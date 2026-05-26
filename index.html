@@ -441,11 +441,12 @@ var cycleUnlocked=false;
 var pinEntry='';
 var pinMode='unlock';
 var pendingPinBtn=null;
+var pendingTabId='cycle';
 function getCyclePin(){return localStorage.getItem('cycle_pin')||''}
 function openPinModal(mode,btn){
   pinMode=mode;pinEntry='';pendingPinBtn=btn||null;
   document.getElementById('pin-dots').textContent='○ ○ ○ ○';
-  document.getElementById('pin-title').textContent=mode==='set'?'Set a new Cycle tab PIN':'Enter PIN to view Cycle tab';
+  document.getElementById('pin-title').textContent=mode==='set'?'Set a PIN for protected tabs':'Enter PIN to continue';
   document.getElementById('pin-error').textContent='';
   document.getElementById('pin-modal').classList.add('open');
 }
@@ -459,7 +460,7 @@ function pinPress(d){
   if(pinEntry.length===4){
     setTimeout(function(){
       if(pinMode==='unlock'){
-        if(pinEntry===getCyclePin()){cycleUnlocked=true;closePinModal();if(pendingPinBtn)activateTab('cycle',pendingPinBtn)}
+        if(pinEntry===getCyclePin()){cycleUnlocked=true;closePinModal();if(pendingPinBtn)activateTab(pendingTabId,pendingPinBtn)}
         else{document.getElementById('pin-error').textContent='Incorrect PIN';pinEntry='';document.getElementById('pin-dots').textContent='○ ○ ○ ○'}
       } else {
         localStorage.setItem('cycle_pin',pinEntry);closePinModal();
@@ -474,7 +475,7 @@ function clearCyclePin(){localStorage.removeItem('cycle_pin');cycleUnlocked=fals
 // ── TABS ──────────────────────────────────────────────────────────
 var builtTabs={};
 function showTab(id,btn){
-  if(id==='cycle'&&getCyclePin()&&!cycleUnlocked){openPinModal('unlock',btn);return}
+  if((id==='cycle'||id==='results')&&getCyclePin()&&!cycleUnlocked){pendingTabId=id;openPinModal('unlock',btn);return}
   activateTab(id,btn);
 }
 function activateTab(id,btn){
