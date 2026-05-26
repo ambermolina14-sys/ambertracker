@@ -179,7 +179,7 @@ textarea{resize:vertical;min-height:70px}
   <button class="tab-btn" onclick="showTab('results',this)">Lab Results</button>
   <button class="tab-btn" onclick="showTab('genetics',this)">Genetics</button>
   <button class="tab-btn" onclick="showTab('notes',this)">Notes</button>
-  <button class="tab-btn" onclick="showTab('settings',this)">⚙ Settings</button>
+  <button class="tab-btn" onclick="showTab('settings',this)">⚙</button>
 </div>
 
 <div id="tab-protocol" class="panel">
@@ -507,7 +507,7 @@ function clearCyclePin(){localStorage.removeItem('cycle_pin');cycleUnlocked=fals
 // ── TABS ──────────────────────────────────────────────────────────
 var builtTabs={};
 function showTab(id,btn){
-  if((id==='cycle'||id==='results')&&getCyclePin()&&!cycleUnlocked){pendingTabId=id;openPinModal('unlock',btn);return}
+  if((id==='cycle'||id==='results'||id==='settings')&&getCyclePin()&&!cycleUnlocked){pendingTabId=id;openPinModal('unlock',btn);return}
   activateTab(id,btn);
 }
 function activateTab(id,btn){
@@ -656,12 +656,10 @@ function updateSlider(id,val,inv){
   var ws=document.getElementById('wellbeing-score');if(ws)ws.textContent=avg;
 }
 function buildSymptoms(){
-  var phase=getPhase(TODAY);
-  var pn={menstrual:'Menstrual — low energy and cramps expected. Be gentle with yourself.',follicular:'Follicular — energy rising. Brain fog should be lifting.',ovulation:'Ovulation — peak energy. Watch for histamine-related agitation.',luteal:'Luteal — PMS symptoms expected. Log cramps, mood swings, overwhelm.'};
-  document.getElementById('sym-phase-note').textContent=pn[phase];
   var scores=GENERAL_SYMS.map(function(s){return s.inv?10-symVals[s.id]:symVals[s.id]});
   var avg=Math.round(scores.reduce(function(a,b){return a+b},0)/scores.length*10)/10;
-  document.getElementById('sym-stats').innerHTML='<div class="stat-box"><div class="stat-num" id="wellbeing-score">'+avg+'</div><div class="stat-lbl">Wellbeing score</div></div><div class="stat-box"><div class="stat-num">'+PHASE_LABELS[phase]+'</div><div class="stat-lbl">Cycle phase</div></div><div class="stat-box"><div class="stat-num">Day '+getCycleDay(TODAY)+'</div><div class="stat-lbl">Cycle day</div></div>';
+  document.getElementById('sym-stats').innerHTML='<div class="stat-box" style="grid-column:span 3"><div class="stat-num" id="wellbeing-score">'+avg+'</div><div class="stat-lbl">Today\'s wellbeing score</div></div>';
+  document.getElementById('sym-phase-note').style.display='none';
   var gc=document.getElementById('general-sliders');gc.innerHTML='';
   var cc=document.getElementById('cycle-sliders');cc.innerHTML='';
   GENERAL_SYMS.forEach(function(s){buildSlider(s,gc)});
