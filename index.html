@@ -525,6 +525,29 @@ async function testConnection() {
   } catch(e) { el.textContent = 'Failed'; el.className = 'sheet-status error'; }
 }
 
+// ─── TABS ───────────────────────────────────────────────────────
+const builtTabs = new Set();
+
+function activateTab(id, btn) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (!builtTabs.has(id)) {
+    if (id==='protocol') buildProtocol();
+    if (id==='symptoms') buildSymptoms();
+    if (id==='cycle') buildCalendar();
+    if (id==='stress') buildStress();
+    if (id==='exercise') buildExercise();
+    if (id==='pollen') buildPollen();
+    if (id==='meals') buildMeals();
+    if (id==='results') buildResults();
+    if (id==='genetics') buildGenetics();
+    builtTabs.add(id);
+  }
+  if (id==='baro') fetchBaro();
+}
+
 // ─── PIN LOCK ───────────────────────────────────────────────────
 let cycleUnlocked = false;
 let pinEntry = '';
@@ -540,25 +563,6 @@ function showTab(id) {
     return;
   }
   activateTab(id, event.target);
-}
-
-function activateTab(id, btn) {
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('tab-'+id).classList.add('active');
-  if (btn) btn.classList.add('active');
-  if (!builtTabs.has(id)) {
-    if (id==='symptoms') buildSymptoms();
-    if (id==='cycle') buildCalendar();
-    if (id==='stress') buildStress();
-    if (id==='exercise') buildExercise();
-    if (id==='pollen') buildPollen();
-    if (id==='meals') buildMeals();
-    if (id==='results') buildResults();
-    if (id==='genetics') buildGenetics();
-    builtTabs.add(id);
-  }
-  if (id==='baro') fetchBaro();
 }
 
 // PIN modal
@@ -613,29 +617,6 @@ function clearCyclePin() {
   cycleUnlocked = false;
   document.getElementById('cycle-pin-display').textContent = 'No PIN set';
   document.getElementById('cycle-pin-display').style.color = 'var(--muted)';
-}
-
-// ─── TABS ───────────────────────────────────────────────────────
-const builtTabs = new Set();
-
-function activateTab(id, btn) {
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('tab-'+id).classList.add('active');
-  if (btn) btn.classList.add('active');
-  if (!builtTabs.has(id)) {
-    if (id==='protocol') buildProtocol();
-    if (id==='symptoms') buildSymptoms();
-    if (id==='cycle') buildCalendar();
-    if (id==='stress') buildStress();
-    if (id==='exercise') buildExercise();
-    if (id==='pollen') buildPollen();
-    if (id==='meals') buildMeals();
-    if (id==='results') buildResults();
-    if (id==='genetics') buildGenetics();
-    builtTabs.add(id);
-  }
-  if (id==='baro') fetchBaro();
 }
 
 // ─── HEADER ─────────────────────────────────────────────────────
