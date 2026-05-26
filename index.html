@@ -821,16 +821,25 @@ function renderExLog(){
 // ── BAROMETRIC ────────────────────────────────────────────────────
 function fetchBaro(){
   document.getElementById('baro-val').innerHTML='…<span class="baro-unit"> inHg</span>';
-  fetch('https://api.open-meteo.com/v1/forecast?latitude=39.9784&longitude=-86.118&current=surface_pressure&timezone=America/Indianapolis')
+  document.getElementById('baro-status').textContent='';
+  fetch('https://api.open-meteo.com/v1/forecast?latitude=39.9784&longitude=-86.118&current=surface_pressure&wind_speed_unit=mph&precipitation_unit=inch&timezone=America%2FIndianapolis')
     .then(function(r){return r.json()}).then(function(data){
-      var inHg=(data.current.surface_pressure*0.02953).toFixed(2);
+      var pressure = data && data.current && data.current.surface_pressure;
+      if(!pressure){
+        document.getElementById('baro-val').innerHTML='Unavailable<span class="baro-unit"> inHg</span>';
+        return;
+      }
+      var inHg=(pressure*0.02953).toFixed(2);
       document.getElementById('baro-val').innerHTML=inHg+'<span class="baro-unit"> inHg</span>';
       document.getElementById('baro-updated').textContent='Updated '+new Date().toLocaleTimeString();
       var v=parseFloat(inHg);var el=document.getElementById('baro-status');
-      if(v>=29.80){el.style.background='#e8f5e9';el.style.color='#2e7d32';el.textContent='✓ Good — typically fine for you'}
-      else if(v>=29.50){el.style.background='#fff3e0';el.style.color='#e65100';el.textContent='⚠ Mild symptoms possible'}
-      else{el.style.background='#fce4ec';el.style.color='#c2185b';el.textContent='⛔ Headache / fog / agitation risk'}
-    }).catch(function(){document.getElementById('baro-val').innerHTML='Error<span class="baro-unit"> inHg</span>'});
+      if(v>=29.80){el.style.background='#eef4ef';el.style.color='#4a6b50';el.textContent='✓ Good — typically fine for you'}
+      else if(v>=29.50){el.style.background='#fdf3ea';el.style.color='#b8763a';el.textContent='⚠ Mild symptoms possible'}
+      else{el.style.background='#fdf0f3';el.style.color='#c4788a';el.textContent='⛔ Headache / fog / agitation risk'}
+    }).catch(function(e){
+      document.getElementById('baro-val').innerHTML='Error<span class="baro-unit"> inHg</span>';
+      document.getElementById('baro-updated').textContent='Failed — tap Refresh to try again';
+    });
 }
 function logBaroManual(){
   var v=parseFloat(document.getElementById('baro-manual').value);if(isNaN(v))return;
