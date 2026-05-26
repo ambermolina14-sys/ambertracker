@@ -501,12 +501,8 @@ function activateTab(id,btn){
 function initHeader(){
   document.getElementById('hdr-date').textContent=TODAY.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
   document.getElementById('note-date').textContent=TODAY.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
-  var phase=getPhase(TODAY);
   var el=document.getElementById('hdr-phase');
-  var cols={menstrual:'#c2185b',follicular:'#2e7d32',ovulation:'#1565c0',luteal:'#e65100'};
-  var bgs={menstrual:'#fce4ec',follicular:'#e8f5e9',ovulation:'#e3f2fd',luteal:'#fff3e0'};
-  el.textContent='Day '+getCycleDay(TODAY)+' · '+PHASE_LABELS[phase];
-  el.style.background=bgs[phase];el.style.color=cols[phase];
+  el.textContent='';el.style.background='';el.style.color='';
 }
 
 // ── SUPPLEMENTS ───────────────────────────────────────────────────
