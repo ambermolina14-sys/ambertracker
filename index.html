@@ -6,28 +6,18 @@
 <title>Amber's Health Tracker</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --sage:#5a7a6a;--sage-light:#e8f0ec;
-  --blush:#c47a8a;--blush-light:#f5e8eb;
-  --gold:#b8860b;--gold-light:#f5f0e0;
-  --ink:#1a1a1a;--muted:#888;
-  --surface:#ffffff;--base:#f5f5f3;
-  --border:#e8e8e4;
-  --radius:8px;--radius-lg:12px;
-  --font:'Georgia',serif;
-}
+:root{--sage:#5a7a6a;--sage-light:#e8f0ec;--blush:#c47a8a;--blush-light:#f5e8eb;--gold:#b8860b;--gold-light:#f5f0e0;--ink:#1a1a1a;--muted:#888;--surface:#ffffff;--base:#f5f5f3;--border:#e8e8e4;--radius:8px;--radius-lg:12px}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--base);color:var(--ink);font-size:14px;min-height:100vh}
 .app{max-width:680px;margin:0 auto;padding:0 0 4rem}
 .header{background:var(--surface);border-bottom:1px solid var(--border);padding:1rem 1.25rem .75rem;position:sticky;top:0;z-index:100}
-.header h1{font-size:16px;font-weight:600;color:var(--ink)}
+.header h1{font-size:16px;font-weight:600}
 .header-sub{display:flex;justify-content:space-between;align-items:center;margin-top:3px}
 .header-date{font-size:11px;color:var(--muted)}
 .phase-badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:500}
-.tabs{display:flex;gap:0;overflow-x:auto;background:var(--surface);border-bottom:1px solid var(--border);scrollbar-width:none;padding:0 .75rem}
+.tabs{display:flex;overflow-x:auto;background:var(--surface);border-bottom:1px solid var(--border);scrollbar-width:none;padding:0 .75rem}
 .tabs::-webkit-scrollbar{display:none}
-.tab-btn{flex-shrink:0;padding:10px 14px;font-size:11px;font-weight:500;border:none;background:none;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap}
+.tab-btn{flex-shrink:0;padding:10px 14px;font-size:11px;font-weight:500;border:none;background:none;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap}
 .tab-btn.active{color:var(--sage);border-bottom-color:var(--sage)}
-.tab-btn:hover:not(.active){color:var(--ink)}
 .panel{display:none;padding:1.25rem}
 .panel.active{display:block}
 .section-title{font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin:1.25rem 0 .6rem}
@@ -40,115 +30,99 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .badge-time{background:var(--sage-light);color:var(--sage)}
 .check-row{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
 .check-row:last-child{border-bottom:none}
-.check-row input[type=checkbox]{margin-top:1px;width:15px;height:15px;cursor:pointer;accent-color:var(--sage);flex-shrink:0}
-.check-name{font-size:13px;font-weight:500;color:var(--ink)}
-.check-note{font-size:11px;color:var(--muted);line-height:1.4;margin-top:1px}
-.check-warn{font-size:11px;color:var(--blush);margin-top:1px}
-.check-test{font-size:11px;color:var(--sage);margin-top:2px;line-height:1.4}
-.progress-wrap{margin-bottom:1rem}
-.progress-row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
-.progress-bar{height:5px;background:var(--base);border-radius:3px;overflow:hidden}
+.check-row input[type=checkbox]{margin-top:2px;width:15px;height:15px;cursor:pointer;accent-color:var(--sage);flex-shrink:0}
+.progress-bar{height:5px;background:var(--base);border-radius:3px;overflow:hidden;margin:6px 0}
 .progress-fill{height:100%;background:var(--sage);border-radius:3px;transition:width .3s}
 .slider-row{padding:10px 0;border-bottom:1px solid var(--border)}
 .slider-row:last-child{border-bottom:none}
-.slider-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.slider-header{display:flex;justify-content:space-between;margin-bottom:5px}
 .slider-label{font-size:13px;font-weight:500}
-.slider-val{font-size:13px;font-weight:600;min-width:20px;text-align:right}
+.slider-val{font-size:13px;font-weight:600}
 input[type=range]{width:100%;accent-color:var(--sage)}
 .slider-ends{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:2px}
 .stats-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:1rem}
 .stat-box{background:var(--base);border-radius:var(--radius);padding:.75rem;text-align:center}
-.stat-num{font-size:19px;font-weight:600;color:var(--ink)}
+.stat-num{font-size:19px;font-weight:600}
 .stat-lbl{font-size:10px;color:var(--muted);margin-top:2px}
 .phase-note{font-size:12px;color:var(--muted);background:var(--base);border-radius:var(--radius);padding:.6rem .9rem;margin-bottom:1rem;line-height:1.5}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
 .cal-head{font-size:10px;color:var(--muted);text-align:center;padding:2px 0}
-.cal-day{min-height:34px;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border:1px solid transparent;transition:all .1s;position:relative}
-.cal-day:hover{border-color:var(--border)}
-.cal-day .dn{font-size:12px;font-weight:500}
-.cal-day .dot{width:4px;height:4px;border-radius:50%;margin-top:2px}
-.cal-today{outline:2px solid var(--sage);outline-offset:-2px}
-.cal-selected{outline:2px solid var(--blush);outline-offset:-2px}
+.cal-day{min-height:34px;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border:1px solid transparent}
 .tap-grid{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:.75rem}
-.tap-btn{padding:7px 12px;font-size:12px;border-radius:20px;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--muted);transition:all .12s}
+.tap-btn{padding:7px 12px;font-size:12px;border-radius:20px;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--muted)}
 .tap-btn.active-sage{border-color:var(--sage);background:var(--sage-light);color:var(--sage);font-weight:500}
 .tap-btn.active-blush{border-color:var(--blush);background:var(--blush-light);color:var(--blush);font-weight:500}
 .tap-btn.active-gold{border-color:var(--gold);background:var(--gold-light);color:var(--gold);font-weight:500}
-.big-tap{flex:1;padding:10px 8px;font-size:12px;border-radius:10px;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--muted);transition:all .12s;text-align:center}
+.big-tap{flex:1;padding:10px 8px;font-size:12px;border-radius:10px;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--muted);text-align:center}
 .info-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px}
 .info-row:last-child{border-bottom:none}
 .info-lbl{color:var(--muted);font-size:12px}
-textarea,input[type=text],input[type=number]{width:100%;padding:8px 10px;font-size:13px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--ink);font-family:inherit;line-height:1.5}
-textarea:focus,input:focus{outline:none;border-color:var(--sage)}
+textarea,input[type=text],input[type=number],input[type=date],select{width:100%;padding:8px 10px;font-size:13px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--ink);font-family:inherit;line-height:1.5}
 textarea{resize:vertical;min-height:70px}
-.btn-primary{padding:8px 20px;font-size:13px;font-weight:600;background:var(--sage);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;transition:opacity .15s}
-.btn-primary:hover{opacity:.88}
-.btn-primary:disabled{opacity:.4;cursor:default}
-.btn-outline{padding:8px 16px;font-size:12px;font-weight:500;background:var(--surface);color:var(--sage);border:1px solid var(--sage);border-radius:var(--radius);cursor:pointer;transition:all .15s}
-.btn-outline:hover{background:var(--sage-light)}
+.btn-primary{padding:8px 20px;font-size:13px;font-weight:600;background:var(--sage);color:#fff;border:none;border-radius:var(--radius);cursor:pointer}
+.btn-outline{padding:8px 16px;font-size:12px;font-weight:500;background:var(--surface);color:var(--sage);border:1px solid var(--sage);border-radius:var(--radius);cursor:pointer}
 .btn-row{display:flex;gap:8px;margin-top:.75rem;flex-wrap:wrap;align-items:center}
 .save-feedback{font-size:12px;color:var(--sage);font-weight:500}
 .save-feedback.error{color:var(--blush)}
-.baro-big{font-size:44px;font-weight:300;text-align:center;color:var(--ink);letter-spacing:-.02em;padding:1rem 0 .5rem}
+.baro-big{font-size:44px;font-weight:300;text-align:center;padding:1rem 0 .5rem}
 .baro-unit{font-size:15px;color:var(--muted)}
-.baro-status{display:inline-block;padding:6px 18px;border-radius:20px;font-size:13px;font-weight:500;margin:.5rem auto}
+.baro-status{display:inline-block;padding:6px 18px;border-radius:20px;font-size:13px;font-weight:500}
 .pollen-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 .pollen-card{background:var(--base);border-radius:var(--radius);padding:.6rem .75rem;text-align:center}
 .pollen-type{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
 .aqi-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:.75rem}
 .aqi-card{background:var(--base);border-radius:var(--radius);padding:.6rem .75rem}
 .aqi-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
-.aqi-val{font-size:13px;font-weight:500}
 .meal-entry{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)}
-.meal-entry:last-child{border-bottom:none}
 .meal-time-badge{font-size:10px;background:var(--base);padding:2px 7px;border-radius:8px;color:var(--muted);flex-shrink:0}
-.meal-del{font-size:18px;color:var(--muted);cursor:pointer;background:none;border:none;padding:0 4px;line-height:1;flex-shrink:0}
-.meal-del:hover{color:var(--blush)}
-.warning-box{border-radius:var(--radius);padding:.7rem 1rem;margin-bottom:.75rem;font-size:12px;line-height:1.6}
+.meal-del{font-size:18px;color:var(--muted);cursor:pointer;background:none;border:none;padding:0 4px;line-height:1}
+.warn-box{border-radius:var(--radius);padding:.7rem 1rem;margin-bottom:.75rem;font-size:12px;line-height:1.6}
 .genetic-item{margin-bottom:.5rem;border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
 .genetic-header{display:flex;align-items:center;gap:10px;padding:.85rem 1.1rem;cursor:pointer;background:var(--surface)}
-.genetic-header:hover{background:var(--base)}
 .genetic-body{padding:0 1.1rem 1rem;border-top:1px solid var(--border)}
 .variant-row{padding:7px 0;border-bottom:1px solid var(--border)}
 .variant-row:last-child{border-bottom:none}
-.gene-chip{font-size:10px;font-family:monospace;background:var(--base);padding:1px 6px;border-radius:4px;color:var(--ink)}
+.gene-chip{font-size:10px;font-family:monospace;background:var(--base);padding:1px 6px;border-radius:4px}
 .sig-chip{font-size:10px;background:var(--blush-light);color:var(--blush);padding:1px 6px;border-radius:6px;font-weight:500}
 .info-box{border-radius:var(--radius);padding:.6rem .9rem;font-size:12px;line-height:1.6;margin-top:.5rem}
-.info-box.sage{background:var(--sage-light);color:var(--ink)}
-.info-box.grey{background:var(--base);color:var(--ink)}
-.exercise-log-entry{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:.8rem 1rem;margin-bottom:.5rem}
+.info-box.sage{background:var(--sage-light)}
+.info-box.grey{background:var(--base)}
+.ex-entry{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:.8rem 1rem;margin-bottom:.5rem}
 .sheet-status{font-size:11px;padding:4px 10px;border-radius:8px;font-weight:500}
 .sheet-status.connected{background:#e8f5e9;color:#2e7d32}
 .sheet-status.disconnected{background:var(--base);color:var(--muted)}
 .sheet-status.error{background:var(--blush-light);color:var(--blush)}
-select{padding:7px 10px;font-size:13px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--ink);cursor:pointer}
-.divider{height:1px;background:var(--border);margin:1rem 0}
+/* PIN modal */
+.pin-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;align-items:center;justify-content:center}
+.pin-modal.open{display:flex}
+.pin-box{background:#fff;border-radius:16px;padding:2rem 1.5rem;width:300px;max-width:90vw;text-align:center}
+.pin-keypad{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:.75rem}
+.pin-key{padding:14px;font-size:18px;font-weight:500;border:1px solid var(--border);border-radius:10px;background:var(--base);cursor:pointer}
 </style>
 </head>
 <body>
-
 <div class="app">
 
 <!-- PIN MODAL -->
-<div id="pin-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:999;align-items:center;justify-content:center">
-  <div style="background:#fff;border-radius:16px;padding:2rem 1.5rem;width:300px;max-width:90vw;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.18)">
+<div id="pin-modal" class="pin-modal">
+  <div class="pin-box">
     <div style="font-size:22px;margin-bottom:.5rem">🔒</div>
-    <div id="pin-title" style="font-size:15px;font-weight:600;color:#1a1a1a;margin-bottom:1.25rem">Enter PIN</div>
-    <div id="pin-dots" style="font-size:22px;letter-spacing:8px;color:#5a7a6a;margin-bottom:.5rem;font-family:monospace">○ ○ ○ ○</div>
-    <div id="pin-error" style="font-size:12px;color:#c47a8a;min-height:18px;margin-bottom:.75rem"></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:.75rem">
-      <button onclick="pinPress('1')" style="padding:14px;font-size:18px;font-weight:500;border:1px solid #e8e8e4;border-radius:10px;background:#f5f5f3;cursor:pointer">1</button>
-      <button onclick="pinPress('2')" style="padding:14px;font-size:18px;font-weight:500;border:1px solid #e8e8e4;border-radius:10px;background:#f5f5f3;cursor:pointer">2</button>
-      <button onclick="pinPress('3')" style="padding:14px;font-size:18px;font-weight:500;border:1px solid #e8e8e4;border-radius:10px;background:#f5f5f3;cursor:pointer">3</button>
-      <button onclick="pinPress('4')" style="padding:14px;font-size:18px;font-weight:500;border:1px solid #e8e8e4;border-radius:10px;background:#f5f5f3;cursor:pointer">4</button>
-      <button onclick="pinPress('5')" style="padding:14px;font-size:18px;font-weight:500;border:1px solid #e8e8e4;border-radius:10px;background:#f5f5f3;cursor:pointer">5</button>
-      <button onclick="pinPress('6')" style="padding:14px;font-size:18px;font-weight:500;border:1px solid #e8e8e4;border-radius:10px;background:#f5f5f3;cursor:pointer">6</button>
-      <button onclick="pinPress('7')" style="padding:14px;font-size:18px;font-weight:500;border:1px solid #e8e8e4;border-radius:10px;background:#f5f5f3;cursor:pointer">7</button>
-      <button onclick="pinPress('8')" style="padding:14px;font-size:18px;font-weight:500;border:1px solid #e8e8e4;border-radius:10px;background:#f5f5f3;cursor:pointer">8</button>
-      <button onclick="pinPress('9')" style="padding:14px;font-size:18px;font-weight:500;border:1px solid #e8e8e4;border-radius:10px;background:#f5f5f3;cursor:pointer">9</button>
-      <button onclick="closePinModal()" style="padding:14px;font-size:13px;border:1px solid #e8e8e4;border-radius:10px;background:#f5f5f3;cursor:pointer;color:#888">Cancel</button>
-      <button onclick="pinPress('0')" style="padding:14px;font-size:18px;font-weight:500;border:1px solid #e8e8e4;border-radius:10px;background:#f5f5f3;cursor:pointer">0</button>
-      <button onclick="pinBackspace()" style="padding:14px;font-size:18px;border:1px solid #e8e8e4;border-radius:10px;background:#f5f5f3;cursor:pointer">⌫</button>
+    <div id="pin-title" style="font-size:15px;font-weight:600;margin-bottom:1.25rem">Enter PIN</div>
+    <div id="pin-dots" style="font-size:22px;letter-spacing:8px;color:var(--sage);margin-bottom:.5rem;font-family:monospace">○ ○ ○ ○</div>
+    <div id="pin-error" style="font-size:12px;color:var(--blush);min-height:18px;margin-bottom:.75rem"></div>
+    <div class="pin-keypad">
+      <button class="pin-key" onclick="pinPress('1')">1</button>
+      <button class="pin-key" onclick="pinPress('2')">2</button>
+      <button class="pin-key" onclick="pinPress('3')">3</button>
+      <button class="pin-key" onclick="pinPress('4')">4</button>
+      <button class="pin-key" onclick="pinPress('5')">5</button>
+      <button class="pin-key" onclick="pinPress('6')">6</button>
+      <button class="pin-key" onclick="pinPress('7')">7</button>
+      <button class="pin-key" onclick="pinPress('8')">8</button>
+      <button class="pin-key" onclick="pinPress('9')">9</button>
+      <button class="pin-key" onclick="closePinModal()" style="font-size:13px;color:var(--muted)">Cancel</button>
+      <button class="pin-key" onclick="pinPress('0')">0</button>
+      <button class="pin-key" onclick="pinBackspace()">⌫</button>
     </div>
   </div>
 </div>
@@ -164,34 +138,27 @@ select{padding:7px 10px;font-size:13px;border:1px solid var(--border);border-rad
 
 <!-- TABS -->
 <div class="tabs">
-  <button class="tab-btn active" onclick="showTab('protocol')">Protocol</button>
-  <button class="tab-btn" onclick="showTab('symptoms')">Symptoms</button>
-  <button class="tab-btn" onclick="showTab('cycle')">Cycle</button>
-  <button class="tab-btn" onclick="showTab('stress')">Stress & NS</button>
-  <button class="tab-btn" onclick="showTab('exercise')">Exercise</button>
-  <button class="tab-btn" onclick="showTab('baro')">Barometric</button>
-  <button class="tab-btn" onclick="showTab('pollen')">Pollen</button>
-  <button class="tab-btn" onclick="showTab('meals')">Meals</button>
-  <button class="tab-btn" onclick="showTab('results')">Lab Results</button>
-  <button class="tab-btn" onclick="showTab('genetics')">Genetics</button>
-  <button class="tab-btn" onclick="showTab('notes')">Notes</button>
-  <button class="tab-btn" onclick="showTab('settings')">⚙ Settings</button>
+  <button class="tab-btn" onclick="showTab('protocol',this)">Protocol</button>
+  <button class="tab-btn" onclick="showTab('symptoms',this)">Symptoms</button>
+  <button class="tab-btn" onclick="showTab('cycle',this)">Cycle</button>
+  <button class="tab-btn" onclick="showTab('stress',this)">Stress & NS</button>
+  <button class="tab-btn" onclick="showTab('exercise',this)">Exercise</button>
+  <button class="tab-btn" onclick="showTab('baro',this)">Barometric</button>
+  <button class="tab-btn" onclick="showTab('pollen',this)">Pollen</button>
+  <button class="tab-btn" onclick="showTab('meals',this)">Meals</button>
+  <button class="tab-btn" onclick="showTab('results',this)">Lab Results</button>
+  <button class="tab-btn" onclick="showTab('genetics',this)">Genetics</button>
+  <button class="tab-btn" onclick="showTab('notes',this)">Notes</button>
+  <button class="tab-btn" onclick="showTab('settings',this)">⚙ Settings</button>
 </div>
 
-<!-- PROTOCOL -->
-<div id="tab-protocol" class="panel active">
-  <div class="progress-wrap">
-    <div class="progress-row"><span style="color:var(--muted);font-size:13px">Today's protocol</span><span id="proto-count" style="font-weight:600;color:var(--sage)"></span></div>
-    <div class="progress-bar"><div class="progress-fill" id="proto-fill" style="width:0%"></div></div>
-  </div>
+<div id="tab-protocol" class="panel">
+  <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:var(--muted)">Today's protocol</span><span id="proto-count" style="font-weight:600;color:var(--sage)"></span></div>
+  <div class="progress-bar"><div class="progress-fill" id="proto-fill" style="width:0%"></div></div>
   <div id="proto-sections"></div>
-  <div class="btn-row">
-    <button class="btn-primary" onclick="saveProtocol()">Save to Sheets</button>
-    <span id="proto-fb" class="save-feedback"></span>
-  </div>
+  <div class="btn-row"><button class="btn-primary" onclick="saveProtocol()">Save to Sheets</button><span id="proto-fb" class="save-feedback"></span></div>
 </div>
 
-<!-- SYMPTOMS -->
 <div id="tab-symptoms" class="panel">
   <div class="stats-grid" id="sym-stats"></div>
   <div class="phase-note" id="sym-phase-note"></div>
@@ -200,13 +167,9 @@ select{padding:7px 10px;font-size:13px;border:1px solid var(--border);border-rad
   <div class="section-title">Cycle & PMS symptoms</div>
   <p style="font-size:12px;color:var(--muted);margin-bottom:.5rem">0 = none, 10 = severe</p>
   <div class="card" id="cycle-sliders"></div>
-  <div class="btn-row">
-    <button class="btn-primary" onclick="saveSymptoms()">Save to Sheets</button>
-    <span id="sym-fb" class="save-feedback"></span>
-  </div>
+  <div class="btn-row"><button class="btn-primary" onclick="saveSymptoms()">Save to Sheets</button><span id="sym-fb" class="save-feedback"></span></div>
 </div>
 
-<!-- CYCLE -->
 <div id="tab-cycle" class="panel">
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
@@ -235,7 +198,6 @@ select{padding:7px 10px;font-size:13px;border:1px solid var(--border);border-rad
   </div>
 </div>
 
-<!-- STRESS & NS -->
 <div id="tab-stress" class="panel">
   <div class="phase-note" id="stress-phase-note"></div>
   <div class="section-title">Nervous system state right now</div>
@@ -248,40 +210,30 @@ select{padding:7px 10px;font-size:13px;border:1px solid var(--border);border-rad
   </div>
   <div class="section-title">Recovery tools used today</div>
   <div class="tap-grid" id="vagal-tools"></div>
-  <div id="vagal-summary" style="display:none" class="info-box sage" style="margin-bottom:.75rem"></div>
-  <div class="section-title">What stressed you today <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></div>
+  <div class="section-title">What stressed you today</div>
   <textarea id="stress-stressors" placeholder="Work, relationships, finances, physical symptoms..."></textarea>
   <div class="section-title" style="margin-top:.75rem">One win or moment of regulation</div>
   <textarea id="stress-wins" placeholder="Even small — a walk, a good meal, a moment of calm..."></textarea>
-  <div class="btn-row">
-    <button class="btn-primary" onclick="saveStress()">Save to Sheets</button>
-    <span id="stress-fb" class="save-feedback"></span>
-  </div>
+  <div class="btn-row"><button class="btn-primary" onclick="saveStress()">Save to Sheets</button><span id="stress-fb" class="save-feedback"></span></div>
   <div class="section-title">Why this matters for you</div>
   <div class="card" style="font-size:12px;color:var(--muted);line-height:1.8">
-    <div style="margin-bottom:.4rem"><strong style="color:var(--ink)">DHEAS confirmed depleted (1.1 ng/mL).</strong> Every stressful day draws from an already low tank. Nervous system recovery IS the protocol right now.</div>
-    <div style="margin-bottom:.4rem"><strong style="color:var(--ink)">Genetic amplifiers:</strong> MAOA (stress emotions slower to settle) + GSK3B (40% higher inflammatory signalling) + SLC6A4 (lower serotonin transporter) + OXTR (connection is medicine).</div>
-    <div><strong style="color:var(--ink)">Fastest tools:</strong> Lumebox base of neck → vagus nerve. Physiological sigh → fastest breath reset. Cold shower → sustained dopamine. PEMF Level 1 nightly → adrenal recovery while sleeping.</div>
+    <div style="margin-bottom:.4rem"><strong style="color:var(--ink)">DHEAS confirmed depleted (1.1 ng/mL).</strong> Every stressful day draws from an already low tank.</div>
+    <div style="margin-bottom:.4rem"><strong style="color:var(--ink)">Genetic amplifiers:</strong> MAOA + GSK3B (40% higher inflammatory signalling) + SLC6A4 + OXTR.</div>
+    <div><strong style="color:var(--ink)">Fastest tools:</strong> Lumebox base of neck. Physiological sigh. Cold shower. PEMF Level 1 nightly.</div>
   </div>
 </div>
 
-<!-- EXERCISE -->
 <div id="tab-exercise" class="panel">
-  <div class="warning-box" id="ex-phase-note"></div>
+  <div class="warn-box" id="ex-phase-note"></div>
   <div class="section-title">Log today's exercise</div>
   <div class="card">
     <p style="font-size:12px;color:var(--muted);margin-bottom:.5rem">What did you do?</p>
     <div class="tap-grid" id="ex-types"></div>
-    <div style="display:flex;gap:8px;margin-bottom:.75rem;align-items:center">
-      <input type="text" id="ex-duration" placeholder="Duration (e.g. 30 min)" style="flex:1">
-    </div>
+    <input type="text" id="ex-duration" placeholder="Duration (e.g. 30 min)" style="margin-bottom:.75rem">
     <p style="font-size:12px;color:var(--muted);margin-bottom:.5rem">How did it feel?</p>
     <div class="tap-grid" id="ex-felt"></div>
-    <textarea id="ex-notes" placeholder="Any notes — what you did, joints, energy after..."></textarea>
-    <div class="btn-row">
-      <button class="btn-primary" id="ex-add-btn" onclick="addExercise()">Save to Sheets</button>
-      <span id="ex-fb" class="save-feedback"></span>
-    </div>
+    <textarea id="ex-notes" placeholder="Any notes — joints, energy after..."></textarea>
+    <div class="btn-row"><button class="btn-primary" onclick="addExercise()">Save to Sheets</button><span id="ex-fb" class="save-feedback"></span></div>
   </div>
   <div id="ex-log-section" style="display:none">
     <div class="section-title">Recent exercise</div>
@@ -289,14 +241,12 @@ select{padding:7px 10px;font-size:13px;border:1px solid var(--border);border-rad
   </div>
   <div class="section-title">Your exercise genetics</div>
   <div class="card" style="font-size:12px;color:var(--muted);line-height:1.8">
-    <div style="margin-bottom:.4rem"><strong style="color:var(--sage)">ACE I/I endurance variant</strong> — exceptional cardiovascular adaptation to sustained aerobic exercise. Built for walking, swimming, cycling more than explosive power sports.</div>
-    <div style="margin-bottom:.4rem"><strong style="color:#c2185b">COL5A1 + COL2A1</strong> — tendons and ligaments less elastic, prone to micro-tears. Always warm up. Pvolve over high-impact.</div>
-    <div style="margin-bottom:.4rem"><strong style="color:var(--sage)">IL6 blood sugar superpower</strong> — 10-15 min walk after meals is one of your most powerful metabolic tools.</div>
+    <div style="margin-bottom:.4rem"><strong style="color:var(--sage)">ACE I/I endurance variant</strong> — built for walking, swimming, cycling over explosive sports.</div>
+    <div style="margin-bottom:.4rem"><strong style="color:#c2185b">COL5A1 + COL2A1</strong> — tendons prone to micro-tears. Always warm up. Pvolve over high-impact.</div>
     <div><strong style="color:var(--ink)">Right now:</strong> Pvolve and walking are exactly right. Shred 415 back in 3-6 months when DHEAS rebuilt.</div>
   </div>
 </div>
 
-<!-- BAROMETRIC -->
 <div id="tab-baro" class="panel">
   <div class="card">
     <div class="baro-big" id="baro-val">—<span class="baro-unit"> inHg</span></div>
@@ -304,7 +254,7 @@ select{padding:7px 10px;font-size:13px;border:1px solid var(--border);border-rad
     <div style="text-align:center;font-size:11px;color:var(--muted);margin:.5rem 0" id="baro-updated"></div>
     <button class="btn-outline" onclick="fetchBaro()" style="width:100%">Refresh pressure</button>
   </div>
-  <div class="section-title">Your personal thresholds (Carmel, IN)</div>
+  <div class="section-title">Your thresholds (Carmel, IN)</div>
   <div class="card">
     <div class="info-row"><span class="info-lbl">≥ 29.80 inHg</span><span class="badge badge-normal">Typically fine</span></div>
     <div class="info-row"><span class="info-lbl">29.50–29.80 inHg</span><span class="badge badge-low">Mild symptoms likely</span></div>
@@ -314,19 +264,18 @@ select{padding:7px 10px;font-size:13px;border:1px solid var(--border);border-rad
   <div class="card">
     <div style="display:flex;gap:8px;align-items:center">
       <input type="number" id="baro-manual" placeholder="29.82" step="0.01" style="flex:1">
-      <button class="btn-primary" onclick="logBaro()">Log</button>
+      <button class="btn-primary" onclick="logBaroManual()">Log</button>
     </div>
     <div id="baro-log" style="margin-top:.75rem"></div>
   </div>
 </div>
 
-<!-- POLLEN -->
 <div id="tab-pollen" class="panel">
   <div class="section-title">Pollen season — Carmel, IN</div>
   <div class="card">
     <p id="season-note" style="font-size:12px;color:var(--muted);margin-bottom:.75rem;line-height:1.6"></p>
     <div class="pollen-grid" id="pollen-season-grid"></div>
-    <p style="font-size:11px;color:var(--muted);margin-top:.75rem">Seasonal averages for Carmel, IN. Live granular pollen counts aren't available for the US via free APIs.</p>
+    <p style="font-size:11px;color:var(--muted);margin-top:.75rem">Seasonal averages for Carmel, IN. Live granular pollen counts not available for US via free APIs.</p>
   </div>
   <div class="section-title">Live air quality — Carmel, IN</div>
   <div class="card">
@@ -334,49 +283,34 @@ select{padding:7px 10px;font-size:13px;border:1px solid var(--border);border-rad
     <div id="aqi-updated" style="font-size:11px;color:var(--muted)"></div>
     <button class="btn-outline" onclick="fetchAQI()" style="width:100%;margin-top:.75rem">Refresh air quality</button>
   </div>
-  <div id="luteal-pollen-warn" style="display:none" class="warning-box" style="background:var(--blush-light);color:var(--blush)"></div>
+  <div id="luteal-warn" style="display:none" class="warn-box"></div>
   <div class="section-title">Overall histamine burden today</div>
   <div style="display:flex;gap:8px;margin-bottom:1rem">
     <button class="big-tap" id="burden-fine" onclick="setBurden('fine')">✓ Feeling fine</button>
     <button class="big-tap" id="burden-mild" onclick="setBurden('mild')">⚡ Mild</button>
     <button class="big-tap" id="burden-flaring" onclick="setBurden('flaring')">🔥 Flaring</button>
   </div>
-  <div class="section-title">What are you noticing? <span style="font-weight:400;text-transform:none;letter-spacing:0">(tap all that apply)</span></div>
+  <div class="section-title">What are you noticing?</div>
   <div class="tap-grid" id="body-symptoms"></div>
-  <div class="section-title">High-histamine foods eaten today</div>
-  <p style="font-size:12px;color:var(--muted);margin-bottom:.6rem">Tap anything you had</p>
+  <div class="section-title">High-histamine foods today</div>
   <div class="tap-grid" id="food-triggers"></div>
   <div style="display:flex;align-items:center;gap:12px;background:var(--base);border-radius:10px;padding:.75rem 1rem;margin-bottom:.75rem">
     <input type="checkbox" id="quercetin-taken" style="width:16px;height:16px;cursor:pointer;accent-color:var(--sage);flex-shrink:0">
-    <div>
-      <div style="font-size:13px;font-weight:500">Quercetin + Bromelain taken today</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:1px">Primary mast cell stabiliser — especially important on high pollen/AQI days</div>
-    </div>
+    <div><div style="font-size:13px;font-weight:500">Quercetin + Bromelain taken today</div><div style="font-size:11px;color:var(--muted);margin-top:1px">Primary mast cell stabiliser</div></div>
   </div>
-  <div id="pollen-summary" style="display:none" class="info-box grey" style="margin-bottom:.75rem"></div>
-  <textarea id="pollen-notes" placeholder="Anything else — where you went, how long outside, how you feel..."></textarea>
-  <div class="btn-row">
-    <button class="btn-primary" onclick="savePollen()">Save to Sheets</button>
-    <span id="pollen-fb" class="save-feedback"></span>
-  </div>
-  <div class="section-title">Your histamine sensitivity profile</div>
-  <div class="card" style="font-size:12px;color:var(--muted);line-height:1.8">
-    <div style="margin-bottom:.4rem"><strong style="color:var(--ink)">Why you're sensitive:</strong> FCER1A (reactive mast cells, 2 effect alleles) + AOC1 (low DAO enzyme) + ESR1 variant means estrogen directly amplifies mast cell activity.</div>
-    <div style="margin-bottom:.4rem"><strong style="color:var(--ink)">Your triggers:</strong> Pollen + barometric drops + estrogen spikes + high-histamine foods + stress — often stack.</div>
-    <div><strong style="color:var(--ink)">Note:</strong> Your symptoms aren't classic allergy. More likely fatigue, agitation, brain fog, and crawling-out-of-skin feeling — especially in luteal phase.</div>
-  </div>
+  <textarea id="pollen-notes" placeholder="Anything else — where you went, how long outside..."></textarea>
+  <div class="btn-row"><button class="btn-primary" onclick="savePollen()">Save to Sheets</button><span id="pollen-fb" class="save-feedback"></span></div>
 </div>
 
-<!-- MEALS -->
 <div id="tab-meals" class="panel">
   <div class="section-title">Log a meal</div>
   <div class="card">
     <div style="display:flex;gap:8px;margin-bottom:8px">
-      <select id="meal-time">
+      <select id="meal-time" style="width:auto;flex-shrink:0">
         <option>Breakfast</option><option>Snack</option><option>Lunch</option><option>Dinner</option><option>Evening snack</option>
       </select>
       <input type="text" id="meal-text" placeholder="What did you eat?" style="flex:1">
-      <button class="btn-primary" onclick="addMeal()">Add</button>
+      <button class="btn-primary" onclick="addMeal()" style="flex-shrink:0;white-space:nowrap">Add</button>
     </div>
     <div id="meal-list"><p style="font-size:12px;color:var(--muted);padding:.5rem 0">No meals logged today</p></div>
   </div>
@@ -391,50 +325,39 @@ select{padding:7px 10px;font-size:13px;border:1px solid var(--border);border-rad
   <div class="card" id="priority-foods"></div>
 </div>
 
-<!-- LAB RESULTS -->
 <div id="tab-results" class="panel">
   <div class="section-title">Everlywell — May 2026</div>
   <div class="card" id="everlywell-results"></div>
   <div class="section-title">Other confirmed</div>
   <div class="card">
-    <div class="info-row">
-      <div><div style="font-size:13px">Ferritin (March 2026)</div><div style="font-size:11px;color:var(--muted)">Optimal: 70–100 ng/mL</div></div>
-      <span class="badge badge-low">18 ng/mL</span>
-    </div>
+    <div class="info-row"><div><div style="font-size:13px">Ferritin (March 2026)</div><div style="font-size:11px;color:var(--muted)">Optimal: 70–100 ng/mL</div></div><span class="badge badge-low">18 ng/mL</span></div>
   </div>
   <div class="section-title">Pending</div>
   <div class="card" id="pending-results"></div>
 </div>
 
-<!-- GENETICS -->
 <div id="tab-genetics" class="panel">
   <p style="font-size:12px;color:var(--muted);margin-bottom:.75rem;line-height:1.6">Source: PlexusDX (May 2026) — 150+ insights across 14 pathways. Tap any pathway to expand.</p>
   <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1rem" id="genetics-filter"></div>
   <div id="genetics-list"></div>
 </div>
 
-<!-- NOTES -->
 <div id="tab-notes" class="panel">
   <div class="section-title">Daily note — <span id="note-date"></span></div>
   <div class="card">
-    <textarea id="daily-note" style="min-height:130px" placeholder="How are you feeling today? Notable symptoms, wins, observations..."></textarea>
-    <div class="btn-row">
-      <button class="btn-primary" onclick="saveNote()">Save to Sheets</button>
-      <span id="note-fb" class="save-feedback"></span>
-    </div>
+    <textarea id="daily-note" style="min-height:130px" placeholder="How are you feeling today?..."></textarea>
+    <div class="btn-row"><button class="btn-primary" onclick="saveNote()">Save to Sheets</button><span id="note-fb" class="save-feedback"></span></div>
   </div>
   <div class="section-title">Recent notes</div>
   <div id="past-notes"></div>
 </div>
 
-<!-- SETTINGS -->
 <div id="tab-settings" class="panel">
   <div class="section-title">Google Sheets connection</div>
   <div class="card">
     <p style="font-size:13px;font-weight:500;margin-bottom:.5rem">Web App URL</p>
-    <p style="font-size:12px;color:var(--muted);margin-bottom:.75rem;line-height:1.6">Paste your Google Apps Script deployment URL here. All your data will save as rows in your Google Sheet automatically.</p>
     <input type="text" id="sheet-url" placeholder="https://script.google.com/macros/s/YOUR_ID/exec" style="margin-bottom:.75rem">
-    <div style="display:flex;gap:8px;align-items:center">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <button class="btn-primary" onclick="saveSheetUrl()">Save URL</button>
       <button class="btn-outline" onclick="testConnection()">Test connection</button>
       <span id="conn-status" class="sheet-status disconnected">Not connected</span>
@@ -442,1070 +365,608 @@ select{padding:7px 10px;font-size:13px;border:1px solid var(--border);border-rad
   </div>
   <div class="section-title">Cycle tab PIN lock</div>
   <div class="card">
-    <p style="font-size:12px;color:var(--muted);margin-bottom:.75rem;line-height:1.6">Set a 4-digit PIN so the Cycle tab requires a code before showing. Stays unlocked for the rest of your session once entered.</p>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:.75rem;line-height:1.6">Set a 4-digit PIN so the Cycle tab requires a code before showing. Stays unlocked for your current session once entered.</p>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <button class="btn-primary" onclick="openPinModal('set')">Set PIN</button>
       <button class="btn-outline" onclick="clearCyclePin()">Remove PIN</button>
-      <span id="cycle-pin-display" style="font-size:12px;color:var(--muted)">—</span>
+      <span id="cycle-pin-display" style="font-size:12px;color:var(--muted)">No PIN set</span>
     </div>
   </div>
   <div class="section-title">Period start date</div>
   <div class="card">
-    <p style="font-size:12px;color:var(--muted);margin-bottom:.75rem">Update when your period starts each cycle so the calendar and phase calculations stay accurate.</p>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:.75rem">Update each time your period starts to keep cycle calculations accurate.</p>
     <input type="date" id="period-start-input" style="margin-bottom:.75rem">
-    <button class="btn-primary" onclick="savePeriodStart()">Update period start</button>
+    <button class="btn-primary" onclick="savePeriodStart()">Update</button>
   </div>
   <div class="section-title">Data backup</div>
   <div class="card">
-    <p style="font-size:12px;color:var(--muted);margin-bottom:.75rem">Download all your locally stored data as a JSON backup file. Keep this safe — it's your fallback if browser storage is cleared.</p>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:.75rem">Download all locally stored data as a backup file.</p>
     <div style="display:flex;gap:8px">
       <button class="btn-outline" onclick="exportData()">Export backup</button>
       <button class="btn-outline" onclick="document.getElementById('import-file').click()">Import backup</button>
-      <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+      <input type="file" id="import-file" accept=".json" style="display:none;width:auto" onchange="importData(event)">
     </div>
   </div>
 </div>
 
 </div><!-- end .app -->
-
 <script>
-// ─── DATA & CONFIG ──────────────────────────────────────────────
-let PERIOD_START = new Date(localStorage.getItem('period_start') || '2026-05-15');
-const CYCLE_LEN = 27;
-const TODAY = new Date(); TODAY.setHours(0,0,0,0);
-let sheetUrl = localStorage.getItem('sheet_url') || '';
-let baroLog = JSON.parse(localStorage.getItem('baro_log') || '[]');
-let flowLog = JSON.parse(localStorage.getItem('flow_log') || '{}');
-let meals = JSON.parse(localStorage.getItem('meals') || '[]');
-let notes = JSON.parse(localStorage.getItem('notes') || '{}');
-let exLog = JSON.parse(localStorage.getItem('ex_log') || '[]');
+// ── CORE ──────────────────────────────────────────────────────────
+var PERIOD_START = new Date(localStorage.getItem('period_start') || '2026-05-15');
+var CYCLE_LEN = 27;
+var TODAY = new Date(); TODAY.setHours(0,0,0,0);
+var sheetUrl = localStorage.getItem('sheet_url') || '';
+var baroLog = JSON.parse(localStorage.getItem('baro_log')||'[]');
+var flowLog = JSON.parse(localStorage.getItem('flow_log')||'{}');
+var meals = JSON.parse(localStorage.getItem('meals')||'[]');
+var notes = JSON.parse(localStorage.getItem('notes')||'{}');
+var exLog = JSON.parse(localStorage.getItem('ex_log')||'[]');
+var checks = JSON.parse(localStorage.getItem('checks')||'{}');
+var MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+var DAYS_SHORT=['Su','Mo','Tu','We','Th','Fr','Sa'];
+var PHASE_COLORS={menstrual:'#fce4ec',follicular:'#e8f5e9',ovulation:'#e3f2fd',luteal:'#fff3e0'};
+var PHASE_LABELS={menstrual:'Menstrual',follicular:'Follicular',ovulation:'Ovulation',luteal:'Luteal'};
 
-const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const DAYS_SHORT = ['Su','Mo','Tu','We','Th','Fr','Sa'];
-const PHASE_COLORS = {menstrual:'#fce4ec',follicular:'#e8f5e9',ovulation:'#e3f2fd',luteal:'#fff3e0'};
-const PHASE_LABELS = {menstrual:'Menstrual',follicular:'Follicular',ovulation:'Ovulation',luteal:'Luteal'};
-
-function daysSince(d){return Math.floor((d-PERIOD_START)/(864e5))}
-function getCycleDay(d){return((daysSince(d)%CYCLE_LEN)+CYCLE_LEN)%CYCLE_LEN+1}
-function getPhase(d){const c=getCycleDay(d);if(c<=6)return'menstrual';if(c<=13)return'follicular';if(c===14)return'ovulation';return'luteal'}
 function todayKey(){return TODAY.toISOString().split('T')[0]}
+function getCycleDay(d){var diff=Math.floor((d-PERIOD_START)/864e5);return((diff%CYCLE_LEN)+CYCLE_LEN)%CYCLE_LEN+1}
+function getPhase(d){var c=getCycleDay(d);if(c<=6)return'menstrual';if(c<=13)return'follicular';if(c===14)return'ovulation';return'luteal'}
+function lsGet(k,def){try{var v=localStorage.getItem(k);return v?JSON.parse(v):def}catch(e){return def}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 
-// ─── GOOGLE SHEETS ──────────────────────────────────────────────
-async function sendToSheets(type, payload) {
-  if (!sheetUrl) return {ok:false,msg:'No sheet URL configured — go to Settings tab'};
-  try {
-    const r = await fetch(sheetUrl, {
-      method:'POST', mode:'no-cors',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({type, payload})
-    });
-    return {ok:true};
-  } catch(e) {
-    return {ok:false,msg:'Connection failed: '+e.message};
-  }
+// ── SHEETS ────────────────────────────────────────────────────────
+async function sendToSheets(type,payload){
+  if(!sheetUrl)return{ok:false,msg:'No sheet URL — go to Settings'};
+  try{await fetch(sheetUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({type,payload})});return{ok:true}}
+  catch(e){return{ok:false,msg:'Connection failed'}}
+}
+function showFeedback(id,ok,msg){
+  var el=document.getElementById(id);if(!el)return;
+  el.textContent=ok?'✓ Saved to Sheets':(msg||'✗ Not saved');
+  el.className='save-feedback'+(ok?'':' error');
+  setTimeout(function(){el.textContent='';el.className='save-feedback'},4000);
+}
+async function testConnection(){
+  var el=document.getElementById('conn-status');
+  el.textContent='Testing...';el.className='sheet-status';
+  if(!sheetUrl){el.textContent='No URL saved';el.className='sheet-status error';return}
+  try{var r=await fetch(sheetUrl+'?test=1');var d=await r.json();
+    if(d.ok){el.textContent='✓ Connected';el.className='sheet-status connected'}
+    else{el.textContent='Error';el.className='sheet-status error'}
+  }catch(e){el.textContent='Failed';el.className='sheet-status error'}
 }
 
-function showFeedback(id, ok, msg) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.textContent = ok ? '✓ Saved to Sheets' : (msg || '✗ Not saved');
-  el.className = 'save-feedback' + (ok ? '' : ' error');
-  setTimeout(() => { el.textContent = ''; el.className = 'save-feedback'; }, 4000);
+// ── PIN ───────────────────────────────────────────────────────────
+var cycleUnlocked=false;
+var pinEntry='';
+var pinMode='unlock';
+var pendingPinBtn=null;
+function getCyclePin(){return localStorage.getItem('cycle_pin')||''}
+function openPinModal(mode,btn){
+  pinMode=mode;pinEntry='';pendingPinBtn=btn||null;
+  document.getElementById('pin-dots').textContent='○ ○ ○ ○';
+  document.getElementById('pin-title').textContent=mode==='set'?'Set a new Cycle tab PIN':'Enter PIN to view Cycle tab';
+  document.getElementById('pin-error').textContent='';
+  document.getElementById('pin-modal').classList.add('open');
 }
-
-async function testConnection() {
-  const el = document.getElementById('conn-status');
-  el.textContent = 'Testing...'; el.className = 'sheet-status';
-  if (!sheetUrl) { el.textContent = 'No URL saved'; el.className = 'sheet-status error'; return; }
-  try {
-    const r = await fetch(sheetUrl + '?test=1');
-    const d = await r.json();
-    if (d.ok) { el.textContent = '✓ Connected'; el.className = 'sheet-status connected'; }
-    else { el.textContent = 'Error'; el.className = 'sheet-status error'; }
-  } catch(e) { el.textContent = 'Failed'; el.className = 'sheet-status error'; }
-}
-
-// ─── TABS ───────────────────────────────────────────────────────
-const builtTabs = new Set();
-
-function activateTab(id, btn) {
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('tab-'+id).classList.add('active');
-  if (btn) btn.classList.add('active');
-  if (!builtTabs.has(id)) {
-    if (id==='protocol') buildProtocol();
-    if (id==='symptoms') buildSymptoms();
-    if (id==='cycle') buildCalendar();
-    if (id==='stress') buildStress();
-    if (id==='exercise') buildExercise();
-    if (id==='pollen') buildPollen();
-    if (id==='meals') buildMeals();
-    if (id==='results') buildResults();
-    if (id==='genetics') buildGenetics();
-    builtTabs.add(id);
-  }
-  if (id==='baro') fetchBaro();
-}
-
-// ─── PIN LOCK ───────────────────────────────────────────────────
-let cycleUnlocked = false;
-let pinEntry = '';
-let pendingTabBtn = null;
-
-function getCyclePin() { return localStorage.getItem('cycle_pin') || ''; }
-
-function showTab(id) {
-  // Intercept cycle tab if PIN is set and not yet unlocked this session
-  if (id === 'cycle' && getCyclePin() && !cycleUnlocked) {
-    pendingTabBtn = event.target;
-    openPinModal('unlock');
-    return;
-  }
-  activateTab(id, event.target);
-}
-
-// PIN modal
-let pinModalMode = 'unlock'; // 'unlock' or 'set'
-function openPinModal(mode) {
-  pinModalMode = mode;
-  pinEntry = '';
-  document.getElementById('pin-dots').innerHTML = '○ ○ ○ ○';
-  document.getElementById('pin-title').textContent = mode === 'set' ? 'Set a new PIN for Cycle tab' : 'Enter PIN to view Cycle tab';
-  document.getElementById('pin-error').textContent = '';
-  document.getElementById('pin-modal').style.display = 'flex';
-}
-function closePinModal() {
-  document.getElementById('pin-modal').style.display = 'none';
-  pinEntry = '';
-}
-function pinPress(digit) {
-  if (pinEntry.length >= 4) return;
-  pinEntry += digit;
-  const filled = '● '.repeat(pinEntry.length);
-  const empty = '○ '.repeat(4 - pinEntry.length);
-  document.getElementById('pin-dots').textContent = (filled + empty).trim();
-  if (pinEntry.length === 4) {
-    setTimeout(() => {
-      if (pinModalMode === 'unlock') {
-        if (pinEntry === getCyclePin()) {
-          cycleUnlocked = true;
-          closePinModal();
-          activateTab('cycle', pendingTabBtn);
-        } else {
-          document.getElementById('pin-error').textContent = 'Incorrect PIN — try again';
-          pinEntry = '';
-          document.getElementById('pin-dots').textContent = '○ ○ ○ ○';
-        }
-      } else if (pinModalMode === 'set') {
-        localStorage.setItem('cycle_pin', pinEntry);
-        closePinModal();
-        document.getElementById('cycle-pin-display').textContent = 'PIN set ✓';
-        document.getElementById('cycle-pin-display').style.color = 'var(--sage)';
+function closePinModal(){document.getElementById('pin-modal').classList.remove('open');pinEntry=''}
+function pinPress(d){
+  if(pinEntry.length>=4)return;
+  pinEntry+=d;
+  var f='● '.repeat(pinEntry.length).trim();
+  var e='○ '.repeat(4-pinEntry.length).trim();
+  document.getElementById('pin-dots').textContent=(f+' '+e).trim();
+  if(pinEntry.length===4){
+    setTimeout(function(){
+      if(pinMode==='unlock'){
+        if(pinEntry===getCyclePin()){cycleUnlocked=true;closePinModal();if(pendingPinBtn)activateTab('cycle',pendingPinBtn)}
+        else{document.getElementById('pin-error').textContent='Incorrect PIN';pinEntry='';document.getElementById('pin-dots').textContent='○ ○ ○ ○'}
+      } else {
+        localStorage.setItem('cycle_pin',pinEntry);closePinModal();
+        var el=document.getElementById('cycle-pin-display');el.textContent='PIN set ✓';el.style.color='var(--sage)';
       }
-    }, 150);
+    },150);
   }
 }
-function pinBackspace() {
-  pinEntry = pinEntry.slice(0, -1);
-  const filled = '● '.repeat(pinEntry.length);
-  const empty = '○ '.repeat(4 - pinEntry.length);
-  document.getElementById('pin-dots').textContent = pinEntry.length ? (filled + empty).trim() : '○ ○ ○ ○';
+function pinBackspace(){pinEntry=pinEntry.slice(0,-1);document.getElementById('pin-dots').textContent=pinEntry.length?('● '.repeat(pinEntry.length).trim()+' '+'○ '.repeat(4-pinEntry.length).trim()).trim():'○ ○ ○ ○'}
+function clearCyclePin(){localStorage.removeItem('cycle_pin');cycleUnlocked=false;var el=document.getElementById('cycle-pin-display');el.textContent='No PIN set';el.style.color='var(--muted)'}
+
+// ── TABS ──────────────────────────────────────────────────────────
+var builtTabs={};
+function showTab(id,btn){
+  if(id==='cycle'&&getCyclePin()&&!cycleUnlocked){openPinModal('unlock',btn);return}
+  activateTab(id,btn);
 }
-function clearCyclePin() {
-  localStorage.removeItem('cycle_pin');
-  cycleUnlocked = false;
-  document.getElementById('cycle-pin-display').textContent = 'No PIN set';
-  document.getElementById('cycle-pin-display').style.color = 'var(--muted)';
+function activateTab(id,btn){
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active')});
+  document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active')});
+  var panel=document.getElementById('tab-'+id);
+  if(panel)panel.classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(!builtTabs[id]){
+    if(id==='protocol')buildProtocol();
+    else if(id==='symptoms')buildSymptoms();
+    else if(id==='cycle')buildCalendar();
+    else if(id==='stress')buildStress();
+    else if(id==='exercise')buildExercise();
+    else if(id==='pollen')buildPollen();
+    else if(id==='meals')buildMeals();
+    else if(id==='results')buildResults();
+    else if(id==='genetics')buildGenetics();
+    builtTabs[id]=true;
+  }
+  if(id==='baro')fetchBaro();
 }
 
-// ─── HEADER ─────────────────────────────────────────────────────
-function initHeader() {
-  document.getElementById('hdr-date').textContent = TODAY.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-  const phase = getPhase(TODAY);
-  const el = document.getElementById('hdr-phase');
-  const c = {menstrual:'#c2185b',follicular:'#2e7d32',ovulation:'#1565c0',luteal:'#e65100'};
-  const bg = {menstrual:'#fce4ec',follicular:'#e8f5e9',ovulation:'#e3f2fd',luteal:'#fff3e0'};
-  el.textContent = 'Day '+getCycleDay(TODAY)+' · '+PHASE_LABELS[phase];
-  el.style.background = bg[phase]; el.style.color = c[phase];
-  document.getElementById('note-date').textContent = TODAY.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+// ── HEADER ────────────────────────────────────────────────────────
+function initHeader(){
+  document.getElementById('hdr-date').textContent=TODAY.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  document.getElementById('note-date').textContent=TODAY.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  var phase=getPhase(TODAY);
+  var el=document.getElementById('hdr-phase');
+  var cols={menstrual:'#c2185b',follicular:'#2e7d32',ovulation:'#1565c0',luteal:'#e65100'};
+  var bgs={menstrual:'#fce4ec',follicular:'#e8f5e9',ovulation:'#e3f2fd',luteal:'#fff3e0'};
+  el.textContent='Day '+getCycleDay(TODAY)+' · '+PHASE_LABELS[phase];
+  el.style.background=bgs[phase];el.style.color=cols[phase];
 }
 
-// ─── SUPPLEMENTS DATA ───────────────────────────────────────────
-const SUPPLEMENTS = {
-  'Morning — Empty Stomach (7:00am)': [
+// ── SUPPLEMENTS ───────────────────────────────────────────────────
+var SUPPLEMENTS={
+  'Morning — Empty Stomach (7:00am)':[
     {id:'amino',name:'Amino Complex',note:'Full essential amino acids — take first, empty stomach',time:'7:00am',test:'No direct test — monitor via energy & symptom tracker'},
-    {id:'iron',name:'Iron Bisglycinate + Vitamin C',note:'Eat 2-3 bites first. No dairy/tea/coffee within 1-2hr',time:'7:00am',warn:true,test:'Ferritin recheck mid-June (Quest, 11911 N Meridian St) — target 70+'},
+    {id:'iron',name:'Iron Bisglycinate + Vitamin C',note:'Eat 2-3 bites first. No dairy/tea/coffee within 1-2hr',time:'7:00am',warn:true,test:'Ferritin recheck mid-June (Quest) — target 70+'},
   ],
-  'Breakfast (7:30am)': [
-    {id:'methyl',name:'Methyl Guard Plus',note:'Most critical — 5-MTHF, methylcobalamin, P5P, riboflavin',time:'7:30am',test:'Homocysteine (Ulta Lab Tests, mid-June) — confirms methylation working'},
+  'Breakfast (7:30am)':[
+    {id:'methyl',name:'Methyl Guard Plus',note:'Most critical — 5-MTHF, methylcobalamin, P5P, riboflavin',time:'7:30am',test:'Homocysteine (Ulta Lab Tests, mid-June)'},
     {id:'vitd',name:'Vitamin D3',note:'1000 IU (likely insufficient — test urgently)',time:'7:30am',warn:true,test:'Vitamin D 25-OH — Everlywell ordered, URGENT'},
-    {id:'fishoil',name:'Fish Oil',note:'EPA/DHA direct — moderate dose, fatty fish 3x/week primarily',time:'7:30am',test:'Cholesterol/Lipids (Choose Health Metabolic) — watch HDL with APOA1 variant'},
-    {id:'thyrocsin',name:'Thyrocsin',note:'Iodine, Tyrosine, Selenium 200mcg, Zinc, Ashwagandha, Guggul',time:'7:30am',test:'Free T3, TSH confirmed normal May 2026. Reverse T3 pending (Ulta)'},
-    {id:'nac',name:'NAC',note:'Half capsule — boosts glutathione, compensates GSTP1 weakness',time:'7:30am',test:'GGT (Choose Health Metabolic) — liver detox marker'},
-    {id:'quercetin',name:'Quercetin + Bromelain',note:'Mast cell stabiliser, NRF2 activator. Bromelain reduces cramps',time:'7:30am',test:'hsCRP (Choose Health Metabolic) — inflammation marker'},
-    {id:'florav',name:'Flora V Probiotic',note:'Lactobacillus blend + cranberry extract',time:'7:30am',test:'No direct test — monitor via bloating in symptoms tab'},
-    {id:'adrenal',name:'Adrenal Cortex',note:'Confirmed low DHEAS 1.1 — supports adrenal recovery',time:'7:30am',test:'DHEAS — confirmed LOW 1.1. Retest in 3–6 months'},
+    {id:'fishoil',name:'Fish Oil',note:'EPA/DHA direct — moderate dose, fatty fish 3x/week primarily',time:'7:30am',test:'Cholesterol/Lipids (Choose Health Metabolic)'},
+    {id:'thyrocsin',name:'Thyrocsin',note:'Iodine, Tyrosine, Selenium 200mcg, Zinc, Ashwagandha, Guggul',time:'7:30am',test:'Free T3, TSH confirmed normal May 2026. Reverse T3 pending'},
+    {id:'nac',name:'NAC',note:'Half capsule — boosts glutathione, compensates GSTP1 weakness',time:'7:30am',test:'GGT (Choose Health Metabolic)'},
+    {id:'quercetin',name:'Quercetin + Bromelain',note:'Mast cell stabiliser, NRF2 activator. Bromelain reduces cramps',time:'7:30am',test:'hsCRP (Choose Health Metabolic)'},
+    {id:'florav',name:'Flora V Probiotic',note:'Lactobacillus blend + cranberry extract',time:'7:30am',test:'Monitor via bloating in symptoms tab'},
+    {id:'adrenal',name:'Adrenal Cortex',note:'Confirmed low DHEAS 1.1 — supports adrenal recovery',time:'7:30am',test:'DHEAS — confirmed LOW 1.1. Retest in 3-6 months'},
   ],
-  'Mid Morning — Adrenal Cocktail': [
-    {id:'cocktail',name:'Adrenal Cocktail',note:'4oz OJ + coconut aloe water + cream of tartar + sea salt + collagen',time:'Mid-morning',test:'No direct test — supports adrenal DHEAS recovery'},
-    {id:'flowbalance',name:'Flow Balance (Organic Olivia)',note:'EVERY DAY without exception — Vitex needs 2-3 months uninterrupted',time:'Mid-morning',warn:true,test:'Estradiol retest (Everlywell, ~3 months) — trending toward 246 or below'},
-    {id:'livertinc',name:'Liver Tincture',note:'Add to adrenal cocktail — estrogen clearance, Phase 2 detox',time:'Mid-morning',test:'GGT + Estradiol retest — liver detox and estrogen clearance'},
+  'Mid Morning — Adrenal Cocktail':[
+    {id:'cocktail',name:'Adrenal Cocktail',note:'4oz OJ + coconut aloe water + cream of tartar + sea salt + collagen',time:'Mid-morning',test:'Supports adrenal DHEAS recovery'},
+    {id:'flowbalance',name:'Flow Balance (Organic Olivia)',note:'EVERY DAY without exception — Vitex needs 2-3 months uninterrupted',time:'Mid-morning',warn:true,test:'Estradiol retest (Everlywell, ~3 months)'},
+    {id:'livertinc',name:'Liver Tincture',note:'Add to adrenal cocktail — estrogen clearance, Phase 2 detox',time:'Mid-morning',test:'GGT + Estradiol retest'},
   ],
-  'Bedtime': [
-    {id:'magnesium',name:'Magnesium CitraMate',note:'GABA support, sleep, muscle relaxation',time:'Bedtime',test:'No direct test — monitor via sleep quality slider'},
-    {id:'pharmagaba',name:'PharmaGABA 100',note:'30-60 min before sleep only — CYP2D6 slow clearance',time:'Bedtime',warn:true,test:'No direct test — monitor via sleep quality and anxiety sliders'},
-    {id:'pemf',name:'PEMF Mat Level 1 — Sleep (3Hz)',note:'Every night — deep sleep entrainment, adrenal recovery',time:'Bedtime',test:'No direct test — future: Oura Ring HRV would measure recovery'},
+  'Bedtime':[
+    {id:'magnesium',name:'Magnesium CitraMate',note:'GABA support, sleep, muscle relaxation',time:'Bedtime',test:'Monitor via sleep quality slider'},
+    {id:'pharmagaba',name:'PharmaGABA 100',note:'30-60 min before sleep only — CYP2D6 slow clearance',time:'Bedtime',warn:true,test:'Monitor via sleep quality and anxiety sliders'},
+    {id:'pemf',name:'PEMF Mat Level 1 — Sleep (3Hz)',note:'Every night — deep sleep entrainment, adrenal recovery',time:'Bedtime',test:'Future: Oura Ring HRV'},
   ],
-  'Biohacking & Lifestyle': [
-    {id:'lumebox',name:'Lumebox Red Light',note:'6-7 min full head protocol — forehead, crown, temples, neck/vagus',time:'Daily',test:'No direct test — monitor via brain fog and energy sliders'},
+  'Biohacking & Lifestyle':[
+    {id:'lumebox',name:'Lumebox Red Light',note:'6-7 min full head — forehead, crown, temples, neck/vagus',time:'Daily',test:'Monitor via brain fog and energy sliders'},
     {id:'sunlight',name:'Morning sunlight',note:'10 min within 30 min of waking — non-negotiable for HPA axis',time:'Morning',test:'Vitamin D 25-OH (Everlywell, URGENT)'},
-    {id:'coldshower',name:'Cold shower',note:'30-60 sec cold at end — dopamine spike + NRF2',time:'Morning',test:'No direct test — monitor via mood and energy sliders'},
-    {id:'vibration',name:'Vibration plate',note:'10 min — lymphatic drainage, bone density, circulation',time:'Evening',test:'No direct test — future: DEXA scan for bone density'},
-    {id:'sauna',name:'Infrared sauna blanket',note:'30-45 min — detox via sweat. Shower after.',time:'Evening',test:'GGT (Choose Health Metabolic) — liver/detox marker'},
+    {id:'coldshower',name:'Cold shower',note:'30-60 sec cold at end — dopamine spike + NRF2',time:'Morning',test:'Monitor via mood and energy sliders'},
+    {id:'vibration',name:'Vibration plate',note:'10 min — lymphatic drainage, bone density, circulation',time:'Evening',test:'Future: DEXA scan for bone density'},
+    {id:'sauna',name:'Infrared sauna blanket',note:'30-45 min — detox via sweat. Shower after.',time:'Evening',test:'GGT (Choose Health Metabolic)'},
     {id:'cruciferous',name:'Cruciferous vegetables',note:'DAILY — confirmed estrogen dominance, non-negotiable',time:'Meals',warn:true,test:'Estradiol retest (Everlywell ~3 months)'},
     {id:'walk',name:'20-30 min walk',note:'IL6 blood sugar superpower — after meals best',time:'Daily',test:'HbA1c + Fasting Glucose (Choose Health Metabolic)'},
     {id:'castorliver',name:'Castor oil pack — Liver',note:'45-60 min with heat on right ribcage. Glutathione + estrogen clearance.',time:'Evening',test:'GGT + Estradiol retest'},
-    {id:'castorabdomen',name:'Castor oil pack — Lower abdomen',note:'2 nights before expected period. Uterine circulation + fibroid prevention.',time:'Evening',test:'Symptom tracker — cramps and bloating'},
-    {id:'grounding',name:'Grounding / Earthing',note:'Barefoot on grass or soil — parasympathetic activation',time:'Morning',test:'No direct test — monitor via stress tab NS rating'},
-    {id:'breathwork',name:'Breathwork',note:'Box breathing (4-4-4-4), 4-7-8, or physiological sigh',time:'As needed',test:'No direct test — monitor via stress tab NS rating'},
-    {id:'mouthtape',name:'Mouth tape during sleep',note:'3M micropore tape. Nasal breathing → nitric oxide → parasympathetic.',time:'Bedtime',test:'No direct test — monitor via sleep quality slider'},
+    {id:'castorabdomen',name:'Castor oil pack — Lower abdomen',note:'2 nights before expected period. Uterine circulation.',time:'Evening',test:'Symptom tracker — cramps and bloating'},
+    {id:'grounding',name:'Grounding / Earthing',note:'Barefoot on grass — parasympathetic activation',time:'Morning',test:'Monitor via stress tab NS rating'},
+    {id:'breathwork',name:'Breathwork',note:'Box breathing (4-4-4-4), 4-7-8, or physiological sigh',time:'As needed',test:'Monitor via stress tab NS rating'},
+    {id:'mouthtape',name:'Mouth tape during sleep',note:'3M micropore tape. Nasal breathing → nitric oxide → parasympathetic.',time:'Bedtime',test:'Monitor via sleep quality slider'},
   ]
 };
 
-// ─── PROTOCOL CHECKLIST ─────────────────────────────────────────
-let checks = JSON.parse(localStorage.getItem('checks') || '{}');
-
-function buildProtocol() {
-  const cont = document.getElementById('proto-sections');
-  cont.innerHTML = '';
-  Object.entries(SUPPLEMENTS).forEach(([section, items]) => {
-    const title = document.createElement('div');
-    title.className = 'section-title';
-    title.style.marginTop = '1rem';
-    title.textContent = '🌿 ' + section;
-    cont.appendChild(title);
-    const card = document.createElement('div');
-    card.className = 'card';
-    items.forEach((item, i) => {
-      const row = document.createElement('div');
-      row.className = 'check-row';
-      row.innerHTML = `
-        <input type="checkbox" id="chk-${item.id}" ${checks[item.id]?'checked':''} onchange="toggleCheck('${item.id}',this.checked)">
-        <div style="flex:1">
-          <div class="check-name">${item.name} <span class="badge badge-time">${item.time}</span></div>
-          <div class="check-note">${item.note}</div>
-          ${item.warn?'<div class="check-warn">⚠ Important timing</div>':''}
-          <div class="check-test">🧪 ${item.test}</div>
-        </div>`;
+function buildProtocol(){
+  var cont=document.getElementById('proto-sections');
+  cont.innerHTML='';
+  Object.keys(SUPPLEMENTS).forEach(function(section){
+    var items=SUPPLEMENTS[section];
+    var t=document.createElement('div');t.className='section-title';t.style.marginTop='1rem';t.textContent=section;cont.appendChild(t);
+    var card=document.createElement('div');card.className='card';
+    items.forEach(function(item){
+      var row=document.createElement('div');row.className='check-row';
+      row.innerHTML='<input type="checkbox" id="chk-'+item.id+'" '+(checks[item.id]?'checked':'')+' onchange="toggleCheck(\''+item.id+'\',this.checked)"><div style="flex:1"><div style="font-size:13px;font-weight:500">'+item.name+' <span class="badge badge-time">'+item.time+'</span></div><div style="font-size:11px;color:var(--muted);line-height:1.4;margin-top:1px">'+item.note+'</div>'+(item.warn?'<div style="font-size:11px;color:var(--blush);margin-top:1px">⚠ Important timing</div>':'')+'<div style="font-size:11px;color:var(--sage);margin-top:2px;line-height:1.4">🧪 '+item.test+'</div></div>';
       card.appendChild(row);
     });
     cont.appendChild(card);
   });
-  updateProtocolProgress();
+  updateProtoProgress();
+}
+function toggleCheck(id,val){checks[id]=val;lsSet('checks',checks);updateProtoProgress()}
+function updateProtoProgress(){
+  var all=Object.values(SUPPLEMENTS).flat();
+  var done=all.filter(function(i){return checks[i.id]}).length;
+  var total=all.length;
+  document.getElementById('proto-count').textContent=done+' / '+total;
+  document.getElementById('proto-fill').style.width=Math.round(done/total*100)+'%';
+}
+async function saveProtocol(){
+  var all=Object.values(SUPPLEMENTS).flat();
+  var done=all.filter(function(i){return checks[i.id]});
+  var missed=all.filter(function(i){return !checks[i.id]}).map(function(i){return i.name});
+  var r=await sendToSheets('protocol',{date:todayKey(),cycleDay:getCycleDay(TODAY),phase:getPhase(TODAY),done:done.length,total:all.length,percent:Math.round(done.length/all.length*100),missed:missed.join(', ')});
+  showFeedback('proto-fb',r.ok,r.msg);
 }
 
-function toggleCheck(id, val) {
-  checks[id] = val;
-  localStorage.setItem('checks', JSON.stringify(checks));
-  updateProtocolProgress();
-}
-
-function updateProtocolProgress() {
-  const all = Object.values(SUPPLEMENTS).flat();
-  const done = all.filter(i => checks[i.id]).length;
-  const total = all.length;
-  document.getElementById('proto-count').textContent = done + ' / ' + total;
-  document.getElementById('proto-fill').style.width = Math.round(done/total*100) + '%';
-}
-
-async function saveProtocol() {
-  const all = Object.values(SUPPLEMENTS).flat();
-  const done = all.filter(i => checks[i.id]);
-  const missed = all.filter(i => !checks[i.id]).map(i => i.name);
-  const r = await sendToSheets('protocol', {
-    date: todayKey(), cycleDay: getCycleDay(TODAY), phase: getPhase(TODAY),
-    done: done.length, total: all.length, percent: Math.round(done.length/all.length*100),
-    missed: missed.join(', ')
-  });
-  showFeedback('proto-fb', r.ok, r.msg);
-}
-
-// ─── SYMPTOMS ───────────────────────────────────────────────────
-const GENERAL_SYMS = [
+// ── SYMPTOMS ──────────────────────────────────────────────────────
+var GENERAL_SYMS=[
   {id:'energy',label:'Energy level',low:'Exhausted',high:'Full energy',def:5},
-  {id:'fatigue',label:'Fatigue',low:'No fatigue',high:'Severe fatigue',invert:true,def:3},
+  {id:'fatigue',label:'Fatigue',low:'No fatigue',high:'Severe fatigue',inv:true,def:3},
   {id:'brain_fog',label:'Mental clarity',low:'Total fog',high:'Crystal clear',def:5},
   {id:'focus',label:'Focus & concentration',low:"Can't focus",high:'Laser focused',def:5},
   {id:'mood',label:'Overall mood',low:'Very low',high:'Great',def:5},
   {id:'emotional_stability',label:'Emotional stability',low:'Volatile',high:'Steady',def:5},
-  {id:'anxiety',label:'Anxiety',low:'None',high:'Severe',invert:true,def:3},
-  {id:'agitation',label:'Agitation / irritability',low:'Calm',high:'Very agitated',invert:true,def:3},
+  {id:'anxiety',label:'Anxiety',low:'None',high:'Severe',inv:true,def:3},
+  {id:'agitation',label:'Agitation / irritability',low:'Calm',high:'Very agitated',inv:true,def:3},
   {id:'sleep_quality',label:"Last night's sleep",low:'Terrible',high:'Deep & restful',def:6},
 ];
-const CYCLE_SYMS = [
-  {id:'cramps',label:'Cramps',low:'None',high:'Severe',invert:true,def:0},
-  {id:'bloating',label:'Bloating',low:'None',high:'Very bloated',invert:true,def:2},
-  {id:'breast_tenderness',label:'Breast tenderness',low:'None',high:'Very tender',invert:true,def:0},
-  {id:'pms_mood',label:'PMS mood swings',low:'None',high:'Intense',invert:true,def:2},
-  {id:'pms_hunger',label:'Cravings / hunger',low:'Normal',high:'Very strong',invert:true,def:3},
-  {id:'pms_overwhelm',label:'Sensory overwhelm',low:'None',high:'Severe',invert:true,def:2},
+var CYCLE_SYMS=[
+  {id:'cramps',label:'Cramps',low:'None',high:'Severe',inv:true,def:0},
+  {id:'bloating',label:'Bloating',low:'None',high:'Very bloated',inv:true,def:2},
+  {id:'breast_tenderness',label:'Breast tenderness',low:'None',high:'Very tender',inv:true,def:0},
+  {id:'pms_mood',label:'PMS mood swings',low:'None',high:'Intense',inv:true,def:2},
+  {id:'pms_hunger',label:'Cravings / hunger',low:'Normal',high:'Very strong',inv:true,def:3},
+  {id:'pms_overwhelm',label:'Sensory overwhelm',low:'None',high:'Severe',inv:true,def:2},
 ];
-let symVals = {};
-[...GENERAL_SYMS,...CYCLE_SYMS].forEach(s=>symVals[s.id]=s.def);
-// Load saved values for today if they exist
-const savedSyms = JSON.parse(localStorage.getItem('symVals_'+new Date().toISOString().split('T')[0]) || '{}');
-Object.assign(symVals, savedSyms);
+var symVals={};
+[].concat(GENERAL_SYMS,CYCLE_SYMS).forEach(function(s){symVals[s.id]=s.def});
+var savedSyms=lsGet('symVals_'+todayKey(),{});
+Object.assign(symVals,savedSyms);
 
-function sliderColor(sym, val) {
-  if (sym.invert) return val<=3?'#2e7d32':val<=6?'#e65100':'#c2185b';
-  return val>=7?'#2e7d32':val>=4?'#e65100':'#c2185b';
+function sColor(sym,val){if(sym.inv)return val<=3?'#2e7d32':val<=6?'#e65100':'#c2185b';return val>=7?'#2e7d32':val>=4?'#e65100':'#c2185b'}
+function buildSlider(sym,cont){
+  var val=symVals[sym.id]!==undefined?symVals[sym.id]:sym.def;
+  var row=document.createElement('div');row.className='slider-row';
+  row.innerHTML='<div class="slider-header"><span class="slider-label">'+sym.label+'</span><span class="slider-val" id="sv-'+sym.id+'" style="color:'+sColor(sym,val)+'">'+val+'</span></div><input type="range" min="0" max="10" value="'+val+'" oninput="updateSlider(\''+sym.id+'\',this.value,'+!!sym.inv+')"><div class="slider-ends"><span>'+sym.low+'</span><span>'+sym.high+'</span></div>';
+  cont.appendChild(row);
+}
+function updateSlider(id,val,inv){
+  symVals[id]=parseInt(val);
+  lsSet('symVals_'+todayKey(),symVals);
+  var el=document.getElementById('sv-'+id);var v=parseInt(val);
+  el.style.color=inv?(v<=3?'#2e7d32':v<=6?'#e65100':'#c2185b'):(v>=7?'#2e7d32':v>=4?'#e65100':'#c2185b');
+  el.textContent=val;
+  var scores=GENERAL_SYMS.map(function(s){return s.inv?10-symVals[s.id]:symVals[s.id]});
+  var avg=Math.round(scores.reduce(function(a,b){return a+b},0)/scores.length*10)/10;
+  var ws=document.getElementById('wellbeing-score');if(ws)ws.textContent=avg;
+}
+function buildSymptoms(){
+  var phase=getPhase(TODAY);
+  var pn={menstrual:'Menstrual — low energy and cramps expected. Be gentle with yourself.',follicular:'Follicular — energy rising. Brain fog should be lifting.',ovulation:'Ovulation — peak energy. Watch for histamine-related agitation.',luteal:'Luteal — PMS symptoms expected. Log cramps, mood swings, overwhelm.'};
+  document.getElementById('sym-phase-note').textContent=pn[phase];
+  var scores=GENERAL_SYMS.map(function(s){return s.inv?10-symVals[s.id]:symVals[s.id]});
+  var avg=Math.round(scores.reduce(function(a,b){return a+b},0)/scores.length*10)/10;
+  document.getElementById('sym-stats').innerHTML='<div class="stat-box"><div class="stat-num" id="wellbeing-score">'+avg+'</div><div class="stat-lbl">Wellbeing score</div></div><div class="stat-box"><div class="stat-num">'+PHASE_LABELS[phase]+'</div><div class="stat-lbl">Cycle phase</div></div><div class="stat-box"><div class="stat-num">Day '+getCycleDay(TODAY)+'</div><div class="stat-lbl">Cycle day</div></div>';
+  var gc=document.getElementById('general-sliders');gc.innerHTML='';
+  var cc=document.getElementById('cycle-sliders');cc.innerHTML='';
+  GENERAL_SYMS.forEach(function(s){buildSlider(s,gc)});
+  CYCLE_SYMS.forEach(function(s){buildSlider(s,cc)});
+}
+async function saveSymptoms(){
+  var scores=GENERAL_SYMS.map(function(s){return s.inv?10-symVals[s.id]:symVals[s.id]});
+  var avg=Math.round(scores.reduce(function(a,b){return a+b},0)/scores.length*10)/10;
+  var payload=Object.assign({date:todayKey(),cycleDay:getCycleDay(TODAY),phase:getPhase(TODAY),wellbeingScore:avg},symVals);
+  var r=await sendToSheets('symptoms',payload);
+  showFeedback('sym-fb',r.ok,r.msg);
 }
 
-function buildSlider(sym, container) {
-  const row = document.createElement('div');
-  row.className = 'slider-row';
-  const val = symVals[sym.id] || sym.def;
-  row.innerHTML = `
-    <div class="slider-header">
-      <span class="slider-label">${sym.label}</span>
-      <span class="slider-val" id="sv-${sym.id}" style="color:${sliderColor(sym,val)}">${val}</span>
-    </div>
-    <input type="range" min="0" max="10" value="${val}" oninput="updateSlider('${sym.id}',this.value,${sym.invert||false})">
-    <div class="slider-ends"><span>${sym.low}</span><span>${sym.high}</span></div>`;
-  container.appendChild(row);
-}
-
-function updateSlider(id, val, invert) {
-  symVals[id] = parseInt(val);
-  localStorage.setItem('symVals_'+new Date().toISOString().split('T')[0], JSON.stringify(symVals));
-  const el = document.getElementById('sv-'+id);
-  const v = parseInt(val);
-  if (invert) el.style.color = v<=3?'#2e7d32':v<=6?'#e65100':'#c2185b';
-  else el.style.color = v>=7?'#2e7d32':v>=4?'#e65100':'#c2185b';
-  el.textContent = val;
-  updateWellbeingScore();
-}
-
-function updateWellbeingScore() {
-  const scores = GENERAL_SYMS.map(s => s.invert ? 10-symVals[s.id] : symVals[s.id]);
-  const avg = Math.round(scores.reduce((a,b)=>a+b,0)/scores.length*10)/10;
-  const el = document.getElementById('wellbeing-score');
-  if (el) el.textContent = avg;
-}
-
-function buildSymptoms() {
-  const phase = getPhase(TODAY);
-  const phaseNotes = {
-    menstrual:'Menstrual phase — low energy and cramps expected. Be gentle with yourself.',
-    follicular:'Follicular phase — energy rising. Brain fog should be lifting.',
-    ovulation:'Ovulation — peak energy window. Watch for histamine-related agitation.',
-    luteal:'Luteal phase — PMS symptoms expected. Log cramps, mood swings, and overwhelm here.',
-  };
-  document.getElementById('sym-phase-note').textContent = phaseNotes[phase];
-  const scores = GENERAL_SYMS.map(s => s.invert ? 10-symVals[s.id] : symVals[s.id]);
-  const avg = Math.round(scores.reduce((a,b)=>a+b,0)/scores.length*10)/10;
-  document.getElementById('sym-stats').innerHTML = `
-    <div class="stat-box"><div class="stat-num" id="wellbeing-score">${avg}</div><div class="stat-lbl">Wellbeing score</div></div>
-    <div class="stat-box"><div class="stat-num">${PHASE_LABELS[phase]}</div><div class="stat-lbl">Cycle phase</div></div>
-    <div class="stat-box"><div class="stat-num">Day ${getCycleDay(TODAY)}</div><div class="stat-lbl">Cycle day</div></div>`;
-  const gc = document.getElementById('general-sliders'); gc.innerHTML = '';
-  const cc = document.getElementById('cycle-sliders'); cc.innerHTML = '';
-  GENERAL_SYMS.forEach(s => buildSlider(s, gc));
-  CYCLE_SYMS.forEach(s => buildSlider(s, cc));
-}
-
-async function saveSymptoms() {
-  const scores = GENERAL_SYMS.map(s => s.invert ? 10-symVals[s.id] : symVals[s.id]);
-  const avg = Math.round(scores.reduce((a,b)=>a+b,0)/scores.length*10)/10;
-  const r = await sendToSheets('symptoms', {
-    date:todayKey(), cycleDay:getCycleDay(TODAY), phase:getPhase(TODAY),
-    ...symVals, wellbeingScore:avg
-  });
-  showFeedback('sym-fb', r.ok, r.msg);
-}
-
-// ─── CYCLE CALENDAR ─────────────────────────────────────────────
-let calViewMonth = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1);
-let selectedCalDay = null;
-
-function buildCalendar() {
-  document.getElementById('cal-month-label').textContent = MONTHS[calViewMonth.getMonth()] + ' ' + calViewMonth.getFullYear();
-  const heads = document.getElementById('cal-heads');
-  heads.innerHTML = DAYS_SHORT.map(d=>`<div class="cal-head">${d}</div>`).join('');
-  const grid = document.getElementById('cal-days');
-  grid.innerHTML = '';
-  const first = new Date(calViewMonth.getFullYear(), calViewMonth.getMonth(), 1);
-  const startDow = first.getDay();
-  const daysInMonth = new Date(calViewMonth.getFullYear(), calViewMonth.getMonth()+1, 0).getDate();
-  for (let i=0;i<startDow;i++) grid.innerHTML += '<div></div>';
-  for (let d=1;d<=daysInMonth;d++) {
-    const date = new Date(calViewMonth.getFullYear(), calViewMonth.getMonth(), d);
-    const phase = getPhase(date);
-    const isToday = date.toDateString()===TODAY.toDateString();
-    const isSel = selectedCalDay && date.toDateString()===selectedCalDay.toDateString();
-    const key = date.toISOString().split('T')[0];
-    const flow = flowLog[key];
-    const el = document.createElement('div');
-    el.className = 'cal-day' + (isToday?' cal-today':'') + (isSel?' cal-selected':'');
-    el.style.background = PHASE_COLORS[phase];
-    el.innerHTML = `<span class="dn" style="color:${isToday?'var(--sage)':'inherit'}">${d}</span>${flow?`<div class="dot" style="background:var(--blush)"></div>`:''}`;
-    const captured = new Date(date);
-    el.onclick = () => selectCalDay(captured);
-    grid.appendChild(el);
+// ── CALENDAR ──────────────────────────────────────────────────────
+var calViewMonth=new Date(TODAY.getFullYear(),TODAY.getMonth(),1);
+var selectedCalDay=null;
+function buildCalendar(){
+  document.getElementById('cal-month-label').textContent=MONTHS[calViewMonth.getMonth()]+' '+calViewMonth.getFullYear();
+  var heads=document.getElementById('cal-heads');heads.innerHTML='';
+  DAYS_SHORT.forEach(function(d){var el=document.createElement('div');el.className='cal-head';el.textContent=d;heads.appendChild(el)});
+  var grid=document.getElementById('cal-days');grid.innerHTML='';
+  var first=new Date(calViewMonth.getFullYear(),calViewMonth.getMonth(),1);
+  var startDow=first.getDay();
+  var daysInMonth=new Date(calViewMonth.getFullYear(),calViewMonth.getMonth()+1,0).getDate();
+  for(var i=0;i<startDow;i++){var empty=document.createElement('div');grid.appendChild(empty)}
+  for(var d=1;d<=daysInMonth;d++){
+    (function(day){
+      var date=new Date(calViewMonth.getFullYear(),calViewMonth.getMonth(),day);
+      var phase=getPhase(date);
+      var isToday=date.toDateString()===TODAY.toDateString();
+      var isSel=selectedCalDay&&date.toDateString()===selectedCalDay.toDateString();
+      var key=date.toISOString().split('T')[0];
+      var flow=flowLog[key];
+      var el=document.createElement('div');
+      el.className='cal-day';
+      el.style.background=PHASE_COLORS[phase];
+      if(isToday||isSel)el.style.outline='2px solid var(--sage)';
+      el.innerHTML='<span style="font-size:12px;font-weight:500;color:'+(isToday?'var(--sage)':'inherit')+'">'+day+'</span>'+(flow?'<div style="width:4px;height:4px;border-radius:50%;background:var(--blush);margin-top:2px"></div>':'');
+      el.onclick=function(){selectCalDay(date)};
+      grid.appendChild(el);
+    })(d);
   }
 }
 function prevMonth(){calViewMonth=new Date(calViewMonth.getFullYear(),calViewMonth.getMonth()-1,1);buildCalendar()}
 function nextMonth(){calViewMonth=new Date(calViewMonth.getFullYear(),calViewMonth.getMonth()+1,1);buildCalendar()}
-function selectCalDay(d) {
-  selectedCalDay = d;
-  buildCalendar();
-  const phase = getPhase(d);
-  const key = d.toISOString().split('T')[0];
-  const flow = flowLog[key];
-  const tips = {
-    menstrual:'Rest, warmth, iron critical. Lumebox on lower abdomen. Castor oil pack.',
-    follicular:'Best energy window. Demanding tasks, exercise, social plans welcome.',
-    ovulation:'Peak energy. Watch for histamine surge — take quercetin.',
-    luteal:'PMS window. Extra quercetin, sardines every other day, PEMF Level 1-2 only.'
-  };
-  const el = document.getElementById('cal-day-detail');
-  el.style.display = 'block';
-  el.innerHTML = `
-    <div class="info-row"><span class="info-lbl">Date</span><span style="font-weight:500">${d.toDateString()}</span></div>
-    <div class="info-row"><span class="info-lbl">Cycle day</span><span style="font-weight:500">Day ${getCycleDay(d)}</span></div>
-    <div class="info-row"><span class="info-lbl">Phase</span><span style="font-weight:500">${PHASE_LABELS[phase]}</span></div>
-    ${flow?`<div class="info-row"><span class="info-lbl">Flow logged</span><span style="font-weight:500">${flow}</span></div>`:''}
-    <div style="margin-top:.5rem;font-size:12px;color:var(--muted);line-height:1.6">${tips[phase]}</div>`;
+function selectCalDay(d){
+  selectedCalDay=d;buildCalendar();
+  var phase=getPhase(d);var key=d.toISOString().split('T')[0];var flow=flowLog[key];
+  var tips={menstrual:'Rest, warmth, iron critical. Lumebox on lower abdomen.',follicular:'Best energy window. Demanding tasks welcome.',ovulation:'Peak energy. Watch for histamine surge.',luteal:'PMS window. Extra quercetin, sardines every other day.'};
+  var el=document.getElementById('cal-day-detail');el.style.display='block';
+  el.innerHTML='<div class="info-row"><span class="info-lbl">Date</span><span style="font-weight:500">'+d.toDateString()+'</span></div><div class="info-row"><span class="info-lbl">Cycle day</span><span style="font-weight:500">Day '+getCycleDay(d)+'</span></div><div class="info-row"><span class="info-lbl">Phase</span><span style="font-weight:500">'+PHASE_LABELS[phase]+'</span></div>'+(flow?'<div class="info-row"><span class="info-lbl">Flow</span><span style="font-weight:500">'+flow+'</span></div>':'')+'<div style="margin-top:.5rem;font-size:12px;color:var(--muted);line-height:1.6">'+tips[phase]+'</div>';
 }
-function logFlow(type) {
-  if (!selectedCalDay) { alert('Tap a day on the calendar first'); return; }
-  const key = selectedCalDay.toISOString().split('T')[0];
-  flowLog[key] = type;
-  localStorage.setItem('flow_log', JSON.stringify(flowLog));
-  buildCalendar();
-  selectCalDay(selectedCalDay);
+function logFlow(type){
+  if(!selectedCalDay){alert('Tap a day on the calendar first');return}
+  var key=selectedCalDay.toISOString().split('T')[0];
+  flowLog[key]=type;lsSet('flow_log',flowLog);
+  buildCalendar();selectCalDay(selectedCalDay);
+  sendToSheets('cycle',{date:key,cycleDay:getCycleDay(selectedCalDay),phase:getPhase(selectedCalDay),flow:type});
 }
 
-// ─── STRESS & NS ─────────────────────────────────────────────────
-let nsState = localStorage.getItem('nsState_'+new Date().toISOString().split('T')[0]) || null;
-let stressLevel = localStorage.getItem('stressLevel_'+new Date().toISOString().split('T')[0]) || null;
-let vagalDone = JSON.parse(localStorage.getItem('vagalDone_'+new Date().toISOString().split('T')[0]) || '{}');
-
-const NS_OPTIONS = [
-  {id:'wired',label:'⚡ Wired / activated',desc:'Anxious, racing thoughts, can\'t settle, hypervigilant',bg:'#fce4ec',col:'#c2185b'},
-  {id:'steady',label:'✓ Steady / regulated',desc:'Calm, present, manageable — nervous system online',bg:'#e8f5e9',col:'#2e7d32'},
-  {id:'depleted',label:'🪫 Depleted / flat',desc:'Low, foggy, disconnected, no motivation, burnt out',bg:'#fff3e0',col:'#e65100'},
+// ── STRESS ────────────────────────────────────────────────────────
+var nsState=localStorage.getItem('nsState_'+todayKey())||null;
+var stressLevel=localStorage.getItem('stressLevel_'+todayKey())||null;
+var vagalDone=lsGet('vagalDone_'+todayKey(),{});
+var NS_OPTIONS=[
+  {id:'wired',label:'⚡ Wired / activated',desc:'Anxious, racing thoughts, hypervigilant',bg:'#fce4ec',col:'#c2185b'},
+  {id:'steady',label:'✓ Steady / regulated',desc:'Calm, present, manageable',bg:'#e8f5e9',col:'#2e7d32'},
+  {id:'depleted',label:'🪫 Depleted / flat',desc:'Low, foggy, disconnected, burnt out',bg:'#fff3e0',col:'#e65100'},
 ];
-const VAGAL_TOOLS = [
+var VAGAL_TOOLS=[
   {id:'breathwork_done',label:'Breathwork',icon:'🌬️'},
   {id:'cold_done',label:'Cold shower',icon:'🚿'},
   {id:'grounding_done',label:'Grounding outside',icon:'🌿'},
   {id:'lumebox_done',label:'Lumebox vagus',icon:'💡'},
-  {id:'pemf_done',label:'PEMF Level 1–2',icon:'🔋'},
+  {id:'pemf_done',label:'PEMF Level 1-2',icon:'🔋'},
   {id:'sauna_done',label:'Sauna / heat',icon:'🔥'},
 ];
-
-function buildStress() {
-  const phase = getPhase(TODAY);
-  const phaseNS = {
-    menstrual:'Menstrual phase — parasympathetic priority. Rest is the protocol. GABA receptors most sensitive now.',
-    follicular:'Follicular phase — nervous system resilience building. Good time for cold showers.',
-    ovulation:'Ovulation — peak resilience. Watch for histamine-triggered agitation.',
-    luteal:'Luteal phase — GABA receptors less responsive, serotonin dropping. Avoid overstimulation. Level 1-2 PEMF only.',
-  };
-  document.getElementById('stress-phase-note').textContent = 'Day '+getCycleDay(TODAY)+' — '+PHASE_LABELS[phase]+': '+phaseNS[phase];
-  const cont = document.getElementById('ns-options');
-  cont.innerHTML = '';
-  NS_OPTIONS.forEach(o => {
-    const btn = document.createElement('div');
-    btn.id = 'ns-'+o.id;
-    btn.style.cssText = `padding:10px 14px;border-radius:10px;cursor:pointer;border:1px solid var(--border);background:var(--surface);transition:all .12s`;
-    btn.innerHTML = `<div style="font-size:13px;font-weight:500">${o.label}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">${o.desc}</div>`;
-    btn.onclick = () => setNS(o.id, o.bg, o.col);
+function buildStress(){
+  var phase=getPhase(TODAY);
+  var pn={menstrual:'Menstrual — parasympathetic priority. Rest is the protocol.',follicular:'Follicular — nervous system resilience building.',ovulation:'Ovulation — peak resilience. Watch for histamine-triggered agitation.',luteal:'Luteal — GABA less responsive, serotonin dropping. Avoid overstimulation.'};
+  document.getElementById('stress-phase-note').textContent='Day '+getCycleDay(TODAY)+' — '+PHASE_LABELS[phase]+': '+pn[phase];
+  var cont=document.getElementById('ns-options');cont.innerHTML='';
+  NS_OPTIONS.forEach(function(o){
+    var btn=document.createElement('div');btn.id='ns-'+o.id;
+    btn.style.cssText='padding:10px 14px;border-radius:10px;cursor:pointer;border:1px solid var(--border);background:var(--surface)';
+    btn.innerHTML='<div style="font-size:13px;font-weight:500">'+o.label+'</div><div style="font-size:11px;color:var(--muted);margin-top:2px">'+o.desc+'</div>';
+    btn.onclick=function(){setNS(o.id,o.bg,o.col)};
     cont.appendChild(btn);
   });
-  const vtCont = document.getElementById('vagal-tools');
-  vtCont.innerHTML = '';
-  VAGAL_TOOLS.forEach(t => {
-    const btn = document.createElement('button');
-    btn.className = 'tap-btn';
-    btn.id = 'vt-'+t.id;
-    btn.textContent = t.icon+' '+t.label;
-    btn.onclick = () => toggleVagal(t.id);
-    vtCont.appendChild(btn);
+  var vtCont=document.getElementById('vagal-tools');vtCont.innerHTML='';
+  VAGAL_TOOLS.forEach(function(t){
+    var btn=document.createElement('button');btn.className='tap-btn';btn.id='vt-'+t.id;btn.textContent=t.icon+' '+t.label;
+    if(vagalDone[t.id])btn.classList.add('active-sage');
+    btn.onclick=function(){toggleVagal(t.id)};vtCont.appendChild(btn);
   });
-  // Restore saved state
-  if (nsState) { const o=NS_OPTIONS.find(x=>x.id===nsState); if(o) setNS(o.id,o.bg,o.col); }
-  if (stressLevel) setStress(stressLevel);
-  Object.keys(vagalDone).forEach(id=>{ if(vagalDone[id]){ const b=document.getElementById('vt-'+id); if(b) b.classList.add('active-sage'); } });
-
-function setNS(id, bg, col) {
-  nsState = id;
-  localStorage.setItem('nsState_'+todayKey(), id);
-  NS_OPTIONS.forEach(o => {
-    const el = document.getElementById('ns-'+o.id);
-    if (el) { el.style.background='var(--surface)'; el.style.borderColor='var(--border)'; }
-  });
-  const el = document.getElementById('ns-'+id);
-  if (el) { el.style.background=bg; el.style.borderColor=col; }
+  if(nsState){var o=NS_OPTIONS.find(function(x){return x.id===nsState});if(o)setNS(o.id,o.bg,o.col)}
+  if(stressLevel)setStress(stressLevel);
+}
+function setNS(id,bg,col){
+  nsState=id;localStorage.setItem('nsState_'+todayKey(),id);
+  NS_OPTIONS.forEach(function(o){var el=document.getElementById('ns-'+o.id);if(el){el.style.background='var(--surface)';el.style.borderColor='var(--border)'}});
+  var el=document.getElementById('ns-'+id);if(el){el.style.background=bg;el.style.borderColor=col}
+}
+function setStress(level){
+  stressLevel=level;localStorage.setItem('stressLevel_'+todayKey(),level);
+  ['low','moderate','high'].forEach(function(l){var el=document.getElementById('stress-'+l);if(el){el.style.background='var(--surface)';el.style.borderColor='var(--border)';el.style.color='var(--muted)';el.style.fontWeight='400'}});
+  var cols={low:'#2e7d32',moderate:'#e65100',high:'#c2185b'};var bgs={low:'#e8f5e9',moderate:'#fff3e0',high:'#fce4ec'};
+  var el=document.getElementById('stress-'+level);if(el){el.style.background=bgs[level];el.style.borderColor=cols[level];el.style.color=cols[level];el.style.fontWeight='600'}
+}
+function toggleVagal(id){
+  vagalDone[id]=!vagalDone[id];lsSet('vagalDone_'+todayKey(),vagalDone);
+  var btn=document.getElementById('vt-'+id);if(btn){if(vagalDone[id])btn.classList.add('active-sage');else btn.classList.remove('active-sage')}
+}
+async function saveStress(){
+  var tools=VAGAL_TOOLS.filter(function(t){return vagalDone[t.id]}).map(function(t){return t.label}).join(', ');
+  var r=await sendToSheets('stress',{date:todayKey(),cycleDay:getCycleDay(TODAY),phase:getPhase(TODAY),nsState:nsState||'',stressLevel:stressLevel||'',recoveryTools:tools,stressors:document.getElementById('stress-stressors').value,wins:document.getElementById('stress-wins').value});
+  showFeedback('stress-fb',r.ok,r.msg);
 }
 
-function setStress(level) {
-  stressLevel = level;
-  localStorage.setItem('stressLevel_'+todayKey(), level);
-  ['low','moderate','high'].forEach(l => {
-    const el = document.getElementById('stress-'+l);
-    if (!el) return;
-    el.style.background='var(--surface)'; el.style.borderColor='var(--border)'; el.style.color='var(--muted)'; el.style.fontWeight='400';
-  });
-  const colors2 = {low:'#2e7d32',moderate:'#e65100',high:'#c2185b'};
-  const bgs = {low:'#e8f5e9',moderate:'#fff3e0',high:'#fce4ec'};
-  const el = document.getElementById('stress-'+level);
-  if (el) { el.style.background=bgs[level]; el.style.borderColor=colors2[level]; el.style.color=colors2[level]; el.style.fontWeight='600'; }
-}
-
-function toggleVagal(id) {
-  vagalDone[id] = !vagalDone[id];
-  localStorage.setItem('vagalDone_'+todayKey(), JSON.stringify(vagalDone));
-  const btn = document.getElementById('vt-'+id);
-  if (vagalDone[id]) btn.classList.add('active-sage'); else btn.classList.remove('active-sage');
-  const active = VAGAL_TOOLS.filter(t=>vagalDone[t.id]);
-  const sumEl = document.getElementById('vagal-summary');
-  if (active.length>0) { sumEl.style.display='block'; sumEl.textContent='✓ Recovery tools today: '+active.map(t=>t.label).join(', '); }
-  else sumEl.style.display='none';
-}
-
-async function saveStress() {
-  const tools = VAGAL_TOOLS.filter(t=>vagalDone[t.id]).map(t=>t.label).join(', ');
-  const r = await sendToSheets('stress', {
-    date:todayKey(), cycleDay:getCycleDay(TODAY), phase:getPhase(TODAY),
-    nsState: nsState||'', stressLevel: stressLevel||'',
-    recoveryTools: tools,
-    stressors: document.getElementById('stress-stressors').value,
-    wins: document.getElementById('stress-wins').value,
-  });
-  showFeedback('stress-fb', r.ok, r.msg);
-}
-
-// ─── EXERCISE ────────────────────────────────────────────────────
-let selectedExType = null, selectedFelt = null;
-const EX_TYPES = [
-  {id:'pvolve',label:'Pvolve',icon:'🧘'},{id:'walk',label:'Walk',icon:'🚶'},
-  {id:'shred415',label:'Shred 415',icon:'🔥'},{id:'strength',label:'Strength',icon:'💪'},
-  {id:'yoga',label:'Yoga / stretch',icon:'🌀'},{id:'swim',label:'Swimming',icon:'🏊'},
-  {id:'bike',label:'Cycling',icon:'🚴'},{id:'other',label:'Other',icon:'⚡'},
-];
-const EX_FELT = [
-  {id:'great',label:'Great — energised',col:'#2e7d32',bg:'#e8f5e9'},
-  {id:'good',label:'Good — steady',col:'#5a7a6a',bg:'#e8f0ec'},
-  {id:'hard',label:'Hard — pushed through',col:'#e65100',bg:'#fff3e0'},
-  {id:'crashed',label:'Crashed after',col:'#c2185b',bg:'#fce4ec'},
-];
-
-function buildExercise() {
-  const phase = getPhase(TODAY);
-  const guides = {
-    menstrual:{text:'Rest or very gentle movement only. No intense exercise. Pvolve or yoga at most.',bg:'#fce4ec',col:'#c2185b'},
-    follicular:{text:'Rising energy — Pvolve, walks, beginning to add more.',bg:'#e8f5e9',col:'#2e7d32'},
-    ovulation:{text:'Peak strength window. Your ACE endurance variant shines here.',bg:'#e3f2fd',col:'#1565c0'},
-    luteal:{text:'Gentle preferred. Walks and Pvolve. No Shred 415 yet. COL5A1 tendons more vulnerable when fatigued.',bg:'#fff3e0',col:'#e65100'},
-  };
-  const g = guides[phase];
-  const pnEl = document.getElementById('ex-phase-note');
-  pnEl.style.background=g.bg; pnEl.style.color=g.col;
-  pnEl.innerHTML = `<strong>Day ${getCycleDay(TODAY)} — ${PHASE_LABELS[phase]}:</strong> ${g.text}`;
-  const typCont = document.getElementById('ex-types');
-  typCont.innerHTML = '';
-  EX_TYPES.forEach(t => {
-    const btn = document.createElement('button');
-    btn.className='tap-btn'; btn.id='ext-'+t.id;
-    btn.textContent=t.icon+' '+t.label;
-    btn.onclick=()=>selectExType(t.id);
-    typCont.appendChild(btn);
-  });
-  const feltCont = document.getElementById('ex-felt');
-  feltCont.innerHTML = '';
-  EX_FELT.forEach(f => {
-    const btn = document.createElement('button');
-    btn.className='tap-btn'; btn.id='exf-'+f.id;
-    btn.textContent=f.label;
-    btn.onclick=()=>selectFelt(f.id,f.bg,f.col);
-    feltCont.appendChild(btn);
-  });
+// ── EXERCISE ──────────────────────────────────────────────────────
+var selExType=null,selFelt=null;
+var EX_TYPES=[{id:'pvolve',label:'Pvolve',icon:'🧘'},{id:'walk',label:'Walk',icon:'🚶'},{id:'shred415',label:'Shred 415',icon:'🔥'},{id:'strength',label:'Strength',icon:'💪'},{id:'yoga',label:'Yoga / stretch',icon:'🌀'},{id:'swim',label:'Swimming',icon:'🏊'},{id:'bike',label:'Cycling',icon:'🚴'},{id:'other',label:'Other',icon:'⚡'}];
+var EX_FELT=[{id:'great',label:'Great — energised',col:'#2e7d32',bg:'#e8f5e9'},{id:'good',label:'Good — steady',col:'#5a7a6a',bg:'#e8f0ec'},{id:'hard',label:'Hard — pushed through',col:'#e65100',bg:'#fff3e0'},{id:'crashed',label:'Crashed after',col:'#c2185b',bg:'#fce4ec'}];
+function buildExercise(){
+  var phase=getPhase(TODAY);
+  var guides={menstrual:{text:'Rest or very gentle movement. Pvolve or yoga at most.',bg:'#fce4ec',col:'#c2185b'},follicular:{text:'Rising energy — Pvolve, walks, beginning to add more.',bg:'#e8f5e9',col:'#2e7d32'},ovulation:{text:'Peak strength window. Your ACE endurance variant shines here.',bg:'#e3f2fd',col:'#1565c0'},luteal:{text:'Gentle preferred. Walks and Pvolve. No Shred 415 yet.',bg:'#fff3e0',col:'#e65100'}};
+  var g=guides[phase];var pn=document.getElementById('ex-phase-note');pn.style.background=g.bg;pn.style.color=g.col;pn.innerHTML='<strong>Day '+getCycleDay(TODAY)+' — '+PHASE_LABELS[phase]+':</strong> '+g.text;
+  var tc=document.getElementById('ex-types');tc.innerHTML='';
+  EX_TYPES.forEach(function(t){var btn=document.createElement('button');btn.className='tap-btn';btn.id='ext-'+t.id;btn.textContent=t.icon+' '+t.label;btn.onclick=function(){selExType=t.id;document.querySelectorAll('#ex-types .tap-btn').forEach(function(b){b.classList.remove('active-sage')});btn.classList.add('active-sage')};tc.appendChild(btn)});
+  var fc=document.getElementById('ex-felt');fc.innerHTML='';
+  EX_FELT.forEach(function(f){var btn=document.createElement('button');btn.className='tap-btn';btn.id='exf-'+f.id;btn.textContent=f.label;btn.onclick=function(){selFelt=f.id;document.querySelectorAll('#ex-felt .tap-btn').forEach(function(b){b.classList.remove('active-sage');b.style.borderColor='';b.style.background='';b.style.color=''});btn.classList.add('active-sage');btn.style.borderColor=f.col;btn.style.background=f.bg;btn.style.color=f.col};fc.appendChild(btn)});
   renderExLog();
 }
-
-function selectExType(id) {
-  selectedExType = id;
-  EX_TYPES.forEach(t => { const el=document.getElementById('ext-'+t.id); if(el) el.classList.remove('active-sage'); });
-  const el = document.getElementById('ext-'+id);
-  if (el) el.classList.add('active-sage');
-}
-
-function selectFelt(id, bg, col) {
-  selectedFelt = id;
-  EX_FELT.forEach(f => { const el=document.getElementById('exf-'+f.id); if(el){el.classList.remove('active-sage','active-blush'); el.style.borderColor='var(--border)';} });
-  const el = document.getElementById('exf-'+id);
-  if (el) { el.classList.add('active-sage'); el.style.borderColor=col; el.style.background=bg; el.style.color=col; }
-}
-
-async function addExercise() {
-  if (!selectedExType) { alert('Select an exercise type first'); return; }
-  const type = EX_TYPES.find(t=>t.id===selectedExType);
-  const felt = EX_FELT.find(f=>f.id===selectedFelt);
-  const entry = {
-    type:type.label, duration:document.getElementById('ex-duration').value,
-    felt:felt?felt.label:'', notes:document.getElementById('ex-notes').value,
-    date:todayKey(), cycleDay:getCycleDay(TODAY), phase:getPhase(TODAY), ts:Date.now()
-  };
-  exLog.unshift(entry); exLog = exLog.slice(0,30);
-  localStorage.setItem('ex_log', JSON.stringify(exLog));
-  const r = await sendToSheets('exercise', entry);
-  showFeedback('ex-fb', r.ok, r.msg);
-  // reset
-  selectedExType=null; selectedFelt=null;
-  document.getElementById('ex-duration').value=''; document.getElementById('ex-notes').value='';
-  EX_TYPES.forEach(t=>{const el=document.getElementById('ext-'+t.id);if(el)el.classList.remove('active-sage')});
-  EX_FELT.forEach(f=>{const el=document.getElementById('exf-'+f.id);if(el){el.classList.remove('active-sage');el.style.background='';el.style.color='';el.style.borderColor=''}});
+async function addExercise(){
+  if(!selExType){alert('Select an exercise type first');return}
+  var type=EX_TYPES.find(function(t){return t.id===selExType});
+  var felt=EX_FELT.find(function(f){return f.id===selFelt});
+  var entry={type:type.label,duration:document.getElementById('ex-duration').value,felt:felt?felt.label:'',notes:document.getElementById('ex-notes').value,date:todayKey(),cycleDay:getCycleDay(TODAY),phase:getPhase(TODAY),ts:Date.now()};
+  exLog.unshift(entry);exLog=exLog.slice(0,30);lsSet('ex_log',exLog);
+  var r=await sendToSheets('exercise',entry);showFeedback('ex-fb',r.ok,r.msg);
+  selExType=null;selFelt=null;document.getElementById('ex-duration').value='';document.getElementById('ex-notes').value='';
+  document.querySelectorAll('#ex-types .tap-btn').forEach(function(b){b.classList.remove('active-sage')});
+  document.querySelectorAll('#ex-felt .tap-btn').forEach(function(b){b.classList.remove('active-sage');b.style.borderColor='';b.style.background='';b.style.color=''});
   renderExLog();
 }
-
-function renderExLog() {
-  const cont = document.getElementById('ex-log');
-  const sec = document.getElementById('ex-log-section');
-  if (!exLog.length) { sec.style.display='none'; return; }
-  sec.style.display='block';
-  cont.innerHTML = exLog.slice(0,5).map(e=>`
-    <div class="exercise-log-entry">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div>
-          <div style="font-size:13px;font-weight:600">${e.type}${e.duration?' — '+e.duration:''}</div>
-          ${e.felt?`<span style="font-size:11px;color:var(--muted)">${e.felt}</span>`:''}
-          ${e.notes?`<div style="font-size:12px;color:var(--muted);margin-top:3px">${e.notes}</div>`:''}
-        </div>
-        <div style="font-size:10px;color:var(--muted);flex-shrink:0;margin-left:8px">${e.date}</div>
-      </div>
-    </div>`).join('');
+function renderExLog(){
+  var sec=document.getElementById('ex-log-section');if(!exLog.length){sec.style.display='none';return}sec.style.display='block';
+  document.getElementById('ex-log').innerHTML=exLog.slice(0,5).map(function(e){return'<div class="ex-entry"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div style="font-size:13px;font-weight:600">'+e.type+(e.duration?' — '+e.duration:'')+'</div>'+(e.felt?'<span style="font-size:11px;color:var(--muted)">'+e.felt+'</span>':'')+(e.notes?'<div style="font-size:12px;color:var(--muted);margin-top:3px">'+e.notes+'</div>':'')+'</div><div style="font-size:10px;color:var(--muted)">'+e.date+'</div></div></div>'}).join('');
 }
 
-// ─── BAROMETRIC ──────────────────────────────────────────────────
-function fetchBaro() {
-  document.getElementById('baro-val').innerHTML = '…<span class="baro-unit"> inHg</span>';
+// ── BAROMETRIC ────────────────────────────────────────────────────
+function fetchBaro(){
+  document.getElementById('baro-val').innerHTML='…<span class="baro-unit"> inHg</span>';
   fetch('https://api.open-meteo.com/v1/forecast?latitude=39.9784&longitude=-86.118&current=surface_pressure&timezone=America/Indianapolis')
-    .then(r=>r.json()).then(data=>{
-      const inHg = (data.current.surface_pressure*0.02953).toFixed(2);
-      document.getElementById('baro-val').innerHTML = inHg+'<span class="baro-unit"> inHg</span>';
-      document.getElementById('baro-updated').textContent = 'Updated '+new Date().toLocaleTimeString();
-      const v = parseFloat(inHg);
-      const el = document.getElementById('baro-status');
+    .then(function(r){return r.json()}).then(function(data){
+      var inHg=(data.current.surface_pressure*0.02953).toFixed(2);
+      document.getElementById('baro-val').innerHTML=inHg+'<span class="baro-unit"> inHg</span>';
+      document.getElementById('baro-updated').textContent='Updated '+new Date().toLocaleTimeString();
+      var v=parseFloat(inHg);var el=document.getElementById('baro-status');
       if(v>=29.80){el.style.background='#e8f5e9';el.style.color='#2e7d32';el.textContent='✓ Good — typically fine for you'}
       else if(v>=29.50){el.style.background='#fff3e0';el.style.color='#e65100';el.textContent='⚠ Mild symptoms possible'}
       else{el.style.background='#fce4ec';el.style.color='#c2185b';el.textContent='⛔ Headache / fog / agitation risk'}
-    }).catch(()=>{document.getElementById('baro-val').innerHTML='Error<span class="baro-unit"> inHg</span>'});
+    }).catch(function(){document.getElementById('baro-val').innerHTML='Error<span class="baro-unit"> inHg</span>'});
+}
+function logBaroManual(){
+  var v=parseFloat(document.getElementById('baro-manual').value);if(isNaN(v))return;
+  baroLog.unshift({v:v,t:new Date().toLocaleString()});baroLog=baroLog.slice(0,10);lsSet('baro_log',baroLog);
+  document.getElementById('baro-manual').value='';renderBaroLog();
+}
+function renderBaroLog(){
+  var el=document.getElementById('baro-log');if(!baroLog.length){el.innerHTML='<span style="font-size:12px;color:var(--muted)">No entries yet</span>';return}
+  el.innerHTML=baroLog.slice(0,5).map(function(e){var col=e.v>=29.80?'#2e7d32':e.v>=29.50?'#e65100':'#c2185b';return'<div class="info-row"><span class="info-lbl">'+e.t+'</span><span style="font-weight:600;color:'+col+'">'+e.v+' inHg</span></div>'}).join('');
 }
 
-function logBaro() {
-  const v = parseFloat(document.getElementById('baro-manual').value);
-  if(isNaN(v)) return;
-  baroLog.unshift({v,t:new Date().toLocaleString()});
-  baroLog = baroLog.slice(0,10);
-  localStorage.setItem('baro_log',JSON.stringify(baroLog));
-  document.getElementById('baro-manual').value='';
-  renderBaroLog();
-}
-
-function renderBaroLog() {
-  const el = document.getElementById('baro-log');
-  if(!baroLog.length){el.innerHTML='<span style="font-size:12px;color:var(--muted)">No entries yet</span>';return}
-  el.innerHTML = baroLog.slice(0,5).map(e=>{
-    const col=e.v>=29.80?'#2e7d32':e.v>=29.50?'#e65100':'#c2185b';
-    return `<div class="info-row"><span class="info-lbl">${e.t}</span><span style="font-weight:600;color:${col}">${e.v} inHg</span></div>`;
-  }).join('');
-}
-
-// ─── POLLEN ──────────────────────────────────────────────────────
-const INDIANA_POLLEN = {
-  0:{trees:'Low',grass:'None',weeds:'None',note:'January — dormant season. Indoor allergens more relevant.'},
-  1:{trees:'Low–Moderate',grass:'None',weeds:'None',note:'February — early tree pollen starting (elm, maple).'},
-  2:{trees:'High',grass:'None',weeds:'None',note:'March — tree pollen season begins. Oak, birch, maple, elm all active.'},
-  3:{trees:'Very High',grass:'Low',weeds:'None',note:'April — peak tree pollen. Oak and birch at highest.'},
-  4:{trees:'High',grass:'Moderate–High',weeds:'Low',note:'May — trees winding down, grass pollen ramping up strongly. Double overlap now.'},
-  5:{trees:'Low',grass:'Very High',weeds:'Low',note:'June — peak grass pollen. Timothy, bluegrass, rye all active.'},
-  6:{trees:'None',grass:'High',weeds:'Moderate',note:'July — grass still high, weed pollen beginning.'},
-  7:{trees:'None',grass:'Moderate',weeds:'High',note:'August — weeds building. Ragweed starts late August.'},
-  8:{trees:'None',grass:'Low',weeds:'Very High',note:'September — peak ragweed season in Indiana.'},
-  9:{trees:'None',grass:'None',weeds:'Moderate',note:'October — ragweed tapering. Mold spores elevated.'},
-  10:{trees:'None',grass:'None',weeds:'Low',note:'November — season mostly over.'},
-  11:{trees:'None',grass:'None',weeds:'None',note:'December — dormant. Focus on indoor air quality.'},
-};
-const POLLEN_LEVEL_STYLE = {
-  'None':{bg:'#f5f5f3',col:'#888'},'Low':{bg:'#e8f5e9',col:'#2e7d32'},
-  'Low–Moderate':{bg:'#f1f8e9',col:'#558b2f'},'Moderate':{bg:'#fff3e0',col:'#e65100'},
-  'Moderate–High':{bg:'#fbe9e7',col:'#bf360c'},'High':{bg:'#fce4ec',col:'#c2185b'},
-  'Very High':{bg:'#f3e5f5',col:'#7b1fa2'}
-};
-const BODY_SYMPTOMS = [
-  {id:'sneezing',label:'Sneezing',icon:'🤧'},{id:'itchy_eyes',label:'Itchy / watery eyes',icon:'👁️'},
-  {id:'runny_nose',label:'Runny nose',icon:'😤'},{id:'skin_reaction',label:'Itchy skin / hives',icon:'🌡️'},
-  {id:'head_pressure',label:'Head pressure',icon:'🤕'},{id:'puffy',label:'Puffy / swollen',icon:'💧'},
-  {id:'scratchy_throat',label:'Scratchy throat',icon:'😮'},{id:'sudden_fog',label:'Sudden brain fog',icon:'🌫️'},
-];
-const HISTAMINE_FOODS = [
-  {id:'leftovers',label:'Leftovers',icon:'🍱'},{id:'canned_fish',label:'Canned fish / sardines',icon:'🐟'},
-  {id:'fermented',label:'Fermented foods',icon:'🫙'},{id:'alcohol',label:'Alcohol',icon:'🍷'},
-  {id:'aged_cheese',label:'Aged cheese',icon:'🧀'},{id:'processed_meat',label:'Processed / deli meat',icon:'🥩'},
-  {id:'vinegar',label:'Vinegar / pickled',icon:'🥒'},{id:'chocolate',label:'Chocolate',icon:'🍫'},
-];
-let pollenTapped={}, foodTapped={}, overallBurden=null;
-
-function buildPollen() {
-  const month = TODAY.getMonth();
-  const season = INDIANA_POLLEN[month];
-  document.getElementById('season-note').textContent = season.note;
-  const pg = document.getElementById('pollen-season-grid');
-  pg.innerHTML = ['trees','grass','weeds'].map(k=>{
-    const level = season[k] || 'None';
-    const s = POLLEN_LEVEL_STYLE[level]||POLLEN_LEVEL_STYLE['None'];
-    const labels = {trees:'Tree pollen',grass:'Grass pollen',weeds:'Weed pollen'};
-    return `<div class="pollen-card"><div class="pollen-type">${labels[k]}</div><div style="font-size:12px;font-weight:600;color:${s.col};background:${s.bg};display:inline-block;padding:2px 8px;border-radius:8px;margin-top:2px">${level}</div></div>`;
-  }).join('');
-  const bs = document.getElementById('body-symptoms');
-  bs.innerHTML = '';
-  BODY_SYMPTOMS.forEach(s=>{
-    const btn=document.createElement('button');
-    btn.className='tap-btn'; btn.id='bs-'+s.id;
-    btn.textContent=s.icon+' '+s.label;
-    btn.onclick=()=>togglePollenSym(s.id);
-    bs.appendChild(btn);
+// ── POLLEN ────────────────────────────────────────────────────────
+var INDIANA_POLLEN={0:{trees:'Low',grass:'None',weeds:'None',note:'January — dormant season. Indoor allergens more relevant.'},1:{trees:'Low-Moderate',grass:'None',weeds:'None',note:'February — early tree pollen starting.'},2:{trees:'High',grass:'None',weeds:'None',note:'March — tree pollen season begins. Oak, birch, maple active.'},3:{trees:'Very High',grass:'Low',weeds:'None',note:'April — peak tree pollen. Oak and birch at highest.'},4:{trees:'High',grass:'Moderate-High',weeds:'Low',note:'May — trees winding down, grass pollen ramping up strongly. Double overlap now.'},5:{trees:'Low',grass:'Very High',weeds:'Low',note:'June — peak grass pollen. Timothy, bluegrass, rye all active.'},6:{trees:'None',grass:'High',weeds:'Moderate',note:'July — grass still high, weed pollen beginning.'},7:{trees:'None',grass:'Moderate',weeds:'High',note:'August — weeds building. Ragweed starts late August.'},8:{trees:'None',grass:'Low',weeds:'Very High',note:'September — peak ragweed season in Indiana.'},9:{trees:'None',grass:'None',weeds:'Moderate',note:'October — ragweed tapering. Mold spores elevated.'},10:{trees:'None',grass:'None',weeds:'Low',note:'November — season mostly over.'},11:{trees:'None',grass:'None',weeds:'None',note:'December — dormant. Focus on indoor air quality.'}};
+var PLS={'None':{bg:'#f5f5f3',col:'#888'},'Low':{bg:'#e8f5e9',col:'#2e7d32'},'Low-Moderate':{bg:'#f1f8e9',col:'#558b2f'},'Moderate':{bg:'#fff3e0',col:'#e65100'},'Moderate-High':{bg:'#fbe9e7',col:'#bf360c'},'High':{bg:'#fce4ec',col:'#c2185b'},'Very High':{bg:'#f3e5f5',col:'#7b1fa2'}};
+var BODY_SYMPTOMS=[{id:'sneezing',label:'Sneezing',icon:'🤧'},{id:'itchy_eyes',label:'Itchy eyes',icon:'👁️'},{id:'runny_nose',label:'Runny nose',icon:'😤'},{id:'skin_reaction',label:'Itchy skin',icon:'🌡️'},{id:'head_pressure',label:'Head pressure',icon:'🤕'},{id:'puffy',label:'Puffy / swollen',icon:'💧'},{id:'scratchy_throat',label:'Scratchy throat',icon:'😮'},{id:'sudden_fog',label:'Sudden brain fog',icon:'🌫️'}];
+var HISTAMINE_FOODS=[{id:'leftovers',label:'Leftovers',icon:'🍱'},{id:'canned_fish',label:'Canned fish',icon:'🐟'},{id:'fermented',label:'Fermented foods',icon:'🫙'},{id:'alcohol',label:'Alcohol',icon:'🍷'},{id:'aged_cheese',label:'Aged cheese',icon:'🧀'},{id:'processed_meat',label:'Processed meat',icon:'🥩'},{id:'vinegar',label:'Vinegar / pickled',icon:'🥒'},{id:'chocolate',label:'Chocolate',icon:'🍫'}];
+var pollenTapped={},foodTapped={},overallBurden=null;
+function buildPollen(){
+  var month=TODAY.getMonth();var season=INDIANA_POLLEN[month];
+  document.getElementById('season-note').textContent=season.note;
+  var pg=document.getElementById('pollen-season-grid');pg.innerHTML='';
+  [{k:'trees',l:'Tree pollen'},{k:'grass',l:'Grass pollen'},{k:'weeds',l:'Weed pollen'}].forEach(function(x){
+    var level=season[x.k]||'None';var s=PLS[level]||PLS['None'];
+    var el=document.createElement('div');el.className='pollen-card';el.innerHTML='<div class="pollen-type">'+x.l+'</div><div style="font-size:12px;font-weight:600;color:'+s.col+';background:'+s.bg+';display:inline-block;padding:2px 8px;border-radius:8px;margin-top:2px">'+level+'</div>';pg.appendChild(el);
   });
-  const ft = document.getElementById('food-triggers');
-  ft.innerHTML = '';
-  HISTAMINE_FOODS.forEach(f=>{
-    const btn=document.createElement('button');
-    btn.className='tap-btn'; btn.id='ft-'+f.id;
-    btn.textContent=f.icon+' '+f.label;
-    btn.onclick=()=>toggleFood(f.id);
-    ft.appendChild(btn);
-  });
-  if (getPhase(TODAY)==='luteal') {
-    const w=document.getElementById('luteal-pollen-warn');
-    w.style.display='block'; w.style.background='#fce4ec'; w.style.color='#c2185b';
-    w.innerHTML='<strong>⚠ Luteal phase — histamine rules active.</strong> Sardines every other day only. No leftovers. No fermented foods.';
-  }
+  var bs=document.getElementById('body-symptoms');bs.innerHTML='';
+  BODY_SYMPTOMS.forEach(function(s){var btn=document.createElement('button');btn.className='tap-btn';btn.id='bs-'+s.id;btn.textContent=s.icon+' '+s.label;btn.onclick=function(){pollenTapped[s.id]=!pollenTapped[s.id];if(pollenTapped[s.id])btn.classList.add('active-blush');else btn.classList.remove('active-blush')};bs.appendChild(btn)});
+  var ft=document.getElementById('food-triggers');ft.innerHTML='';
+  HISTAMINE_FOODS.forEach(function(f){var btn=document.createElement('button');btn.className='tap-btn';btn.id='ft-'+f.id;btn.textContent=f.icon+' '+f.label;btn.onclick=function(){foodTapped[f.id]=!foodTapped[f.id];if(foodTapped[f.id])btn.classList.add('active-gold');else btn.classList.remove('active-gold')};ft.appendChild(btn)});
+  if(getPhase(TODAY)==='luteal'){var w=document.getElementById('luteal-warn');w.style.display='block';w.style.background='#fce4ec';w.style.color='#c2185b';w.innerHTML='<strong>⚠ Luteal phase — histamine rules active.</strong> Sardines every other day only. No leftovers. No fermented foods.'}
   fetchAQI();
 }
-
-function togglePollenSym(id) {
-  pollenTapped[id]=!pollenTapped[id];
-  const btn=document.getElementById('bs-'+id);
-  if(pollenTapped[id]) btn.classList.add('active-blush'); else btn.classList.remove('active-blush');
-  updatePollenSummary();
-}
-function toggleFood(id) {
-  foodTapped[id]=!foodTapped[id];
-  const btn=document.getElementById('ft-'+id);
-  if(foodTapped[id]) btn.classList.add('active-gold'); else btn.classList.remove('active-gold');
-  updatePollenSummary();
-}
-function setBurden(id) {
+function setBurden(id){
   overallBurden=id;
-  const styles={fine:{bg:'#e8f5e9',col:'#2e7d32'},mild:{bg:'#fff3e0',col:'#e65100'},flaring:{bg:'#fce4ec',col:'#c2185b'}};
-  ['fine','mild','flaring'].forEach(b=>{
-    const el=document.getElementById('burden-'+b);
-    if(el){el.style.background='var(--surface)';el.style.borderColor='var(--border)';el.style.color='var(--muted)';el.style.fontWeight='400'}
-  });
-  const el=document.getElementById('burden-'+id);
-  const s=styles[id];
-  if(el){el.style.background=s.bg;el.style.borderColor=s.col;el.style.color=s.col;el.style.fontWeight='600'}
+  var styles={fine:{bg:'#e8f5e9',col:'#2e7d32'},mild:{bg:'#fff3e0',col:'#e65100'},flaring:{bg:'#fce4ec',col:'#c2185b'}};
+  ['fine','mild','flaring'].forEach(function(b){var el=document.getElementById('burden-'+b);if(el){el.style.background='var(--surface)';el.style.borderColor='var(--border)';el.style.color='var(--muted)';el.style.fontWeight='400'}});
+  var el=document.getElementById('burden-'+id);var s=styles[id];if(el){el.style.background=s.bg;el.style.borderColor=s.col;el.style.color=s.col;el.style.fontWeight='600'}
 }
-function updatePollenSummary() {
-  const syms = BODY_SYMPTOMS.filter(s=>pollenTapped[s.id]);
-  const foods = HISTAMINE_FOODS.filter(f=>foodTapped[f.id]);
-  const quercetin = document.getElementById('quercetin-taken').checked;
-  const el = document.getElementById('pollen-summary');
-  if(!syms.length&&!foods.length){el.style.display='none';return}
-  el.style.display='block';
-  let html='';
-  if(syms.length) html+=`<div><strong>Symptoms:</strong> ${syms.map(s=>s.label).join(', ')}</div>`;
-  if(foods.length) html+=`<div><strong>High-histamine foods:</strong> ${foods.map(f=>f.label).join(', ')}</div>`;
-  if(!quercetin&&(syms.length||foods.length)) html+=`<div style="color:var(--blush);margin-top:2px">⚠ Quercetin not yet taken — consider taking it now</div>`;
-  el.innerHTML=html;
-}
-
-function fetchAQI() {
-  const grid=document.getElementById('aqi-grid');
-  grid.innerHTML='<div style="grid-column:span 2;font-size:12px;color:var(--muted)">Fetching air quality...</div>';
+function fetchAQI(){
+  var grid=document.getElementById('aqi-grid');grid.innerHTML='<div style="grid-column:span 2;font-size:12px;color:var(--muted)">Fetching air quality...</div>';
   fetch('https://air-quality-api.open-meteo.com/v1/air-quality?latitude=39.9784&longitude=-86.118&current=us_aqi,pm2_5,pm10,ozone&timezone=America/Indianapolis')
-    .then(r=>r.json()).then(d=>{
-      const c=d.current;
-      function aqiBadge(v){
-        if(v==null)return'—';
-        const vi=parseInt(v);
-        if(vi<=50)return`<span class="badge badge-normal">Good (${vi})</span>`;
-        if(vi<=100)return`<span class="badge badge-low">Moderate (${vi})</span>`;
-        return`<span class="badge badge-high">Unhealthy (${vi})</span>`;
-      }
-      grid.innerHTML=`
-        <div class="aqi-card"><div class="aqi-lbl">US Air Quality Index</div><div class="aqi-val">${aqiBadge(c.us_aqi)}</div></div>
-        <div class="aqi-card"><div class="aqi-lbl">PM2.5</div><div class="aqi-val">${c.pm2_5!=null?Math.round(c.pm2_5*10)/10+' µg/m³':'—'}</div></div>
-        <div class="aqi-card"><div class="aqi-lbl">PM10</div><div class="aqi-val">${c.pm10!=null?Math.round(c.pm10*10)/10+' µg/m³':'—'}</div></div>
-        <div class="aqi-card"><div class="aqi-lbl">Ozone</div><div class="aqi-val">${c.ozone!=null?Math.round(c.ozone)+' µg/m³':'—'}</div></div>`;
+    .then(function(r){return r.json()}).then(function(d){
+      var c=d.current;
+      function aqiBadge(v){if(v==null)return'—';var vi=parseInt(v);if(vi<=50)return'<span class="badge badge-normal">Good ('+vi+')</span>';if(vi<=100)return'<span class="badge badge-low">Moderate ('+vi+')</span>';return'<span class="badge badge-high">Unhealthy ('+vi+')</span>'}
+      grid.innerHTML='<div class="aqi-card"><div class="aqi-lbl">US Air Quality Index</div><div class="aqi-val">'+aqiBadge(c.us_aqi)+'</div></div><div class="aqi-card"><div class="aqi-lbl">PM2.5</div><div class="aqi-val">'+(c.pm2_5!=null?Math.round(c.pm2_5*10)/10+' µg/m³':'—')+'</div></div><div class="aqi-card"><div class="aqi-lbl">PM10</div><div class="aqi-val">'+(c.pm10!=null?Math.round(c.pm10*10)/10+' µg/m³':'—')+'</div></div><div class="aqi-card"><div class="aqi-lbl">Ozone</div><div class="aqi-val">'+(c.ozone!=null?Math.round(c.ozone)+' µg/m³':'—')+'</div></div>';
       document.getElementById('aqi-updated').textContent='Updated '+new Date().toLocaleTimeString();
-    }).catch(()=>{grid.innerHTML='<div style="grid-column:span 2;font-size:12px;color:var(--muted)">Could not load air quality</div>'});
+    }).catch(function(){grid.innerHTML='<div style="grid-column:span 2;font-size:12px;color:var(--muted)">Could not load air quality</div>'});
 }
-
-async function savePollen() {
-  const season=INDIANA_POLLEN[TODAY.getMonth()];
-  const aqiEl=document.getElementById('aqi-grid').querySelector('.aqi-val');
-  const syms=BODY_SYMPTOMS.filter(s=>pollenTapped[s.id]).map(s=>s.label).join(', ');
-  const foods=HISTAMINE_FOODS.filter(f=>foodTapped[f.id]).map(f=>f.label).join(', ');
-  const r=await sendToSheets('pollen',{
-    date:todayKey(),cycleDay:getCycleDay(TODAY),phase:getPhase(TODAY),
-    trees:season.trees,grass:season.grass,weeds:season.weeds,
-    aqi:'see sheet',pm25:'see sheet',
-    overallBurden:overallBurden||'',symptoms:syms,foods:foods,
-    quercetinTaken:document.getElementById('quercetin-taken').checked,
-    notes:document.getElementById('pollen-notes').value
-  });
+async function savePollen(){
+  var season=INDIANA_POLLEN[TODAY.getMonth()];
+  var syms=BODY_SYMPTOMS.filter(function(s){return pollenTapped[s.id]}).map(function(s){return s.label}).join(', ');
+  var foods=HISTAMINE_FOODS.filter(function(f){return foodTapped[f.id]}).map(function(f){return f.label}).join(', ');
+  var r=await sendToSheets('pollen',{date:todayKey(),cycleDay:getCycleDay(TODAY),phase:getPhase(TODAY),trees:season.trees,grass:season.grass,weeds:season.weeds,overallBurden:overallBurden||'',symptoms:syms,foods:foods,quercetinTaken:document.getElementById('quercetin-taken').checked,notes:document.getElementById('pollen-notes').value});
   showFeedback('pollen-fb',r.ok,r.msg);
 }
 
-// ─── MEALS ────────────────────────────────────────────────────────
-const PRIORITY_FOODS_DATA = {
-  menstrual:['Eggs (choline + preformed Vit A)','Red meat (heme iron — most critical now)','Blueberries (brain anti-inflammatory)','Warm soups and broths'],
-  follicular:['Salmon or sardines (EPA/DHA)','Cruciferous veg (estrogen clearance)','Eggs daily','Cooked tomatoes with olive oil (lycopene)'],
-  ovulation:['Quercetin foods — red onion','Brazil nuts (selenium)','Fatty fish','Extra quercetin supplement today'],
-  luteal:['Eggs (critical)','Cruciferous veg (estrogen dominance)','Sardines every OTHER day only (histamine)','Fresh food only — no leftovers or fermented'],
-};
-
-function buildMeals() {
-  const phase=getPhase(TODAY);
-  const cont=document.getElementById('priority-foods');
-  cont.innerHTML=`<div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem">${PHASE_LABELS[phase]} phase priorities</div>`+
-    PRIORITY_FOODS_DATA[phase].map(f=>`<div class="info-row"><span style="font-size:13px">✓ ${f}</span></div>`).join('');
+// ── MEALS ─────────────────────────────────────────────────────────
+var PRIORITY_FOODS={menstrual:['Eggs (choline + preformed Vit A)','Red meat (heme iron — most critical now)','Blueberries (brain anti-inflammatory)','Warm soups and broths'],follicular:['Salmon or sardines (EPA/DHA)','Cruciferous veg (estrogen clearance)','Eggs daily','Cooked tomatoes with olive oil (lycopene)'],ovulation:['Quercetin foods — red onion','Brazil nuts (selenium)','Fatty fish','Extra quercetin supplement today'],luteal:['Eggs (critical)','Cruciferous veg (estrogen dominance)','Sardines every OTHER day only (histamine)','Fresh food only — no leftovers or fermented']};
+function buildMeals(){
+  var phase=getPhase(TODAY);
+  var cont=document.getElementById('priority-foods');cont.innerHTML='<div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem">'+PHASE_LABELS[phase]+' phase priorities</div>'+PRIORITY_FOODS[phase].map(function(f){return'<div class="info-row"><span style="font-size:13px">✓ '+f+'</span></div>'}).join('');
   renderMeals();
 }
-
-function addMeal() {
-  const text=document.getElementById('meal-text').value.trim();
-  if(!text) return;
-  const time=document.getElementById('meal-time').value;
-  const entry={text,time,date:todayKey(),ts:Date.now()};
-  meals.unshift(entry); meals=meals.slice(0,50);
-  localStorage.setItem('meals',JSON.stringify(meals));
+function addMeal(){
+  var text=document.getElementById('meal-text').value.trim();if(!text)return;
+  var time=document.getElementById('meal-time').value;
+  var entry={text:text,time:time,date:todayKey(),ts:Date.now()};
+  meals.unshift(entry);meals=meals.slice(0,50);lsSet('meals',meals);
   document.getElementById('meal-text').value='';
-  sendToSheets('meals',{date:todayKey(),time,meal:text});
+  sendToSheets('meals',{date:todayKey(),time:time,meal:text});
   renderMeals();
-}
-
-function renderMeals() {
-  const today=todayKey();
-  const todayMeals=meals.filter(m=>m.date===today);
-  const el=document.getElementById('meal-list');
-  if(!todayMeals.length){el.innerHTML='<p style="font-size:12px;color:var(--muted);padding:.5rem 0">No meals logged today</p>';return}
-  el.innerHTML=todayMeals.map((m,i)=>`
-    <div class="meal-entry">
-      <span class="meal-time-badge">${m.time}</span>
-      <span style="font-size:13px;flex:1">${m.text}</span>
-      <button class="meal-del" onclick="deleteMeal(${i})">×</button>
-    </div>`).join('');
 }
 function deleteMeal(i){
-  const today=todayKey();
-  const todayMeals=meals.filter(m=>m.date===today);
-  const toDelete=todayMeals[i];
-  meals=meals.filter(m=>m!==toDelete);
-  localStorage.setItem('meals',JSON.stringify(meals));
-  renderMeals();
+  var today=todayKey();var todayMeals=meals.filter(function(m){return m.date===today});var toDelete=todayMeals[i];
+  meals=meals.filter(function(m){return m!==toDelete});lsSet('meals',meals);renderMeals();
+}
+function renderMeals(){
+  var today=todayKey();var todayMeals=meals.filter(function(m){return m.date===today});
+  var el=document.getElementById('meal-list');
+  if(!todayMeals.length){el.innerHTML='<p style="font-size:12px;color:var(--muted);padding:.5rem 0">No meals logged today</p>';return}
+  el.innerHTML=todayMeals.map(function(m,i){return'<div class="meal-entry"><span class="meal-time-badge">'+m.time+'</span><span style="font-size:13px;flex:1">'+m.text+'</span><button class="meal-del" onclick="deleteMeal('+i+')">×</button></div>'}).join('');
 }
 
-// ─── LAB RESULTS ─────────────────────────────────────────────────
-const EVERLYWELL_RESULTS=[
-  {name:'Estradiol',val:'263.38 pg/mL',flag:'badge-high',ref:'Ref: 36.50–246.00'},
-  {name:'DHEAS',val:'1.1 ng/mL',flag:'badge-low',ref:'Ref: 2.0–19.0'},
-  {name:'Progesterone',val:'<0.1 ng/mL',flag:'badge-normal',ref:'Saliva — normal'},
-  {name:'Testosterone (Total)',val:'22.9 pg/mL',flag:'badge-normal',ref:'Ref: 10.0–130.0'},
-  {name:'TSH',val:'1.54 uIU/mL',flag:'badge-normal',ref:'Ref: 0.45–5.33'},
-  {name:'Free T3',val:'2.55 pg/mL',flag:'badge-normal',ref:'Ref: 2.07–3.87'},
-  {name:'Free T4',val:'0.91 ng/dL',flag:'badge-normal',ref:'Ref: 0.50–1.14'},
-  {name:'TPO Antibodies',val:'<0.25 IU/mL',flag:'badge-normal',ref:'No Hashimoto\'s'},
-  {name:'Cortisol Morning',val:'3.05 ng/mL',flag:'badge-normal',ref:'HPA rhythm intact'},
-  {name:'FSH',val:'4.91 mIU/mL',flag:'badge-normal',ref:'Ref: 3.85–8.78'},
-  {name:'LH',val:'3.62 mIU/mL',flag:'badge-normal',ref:'Ref: 2.12–10.89'},
-  {name:'LH/FSH Ratio',val:'0.74',flag:'badge-normal',ref:'No PCOS (threshold >2.0)'},
-];
-const PENDING_RESULTS=[
-  {name:'Choose Health Metabolic 7-in-1',val:'Mailed May 24',ref:'Results late May/early June'},
-  {name:'Ferritin recheck',val:'Due mid-June',ref:'Quest, 11911 N Meridian St'},
-  {name:'Vitamin D (25-OH)',val:'URGENT',ref:'Everlywell ordered'},
-  {name:'Serum Progesterone Day 21',val:'Next cycle Day 21',ref:'Blood confirmation'},
-  {name:'Free Testosterone',val:'Pending',ref:'SHBG variant — total insufficient'},
-  {name:'Homocysteine',val:'Pending',ref:'Confirms methylation working'},
-  {name:'Reverse T3',val:'Pending',ref:'Pairs with Free T3'},
-];
-
-function buildResults() {
-  document.getElementById('everlywell-results').innerHTML=EVERLYWELL_RESULTS.map(r=>`
-    <div class="info-row">
-      <div><div style="font-size:13px">${r.name}</div><div style="font-size:11px;color:var(--muted)">${r.ref}</div></div>
-      <span class="badge ${r.flag}">${r.val}</span>
-    </div>`).join('');
-  document.getElementById('pending-results').innerHTML=PENDING_RESULTS.map(r=>`
-    <div class="info-row">
-      <div><div style="font-size:13px">${r.name}</div><div style="font-size:11px;color:var(--muted)">${r.ref}</div></div>
-      <span class="badge badge-pending">${r.val}</span>
-    </div>`).join('');
+// ── LAB RESULTS ───────────────────────────────────────────────────
+var EVERLYWELL=[{name:'Estradiol',val:'263.38 pg/mL',flag:'badge-high',ref:'Ref: 36.50–246.00'},{name:'DHEAS',val:'1.1 ng/mL',flag:'badge-low',ref:'Ref: 2.0–19.0'},{name:'Progesterone',val:'<0.1 ng/mL',flag:'badge-normal',ref:'Saliva — normal'},{name:'Testosterone (Total)',val:'22.9 pg/mL',flag:'badge-normal',ref:'Ref: 10.0–130.0'},{name:'TSH',val:'1.54 uIU/mL',flag:'badge-normal',ref:'Ref: 0.45–5.33'},{name:'Free T3',val:'2.55 pg/mL',flag:'badge-normal',ref:'Ref: 2.07–3.87'},{name:'Free T4',val:'0.91 ng/dL',flag:'badge-normal',ref:'Ref: 0.50–1.14'},{name:'TPO Antibodies',val:'<0.25 IU/mL',flag:'badge-normal',ref:"No Hashimoto's"},{name:'Cortisol Morning',val:'3.05 ng/mL',flag:'badge-normal',ref:'HPA rhythm intact'},{name:'FSH',val:'4.91 mIU/mL',flag:'badge-normal',ref:'Ref: 3.85–8.78'},{name:'LH',val:'3.62 mIU/mL',flag:'badge-normal',ref:'Ref: 2.12–10.89'},{name:'LH/FSH Ratio',val:'0.74',flag:'badge-normal',ref:'No PCOS (threshold >2.0)'}];
+var PENDING=[{name:'Choose Health Metabolic 7-in-1',val:'Mailed May 24',ref:'Results late May/early June'},{name:'Ferritin recheck',val:'Due mid-June',ref:'Quest, 11911 N Meridian St'},{name:'Vitamin D (25-OH)',val:'URGENT',ref:'Everlywell ordered'},{name:'Serum Progesterone Day 21',val:'Next cycle Day 21',ref:'Blood confirmation'},{name:'Free Testosterone',val:'Pending',ref:'SHBG variant'},{name:'Homocysteine',val:'Pending',ref:'Confirms methylation working'},{name:'Reverse T3',val:'Pending',ref:'Pairs with Free T3'}];
+function buildResults(){
+  document.getElementById('everlywell-results').innerHTML=EVERLYWELL.map(function(r){return'<div class="info-row"><div><div style="font-size:13px">'+r.name+'</div><div style="font-size:11px;color:var(--muted)">'+r.ref+'</div></div><span class="badge '+r.flag+'">'+r.val+'</span></div>'}).join('');
+  document.getElementById('pending-results').innerHTML=PENDING.map(function(r){return'<div class="info-row"><div><div style="font-size:13px">'+r.name+'</div><div style="font-size:11px;color:var(--muted)">'+r.ref+'</div></div><span class="badge badge-pending">'+r.val+'</span></div>'}).join('');
 }
 
-// ─── GENETICS ────────────────────────────────────────────────────
-const GENETICS=[
-  {id:'methylation',label:'Methylation & Folate',icon:'🧬',impact:'high',summary:'Folic acid from supplements is largely unusable. Requires 5-MTHF methylfolate directly.',supplement:'Methyl Guard Plus',test:'Homocysteine (Ulta Lab Tests) — confirms correction working',variants:[{gene:'DHFR rs70991108',alleles:'2 effect alleles',sig:true,effect:'Synthetic folic acid largely unusable — must use 5-MTHF methylfolate'},{gene:'MTHFR rs1801131',alleles:'1 effect allele',effect:'Modest reduction in active folate production'},{gene:'MTHFD1 rs2236225',alleles:'2 effect alleles',effect:'Reduced folate processing, increased choline reliance'},{gene:'PEMT rs7946',alleles:'1 effect allele',effect:'Less efficient internal choline production — daily eggs critical'}]},
-  {id:'iron',label:'Iron Absorption',icon:'🔩',impact:'high',summary:'Body actively blocks iron absorption even when deficient. Ferritin at 18 — confirmed deficiency.',supplement:'Iron Bisglycinate + Vitamin C',test:'Ferritin recheck mid-June (Quest) — target 70+',variants:[{gene:'TMPRSS6 rs855791',alleles:'2 effect alleles',sig:true,effect:'Higher hepcidin blocks iron absorption even when deficient'},{gene:'TF rs3811647',alleles:'2 effect alleles',effect:'Reduced transferrin — less efficient iron transport'},{gene:'TFR2',alleles:'variant',effect:'Reduced cellular iron uptake'},{gene:'BTBD9',alleles:'variant',effect:'Iron stored but not efficiently delivered to tissues'}]},
-  {id:'detox',label:'Detoxification',icon:'🧹',impact:'high',summary:'Primary detox weakness. Estrogen metabolites, heavy metals, and BPA clear slowly.',supplement:'NAC + cruciferous vegetables daily',test:'GGT (Choose Health Metabolic) — liver detox marker',variants:[{gene:'GSTP1 rs1695',alleles:'2 effect alleles',sig:true,effect:'Reduced Phase 2 detox of heavy metals, BPA, estrogen metabolites'},{gene:'COMT rs4680',alleles:'1 effect allele',effect:'Slower estrogen and dopamine clearance'},{gene:'CYP1B1 rs1056836',alleles:'1 effect allele',effect:'Increased toxic 4-OH estrogen intermediate'},{gene:'NQO1 rs1800566',alleles:'1 effect allele',effect:'Reduced benzene detox and antioxidant recycling'}]},
-  {id:'vitd',label:'Vitamin D',icon:'☀️',impact:'high',summary:'Triple impairment: poor conversion, poor transport, and poor receptor response. Almost certainly deficient.',supplement:'Vitamin D3 — current 1000 IU likely insufficient, may need 4000–5000 IU',test:'Vitamin D 25-OH (Everlywell — URGENT)',variants:[{gene:'CYP2R1 rs10741657',alleles:'2 effect alleles',sig:true,effect:'Reduced liver conversion of Vitamin D to active form'},{gene:'GC rs7041 + rs2282679',alleles:'2+1 effect alleles',effect:'Reduced Vitamin D Binding Protein — poor transport'},{gene:'VDR rs1544410 + rs731236',alleles:'1+1 effect alleles',effect:"Reduced receptor response — cells don't use Vit D efficiently"}]},
-  {id:'brain',label:'Brain Chemistry',icon:'🧠',impact:'high',summary:'Low dopamine density, reduced serotonin, impaired GABA — all amplified during luteal phase.',supplement:'PharmaGABA + Amino Complex + Methyl Guard Plus',test:'No direct blood test — monitor via symptom tracker',variants:[{gene:'QDPR rs1111875',alleles:'2 effect alleles',sig:true,effect:'Reduced BH4 recycling — fuel for dopamine, serotonin, melatonin, NO'},{gene:'DRD2 rs1800497',alleles:'2 effect alleles',effect:'Lower dopamine receptor density — motivation, focus, reward'},{gene:'TPH2 rs4570625',alleles:'1 effect allele',effect:'Slightly reduced serotonin production — amplified pre-menstrually'},{gene:'SLC6A4',alleles:'2 effect alleles',effect:'Lower serotonin transporter — stress mood symptoms + disrupted sleep'},{gene:'GABR variants',alleles:'multiple',effect:'Less efficient GABA receptors — calming system needs more signal'}]},
-  {id:'histamine',label:'Histamine',icon:'🌿',impact:'medium',summary:'Produced in excess and cleared slowly. Estrogen surges directly amplify mast cell reactivity.',supplement:'Quercetin + Bromelain + dietary management',test:'Track via pollen tab body check-in',variants:[{gene:'FCER1A rs2251746',alleles:'2 effect alleles',sig:true,effect:'Reactive mast cells — histamine released more easily'},{gene:'AOC1 (multiple)',alleles:'1+1 effect alleles',effect:'Reduced DAO enzyme — histamine cleared more slowly from gut'},{gene:'ESR1 rs2234693',alleles:'1 effect allele',effect:'Estrogen receptor amplifies mast cell activity directly'},{gene:'MAOB',alleles:'variant',effect:'Reduced brain histamine clearance'}]},
-  {id:'hormones',label:'Hormones',icon:'⚖️',impact:'high',summary:'Estrogen dominance confirmed (263.38 HIGH). Genetic variants impair estrogen clearance.',supplement:'Flow Balance + Liver Tincture + cruciferous vegetables daily',test:'Estradiol — confirmed HIGH May 2026. Serum Progesterone Day 21 (next cycle)',variants:[{gene:'GSTP1 rs1695',alleles:'2 effect alleles',sig:true,effect:'Impairs Phase 2 conjugation — estrogen metabolites not fully cleared'},{gene:'COMT rs4680',alleles:'1 effect allele',effect:'Slower estrogen breakdown — contributes to dominance'},{gene:'CYP1B1 rs1056836',alleles:'1 effect allele',effect:'More 4-OH estrogen (carcinogenic metabolite) over 2-OH'}]},
-  {id:'nutrients',label:'Nutrient Absorption',icon:'🥗',impact:'medium',summary:'B6, Vitamin K, Omega-3 conversion, and Vitamin A from plants all impaired.',supplement:'Fish Oil (direct EPA/DHA) + Thyrocsin (B6 as P5P) + eggs daily',test:'Vitamin D (Everlywell). Future: full micronutrient panel',variants:[{gene:'BCO1 (multiple)',alleles:'2+ effect alleles',sig:true,effect:'Very inefficient beta-carotene → Vit A. Plant sources essentially useless. Needs eggs/liver.'},{gene:'FADS1 rs174537',alleles:'2 effect alleles',effect:'Poor conversion of plant omega-3s — needs direct fish sources'},{gene:'ALPL + NBPF3',alleles:'multiple',effect:'Significant B6 deficiency risk — Thyrocsin provides P5P (active B6)'},{gene:'VKORC1 rs7294',alleles:'2 effect alleles',effect:'Reduced Vitamin K recycling — lower bone density risk'}]},
-  {id:'longevity',label:'Strengths & Longevity',icon:'✨',impact:'strength',summary:'Several significant longevity and performance variants working in your favour.',supplement:'Exercise (ACE endurance) + antioxidant-rich diet',test:'HbA1c + Fasting Glucose (Choose Health Metabolic)',variants:[{gene:'ACE I/I',alleles:'endurance genotype',effect:'STRENGTH — exceptional cardiovascular adaptation to sustained aerobic exercise'},{gene:'BPIFB4 rs2070325',alleles:'AG',effect:'STRENGTH — longevity protein. Reduced arterial plaque, reduced frailty'},{gene:'IGF1R rs2229765',alleles:'AG',effect:'STRENGTH — centenarian variant. Found more frequently in people living to 100+'},{gene:'SIRT1 rs3758391',alleles:'CT',effect:'STRENGTH — lower cardiovascular mortality, better cognitive function with ageing'}]},
-];
-
-let geneticsFilter='all', openGenetic=null;
-const IMPACT_STYLE={high:{bg:'#fce4ec',col:'#c2185b',lbl:'Needs support'},medium:{bg:'#fff3e0',col:'#e65100',lbl:'Monitor'},low:{bg:'#e8f5e9',col:'#2e7d32',lbl:'Mild'},strength:{bg:'#e8f0ec',col:'#5a7a6a',lbl:'Strength'}};
-
-function buildGenetics() {
-  const fCont=document.getElementById('genetics-filter');
-  fCont.innerHTML=['all','high','medium','strength'].map(f=>`<button class="tap-btn${geneticsFilter===f?' active-sage':''}" onclick="setGeneticsFilter('${f}')">${{all:'All',high:'Needs support',medium:'Monitor',strength:'Strengths'}[f]}</button>`).join('');
-  const list=document.getElementById('genetics-list');
-  list.innerHTML='';
-  GENETICS.filter(p=>geneticsFilter==='all'||p.impact===geneticsFilter).forEach(p=>{
-    const imp=IMPACT_STYLE[p.impact];
-    const isOpen=openGenetic===p.id;
-    const item=document.createElement('div');
-    item.className='genetic-item';
-    item.innerHTML=`
-      <div class="genetic-header" onclick="toggleGenetic('${p.id}')">
-        <span style="font-size:18px">${p.icon}</span>
-        <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">
-            <span style="font-size:13px;font-weight:600">${p.label}</span>
-            <span style="background:${imp.bg};color:${imp.col};font-size:10px;padding:2px 7px;border-radius:8px;font-weight:600">${imp.lbl}</span>
-          </div>
-          <div style="font-size:12px;color:var(--muted);line-height:1.4">${p.summary}</div>
-        </div>
-        <span style="font-size:12px;color:var(--muted);flex-shrink:0;margin-left:8px">${p.variants.length}v ${isOpen?'▲':'▼'}</span>
-      </div>
-      ${isOpen?`<div class="genetic-body">
-        ${p.variants.map(v=>`<div class="variant-row">
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
-            <span class="gene-chip">${v.gene}</span>
-            <span style="font-size:10px;color:var(--muted)">${v.alleles}</span>
-            ${v.sig?'<span class="sig-chip">significant</span>':''}
-          </div>
-          <div style="font-size:12px;color:${v.sig?'var(--blush)':'var(--muted)'};line-height:1.4">${v.effect}</div>
-        </div>`).join('')}
-        <div class="info-box sage" style="margin-top:.75rem"><strong>What you're doing:</strong> ${p.supplement}</div>
-        <div class="info-box grey" style="margin-top:.5rem"><strong>Associated test:</strong> ${p.test}</div>
-      </div>`:''}`;
+// ── GENETICS ──────────────────────────────────────────────────────
+var GENETICS=[{id:'methylation',label:'Methylation & Folate',icon:'🧬',impact:'high',summary:'Folic acid from supplements largely unusable. Requires 5-MTHF methylfolate directly.',supplement:'Methyl Guard Plus',test:'Homocysteine (Ulta Lab Tests) — confirms correction working',variants:[{gene:'DHFR rs70991108',alleles:'2 effect alleles',sig:true,effect:'Synthetic folic acid largely unusable — must use 5-MTHF methylfolate'},{gene:'MTHFR rs1801131',alleles:'1 effect allele',effect:'Modest reduction in active folate production'},{gene:'MTHFD1 rs2236225',alleles:'2 effect alleles',effect:'Reduced folate processing, increased choline reliance'},{gene:'PEMT rs7946',alleles:'1 effect allele',effect:'Less efficient internal choline production — daily eggs critical'}]},{id:'iron',label:'Iron Absorption',icon:'🔩',impact:'high',summary:'Body actively blocks iron absorption even when deficient. Ferritin at 18 — confirmed.',supplement:'Iron Bisglycinate + Vitamin C',test:'Ferritin recheck mid-June (Quest) — target 70+',variants:[{gene:'TMPRSS6 rs855791',alleles:'2 effect alleles',sig:true,effect:'Higher hepcidin blocks iron absorption even when deficient'},{gene:'TF rs3811647',alleles:'2 effect alleles',effect:'Reduced transferrin — less efficient iron transport'},{gene:'TFR2',alleles:'variant',effect:'Reduced cellular iron uptake'}]},{id:'detox',label:'Detoxification',icon:'🧹',impact:'high',summary:'Primary detox weakness. Estrogen metabolites, heavy metals, BPA clear slowly.',supplement:'NAC + cruciferous vegetables daily',test:'GGT (Choose Health Metabolic)',variants:[{gene:'GSTP1 rs1695',alleles:'2 effect alleles',sig:true,effect:'Reduced Phase 2 detox of heavy metals, BPA, estrogen metabolites'},{gene:'COMT rs4680',alleles:'1 effect allele',effect:'Slower estrogen and dopamine clearance'},{gene:'CYP1B1 rs1056836',alleles:'1 effect allele',effect:'Increased toxic 4-OH estrogen intermediate'}]},{id:'vitd',label:'Vitamin D',icon:'☀️',impact:'high',summary:'Triple impairment: poor conversion, poor transport, poor receptor response.',supplement:'Vitamin D3 — 1000 IU likely insufficient, may need 4000-5000 IU',test:'Vitamin D 25-OH (Everlywell — URGENT)',variants:[{gene:'CYP2R1 rs10741657',alleles:'2 effect alleles',sig:true,effect:'Reduced liver conversion of Vitamin D to active form'},{gene:'GC rs7041+rs2282679',alleles:'2+1 effect alleles',effect:'Reduced Vitamin D Binding Protein — poor transport'},{gene:'VDR rs1544410+rs731236',alleles:'1+1 effect alleles',effect:"Reduced receptor response — cells don't use Vit D efficiently"}]},{id:'brain',label:'Brain Chemistry',icon:'🧠',impact:'high',summary:'Low dopamine density, reduced serotonin, impaired GABA — amplified in luteal phase.',supplement:'PharmaGABA + Amino Complex + Methyl Guard Plus',test:'No direct blood test — monitor via symptom tracker',variants:[{gene:'QDPR rs1111875',alleles:'2 effect alleles',sig:true,effect:'Reduced BH4 recycling — fuel for dopamine, serotonin, melatonin'},{gene:'DRD2 rs1800497',alleles:'2 effect alleles',effect:'Lower dopamine receptor density — motivation, focus, reward'},{gene:'TPH2 rs4570625',alleles:'1 effect allele',effect:'Slightly reduced serotonin — amplified pre-menstrually'},{gene:'SLC6A4',alleles:'2 effect alleles',effect:'Lower serotonin transporter — stress mood symptoms + disrupted sleep'}]},{id:'histamine',label:'Histamine',icon:'🌿',impact:'medium',summary:'Produced in excess and cleared slowly. Estrogen amplifies mast cell reactivity.',supplement:'Quercetin + Bromelain + dietary management',test:'Track via pollen tab body check-in',variants:[{gene:'FCER1A rs2251746',alleles:'2 effect alleles',sig:true,effect:'Reactive mast cells — histamine released more easily'},{gene:'AOC1 (multiple)',alleles:'1+1 effect alleles',effect:'Reduced DAO enzyme — histamine cleared slowly from gut'},{gene:'ESR1 rs2234693',alleles:'1 effect allele',effect:'Estrogen receptor amplifies mast cell activity directly'}]},{id:'hormones',label:'Hormones',icon:'⚖️',impact:'high',summary:'Estrogen dominance confirmed (263.38 HIGH). Genetic variants impair clearance.',supplement:'Flow Balance + Liver Tincture + cruciferous vegetables daily',test:'Estradiol — confirmed HIGH May 2026. Serum Progesterone Day 21 next cycle',variants:[{gene:'GSTP1 rs1695',alleles:'2 effect alleles',sig:true,effect:'Impairs Phase 2 conjugation — estrogen metabolites not fully cleared'},{gene:'COMT rs4680',alleles:'1 effect allele',effect:'Slower estrogen breakdown — contributes to dominance'},{gene:'CYP1B1 rs1056836',alleles:'1 effect allele',effect:'More 4-OH estrogen (carcinogenic metabolite) over 2-OH'}]},{id:'longevity',label:'Strengths & Longevity',icon:'✨',impact:'strength',summary:'Several significant longevity and performance variants working in your favour.',supplement:'Exercise (ACE endurance) + antioxidant-rich diet',test:'HbA1c + Fasting Glucose (Choose Health Metabolic)',variants:[{gene:'ACE I/I',alleles:'endurance genotype',effect:'STRENGTH — exceptional cardiovascular adaptation to sustained aerobic exercise'},{gene:'BPIFB4 rs2070325',alleles:'AG',effect:'STRENGTH — longevity protein. Reduced arterial plaque, reduced frailty'},{gene:'IGF1R rs2229765',alleles:'AG',effect:'STRENGTH — centenarian variant. More frequent in people living to 100+'},{gene:'SIRT1 rs3758391',alleles:'CT',effect:'STRENGTH — lower cardiovascular mortality, better cognitive function with ageing'}]}];
+var genFilter='all';var openGenetic=null;
+var IMP={high:{bg:'#fce4ec',col:'#c2185b',lbl:'Needs support'},medium:{bg:'#fff3e0',col:'#e65100',lbl:'Monitor'},low:{bg:'#e8f5e9',col:'#2e7d32',lbl:'Mild'},strength:{bg:'#e8f0ec',col:'#5a7a6a',lbl:'Strength'}};
+function buildGenetics(){
+  var fc=document.getElementById('genetics-filter');fc.innerHTML='';
+  [['all','All'],['high','Needs support'],['medium','Monitor'],['strength','Strengths']].forEach(function(f){
+    var btn=document.createElement('button');btn.className='tap-btn'+(genFilter===f[0]?' active-sage':'');btn.textContent=f[1];btn.onclick=function(){genFilter=f[0];buildGenetics()};fc.appendChild(btn);
+  });
+  var list=document.getElementById('genetics-list');list.innerHTML='';
+  GENETICS.filter(function(p){return genFilter==='all'||p.impact===genFilter}).forEach(function(p){
+    var imp=IMP[p.impact];var isOpen=openGenetic===p.id;
+    var item=document.createElement('div');item.className='genetic-item';
+    var varHtml=isOpen?p.variants.map(function(v){return'<div class="variant-row"><div style="display:flex;align-items:center;gap:6px;margin-bottom:3px"><span class="gene-chip">'+v.gene+'</span><span style="font-size:10px;color:var(--muted)">'+v.alleles+'</span>'+(v.sig?'<span class="sig-chip">significant</span>':'')+'</div><div style="font-size:12px;color:'+(v.sig?'var(--blush)':'var(--muted)')+';line-height:1.4">'+v.effect+'</div></div>'}).join(''):'';
+    item.innerHTML='<div class="genetic-header" onclick="toggleGenetic(\''+p.id+'\')"><span style="font-size:18px">'+p.icon+'</span><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:8px;margin-bottom:2px"><span style="font-size:13px;font-weight:600">'+p.label+'</span><span style="background:'+imp.bg+';color:'+imp.col+';font-size:10px;padding:2px 7px;border-radius:8px;font-weight:600">'+imp.lbl+'</span></div><div style="font-size:12px;color:var(--muted);line-height:1.4">'+p.summary+'</div></div><span style="font-size:12px;color:var(--muted);flex-shrink:0;margin-left:8px">'+p.variants.length+'v '+(isOpen?'▲':'▼')+'</span></div>'+(isOpen?'<div class="genetic-body">'+varHtml+'<div class="info-box sage" style="margin-top:.75rem"><strong>What you\'re doing:</strong> '+p.supplement+'</div><div class="info-box grey" style="margin-top:.5rem"><strong>Associated test:</strong> '+p.test+'</div></div>':'');
     list.appendChild(item);
   });
 }
-
-function setGeneticsFilter(f){geneticsFilter=f;buildGenetics()}
 function toggleGenetic(id){openGenetic=openGenetic===id?null:id;buildGenetics()}
 
-// ─── NOTES ───────────────────────────────────────────────────────
-async function saveNote() {
-  const text=document.getElementById('daily-note').value.trim();
-  if(!text){alert('Write a note first');return}
-  notes[todayKey()]={text,ts:Date.now()};
-  localStorage.setItem('notes',JSON.stringify(notes));
-  const r=await sendToSheets('notes',{
-    date:todayKey(),cycleDay:getCycleDay(TODAY),phase:getPhase(TODAY),note:text
-  });
-  showFeedback('note-fb',r.ok,r.msg);
-  renderNotes();
+// ── NOTES ─────────────────────────────────────────────────────────
+async function saveNote(){
+  var text=document.getElementById('daily-note').value.trim();if(!text){alert('Write a note first');return}
+  notes[todayKey()]={text:text,ts:Date.now()};lsSet('notes',notes);
+  var r=await sendToSheets('notes',{date:todayKey(),cycleDay:getCycleDay(TODAY),phase:getPhase(TODAY),note:text});
+  showFeedback('note-fb',r.ok,r.msg);renderNotes();
 }
-
-function renderNotes() {
-  const el=document.getElementById('past-notes');
-  const entries=Object.entries(notes).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,7);
+function renderNotes(){
+  var el=document.getElementById('past-notes');
+  var entries=Object.entries(notes).sort(function(a,b){return b[0].localeCompare(a[0])}).slice(0,7);
   if(!entries.length){el.innerHTML='<p style="font-size:12px;color:var(--muted)">No notes yet</p>';return}
-  el.innerHTML=entries.map(([date,n])=>`
-    <div class="card" style="margin-bottom:.5rem">
-      <div style="font-size:10px;color:var(--muted);margin-bottom:.35rem;font-weight:600">${date}</div>
-      <div style="font-size:13px;line-height:1.6">${n.text}</div>
-    </div>`).join('');
-  if(notes[todayKey()]) document.getElementById('daily-note').value=notes[todayKey()].text;
+  el.innerHTML=entries.map(function(e){return'<div class="card" style="margin-bottom:.5rem"><div style="font-size:10px;color:var(--muted);margin-bottom:.35rem;font-weight:600">'+e[0]+'</div><div style="font-size:13px;line-height:1.6">'+e[1].text+'</div></div>'}).join('');
+  var todayNote=notes[todayKey()];if(todayNote)document.getElementById('daily-note').value=todayNote.text;
 }
 
-// ─── SETTINGS ────────────────────────────────────────────────────
-function saveSheetUrl() {
-  sheetUrl=document.getElementById('sheet-url').value.trim();
-  localStorage.setItem('sheet_url',sheetUrl);
-  const el=document.getElementById('conn-status');
-  el.textContent=sheetUrl?'URL saved':'No URL'; el.className='sheet-status '+(sheetUrl?'connected':'disconnected');
+// ── SETTINGS ──────────────────────────────────────────────────────
+function saveSheetUrl(){
+  sheetUrl=document.getElementById('sheet-url').value.trim();localStorage.setItem('sheet_url',sheetUrl);
+  var el=document.getElementById('conn-status');el.textContent=sheetUrl?'URL saved':'No URL';el.className='sheet-status '+(sheetUrl?'connected':'disconnected');
+}
+function savePeriodStart(){
+  var val=document.getElementById('period-start-input').value;if(!val)return;
+  PERIOD_START=new Date(val+'T00:00:00');localStorage.setItem('period_start',val);
+  initHeader();alert('Period start updated!');
+}
+function exportData(){
+  var data={checks:checks,flowLog:flowLog,meals:meals,notes:notes,exLog:exLog,baroLog:baroLog,sheetUrl:sheetUrl,period_start:localStorage.getItem('period_start')};
+  var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='amber_health_backup_'+todayKey()+'.json';a.click();
+}
+function importData(e){
+  var file=e.target.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      var d=JSON.parse(ev.target.result);
+      if(d.checks){checks=d.checks;lsSet('checks',checks)}
+      if(d.flowLog){flowLog=d.flowLog;lsSet('flow_log',flowLog)}
+      if(d.meals){meals=d.meals;lsSet('meals',meals)}
+      if(d.notes){notes=d.notes;lsSet('notes',notes)}
+      if(d.exLog){exLog=d.exLog;lsSet('ex_log',exLog)}
+      if(d.sheetUrl){sheetUrl=d.sheetUrl;localStorage.setItem('sheet_url',sheetUrl)}
+      if(d.period_start){localStorage.setItem('period_start',d.period_start);PERIOD_START=new Date(d.period_start+'T00:00:00')}
+      alert('Data imported!');init();
+    }catch(err){alert('Import failed: '+err.message)}
+  };reader.readAsText(file);
 }
 
-function savePeriodStart() {
-  const val=document.getElementById('period-start-input').value;
-  if(!val) return;
-  PERIOD_START=new Date(val+'T00:00:00');
-  localStorage.setItem('period_start',val);
-  initHeader(); buildCalendar(); buildSymptoms(); buildStress(); buildExercise();
-  alert('Period start updated!');
-}
-
-function exportData() {
-  const data={checks,flowLog,meals,notes,exLog,baroLog,sheetUrl,period_start:localStorage.getItem('period_start')};
-  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='amber_health_backup_'+todayKey()+'.json';
-  a.click();
-}
-
-function importData(e) {
-  const file=e.target.files[0];
-  if(!file) return;
-  const reader=new FileReader();
-  reader.onload=ev=>{
-    try {
-      const d=JSON.parse(ev.target.result);
-      if(d.checks) {checks=d.checks;localStorage.setItem('checks',JSON.stringify(checks))}
-      if(d.flowLog) {flowLog=d.flowLog;localStorage.setItem('flow_log',JSON.stringify(flowLog))}
-      if(d.meals) {meals=d.meals;localStorage.setItem('meals',JSON.stringify(meals))}
-      if(d.notes) {notes=d.notes;localStorage.setItem('notes',JSON.stringify(notes))}
-      if(d.exLog) {exLog=d.exLog;localStorage.setItem('ex_log',JSON.stringify(exLog))}
-      if(d.sheetUrl) {sheetUrl=d.sheetUrl;localStorage.setItem('sheet_url',sheetUrl)}
-      if(d.period_start) {localStorage.setItem('period_start',d.period_start);PERIOD_START=new Date(d.period_start+'T00:00:00')}
-      alert('Data imported successfully!');
-      init();
-    } catch(err) { alert('Import failed: '+err.message); }
-  };
-  reader.readAsText(file);
-}
-
-// ─── INIT ────────────────────────────────────────────────────────
-function init() {
+// ── INIT ──────────────────────────────────────────────────────────
+function init(){
   initHeader();
-  // Activate the first tab properly
-  activateTab('protocol', document.querySelector('.tab-btn'));
+  // Activate first tab
+  var firstBtn=document.querySelector('.tab-btn');
+  if(firstBtn)activateTab('protocol',firstBtn);
   renderNotes();
   renderBaroLog();
-  if(sheetUrl) {
-    document.getElementById('sheet-url').value=sheetUrl;
-    document.getElementById('conn-status').textContent='URL saved';
-    document.getElementById('conn-status').className='sheet-status connected';
-  }
-  const ps=localStorage.getItem('period_start');
-  if(ps) document.getElementById('period-start-input').value=ps;
-  const pinDisplay = document.getElementById('cycle-pin-display');
-  if (pinDisplay) { pinDisplay.textContent = getCyclePin() ? 'PIN set ✓' : 'No PIN set'; pinDisplay.style.color = getCyclePin() ? 'var(--sage)' : 'var(--muted)'; }
+  if(sheetUrl){document.getElementById('sheet-url').value=sheetUrl;document.getElementById('conn-status').textContent='URL saved';document.getElementById('conn-status').className='sheet-status connected'}
+  var ps=localStorage.getItem('period_start');if(ps)document.getElementById('period-start-input').value=ps;
+  var pinDisplay=document.getElementById('cycle-pin-display');if(pinDisplay){pinDisplay.textContent=getCyclePin()?'PIN set ✓':'No PIN set';pinDisplay.style.color=getCyclePin()?'var(--sage)':'var(--muted)'}
 }
-
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded',init);
 </script>
 </body>
 </html>
