@@ -164,9 +164,6 @@ textarea{resize:vertical;min-height:70px}
   <div class="phase-note" id="sym-phase-note"></div>
   <div class="section-title">General daily wellbeing</div>
   <div class="card" id="general-sliders"></div>
-  <div class="section-title">Cycle & PMS symptoms</div>
-  <p style="font-size:12px;color:var(--muted);margin-bottom:.5rem">0 = none, 10 = severe</p>
-  <div class="card" id="cycle-sliders"></div>
   <div class="btn-row"><button class="btn-primary" onclick="saveSymptoms()">Save to Sheets</button><span id="sym-fb" class="save-feedback"></span></div>
 </div>
 
@@ -196,6 +193,10 @@ textarea{resize:vertical;min-height:70px}
     <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)"><div style="width:10px;height:10px;border-radius:2px;background:#e3f2fd"></div>Ovulation</div>
     <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)"><div style="width:10px;height:10px;border-radius:2px;background:#fff3e0"></div>Luteal</div>
   </div>
+  <div class="section-title" style="margin-top:1.25rem">Cycle & PMS symptoms</div>
+  <p style="font-size:12px;color:var(--muted);margin-bottom:.5rem">0 = none, 10 = severe</p>
+  <div class="card" id="cycle-sliders"></div>
+  <div class="btn-row"><button class="btn-primary" onclick="saveCycleSymptoms()">Save to Sheets</button><span id="cycle-sym-fb" class="save-feedback"></span></div>
 </div>
 
 <div id="tab-stress" class="panel">
@@ -644,7 +645,13 @@ async function saveSymptoms(){
 // ── CALENDAR ──────────────────────────────────────────────────────
 var calViewMonth=new Date(TODAY.getFullYear(),TODAY.getMonth(),1);
 var selectedCalDay=null;
+async function saveCycleSymptoms(){
+  var payload=Object.assign({date:todayKey(),cycleDay:getCycleDay(TODAY),phase:getPhase(TODAY)},symVals);
+  var r=await sendToSheets('symptoms',payload);
+  showFeedback('cycle-sym-fb',r.ok,r.msg);
+}
 function buildCalendar(){
+  var cc=document.getElementById('cycle-sliders');if(cc){cc.innerHTML='';CYCLE_SYMS.forEach(function(s){buildSlider(s,cc)})}
   document.getElementById('cal-month-label').textContent=MONTHS[calViewMonth.getMonth()]+' '+calViewMonth.getFullYear();
   var heads=document.getElementById('cal-heads');heads.innerHTML='';
   DAYS_SHORT.forEach(function(d){var el=document.createElement('div');el.className='cal-head';el.textContent=d;heads.appendChild(el)});
