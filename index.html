@@ -618,6 +618,26 @@ function clearCyclePin() {
 // ─── TABS ───────────────────────────────────────────────────────
 const builtTabs = new Set();
 
+function activateTab(id, btn) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (!builtTabs.has(id)) {
+    if (id==='protocol') buildProtocol();
+    if (id==='symptoms') buildSymptoms();
+    if (id==='cycle') buildCalendar();
+    if (id==='stress') buildStress();
+    if (id==='exercise') buildExercise();
+    if (id==='pollen') buildPollen();
+    if (id==='meals') buildMeals();
+    if (id==='results') buildResults();
+    if (id==='genetics') buildGenetics();
+    builtTabs.add(id);
+  }
+  if (id==='baro') fetchBaro();
+}
+
 // ─── HEADER ─────────────────────────────────────────────────────
 function initHeader() {
   document.getElementById('hdr-date').textContent = TODAY.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
@@ -1489,18 +1509,10 @@ function importData(e) {
 // ─── INIT ────────────────────────────────────────────────────────
 function init() {
   initHeader();
-  buildProtocol();
-  buildSymptoms(); builtTabs.add('symptoms');
-  buildCalendar(); builtTabs.add('cycle');
-  buildStress();   builtTabs.add('stress');
-  buildExercise(); builtTabs.add('exercise');
-  buildPollen();   builtTabs.add('pollen');
-  buildMeals();    builtTabs.add('meals');
-  buildResults();  builtTabs.add('results');
-  buildGenetics(); builtTabs.add('genetics');
+  // Activate the first tab properly
+  activateTab('protocol', document.querySelector('.tab-btn'));
   renderNotes();
   renderBaroLog();
-  fetchBaro();
   if(sheetUrl) {
     document.getElementById('sheet-url').value=sheetUrl;
     document.getElementById('conn-status').textContent='URL saved';
@@ -1508,7 +1520,6 @@ function init() {
   }
   const ps=localStorage.getItem('period_start');
   if(ps) document.getElementById('period-start-input').value=ps;
-  // PIN display
   const pinDisplay = document.getElementById('cycle-pin-display');
   if (pinDisplay) { pinDisplay.textContent = getCyclePin() ? 'PIN set ✓' : 'No PIN set'; pinDisplay.style.color = getCyclePin() ? 'var(--sage)' : 'var(--muted)'; }
 }
