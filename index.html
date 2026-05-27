@@ -177,6 +177,7 @@ textarea{resize:vertical;min-height:70px}
   <button class="tab-btn" onclick="showTab('cycle',this)">Cycle</button>
   <button class="tab-btn" onclick="showTab('results',this)">Lab Results</button>
   <button class="tab-btn" onclick="showTab('genetics',this)">Genetics</button>
+  <button class="tab-btn" onclick="showTab('dashboard',this)">Progress</button>
   <button class="tab-btn" onclick="showTab('notes',this)">Notes</button>
   <button class="tab-btn" onclick="showTab('settings',this)">⚙</button>
 </div>
@@ -381,6 +382,27 @@ textarea{resize:vertical;min-height:70px}
     <button class="big-tap" id="burden-flaring" onclick="setBurden('flaring')">🔥 Flaring</button>
   </div>
 
+  <div class="section-title">Headache & pain</div>
+  <div class="card">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:.75rem;line-height:1.5">Track headaches so you can spot patterns — barometric drops, high pollen, and high-histamine foods often stack to trigger them.</div>
+    <div style="margin-bottom:.75rem">
+      <div style="font-size:12px;font-weight:500;color:var(--ink);margin-bottom:.5rem">Headache today?</div>
+      <div style="display:flex;gap:8px">
+        <button class="big-tap" id="head-none" onclick="setHeadache('none')">✓ None</button>
+        <button class="big-tap" id="head-mild" onclick="setHeadache('mild')">Mild</button>
+        <button class="big-tap" id="head-moderate" onclick="setHeadache('moderate')">Moderate</button>
+        <button class="big-tap" id="head-severe" onclick="setHeadache('severe')">Severe</button>
+      </div>
+    </div>
+    <div style="margin-bottom:.75rem">
+      <div style="font-size:12px;font-weight:500;color:var(--ink);margin-bottom:.5rem">Medication taken?</div>
+      <div class="tap-grid" id="headache-meds"></div>
+    </div>
+    <div>
+      <div style="font-size:12px;font-weight:500;color:var(--ink);margin-bottom:.5rem">What do you think caused it?</div>
+      <div class="tap-grid" id="headache-triggers"></div>
+    </div>
+  </div>
   <textarea id="pollen-notes" placeholder="Any other notes — where you went, how long outside, what you ate..."></textarea>
   <div class="btn-row"><button class="btn-primary" onclick="savePollen()">Save to Sheets</button><span id="pollen-fb" class="save-feedback"></span></div>
 
@@ -432,6 +454,10 @@ textarea{resize:vertical;min-height:70px}
   <p style="font-size:12px;color:var(--muted);margin-bottom:.75rem;line-height:1.6">Source: PlexusDX (May 2026) — 150+ insights across 14 pathways. Tap any pathway to expand.</p>
   <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1rem" id="genetics-filter"></div>
   <div id="genetics-list"></div>
+</div>
+
+<div id="tab-dashboard" class="panel">
+  <div id="dashboard-content"></div>
 </div>
 
 <div id="tab-notes" class="panel">
@@ -585,6 +611,7 @@ function activateTab(id,btn){
     else if(id==='meals')buildMeals();
     else if(id==='results')buildResults();
     else if(id==='genetics')buildGenetics();
+    else if(id==='dashboard')buildDashboard();
     builtTabs[id]=true;
   }
 }
@@ -597,7 +624,226 @@ function initHeader(){
   el.textContent='';el.style.background='';el.style.color='';
 }
 
-// ── STREAKS ───────────────────────────────────────────────────────
+// ── DASHBOARD ─────────────────────────────────────────────────────
+var PROTOCOL_START = new Date('2026-03-01');
+var GOALS = [
+  {
+    id:'ferritin',
+    label:'Ferritin',
+    icon:'🔩',
+    why:'Biggest single driver of fatigue and brain fog',
+    start:18, target:70, current:18, unit:'ng/mL',
+    test:'Retest mid-June — Quest Diagnostics',
+    status:'in-progress',
+    color:'var(--blush)'
+  },
+  {
+    id:'vitd',
+    label:'Vitamin D',
+    icon:'☀️',
+    why:'Three genetic variants impairing conversion, transport, and receptor response',
+    start:null, target:60, current:null, unit:'ng/mL',
+    test:'Everlywell ordered — URGENT',
+    status:'untested',
+    color:'var(--gold)'
+  },
+  {
+    id:'estradiol',
+    label:'Estradiol',
+    icon:'⚖️',
+    why:'Confirmed estrogen dominance — driving most PMS symptoms',
+    start:263.38, target:180, current:263.38, unit:'pg/mL',
+    test:'Retest in ~3 months',
+    status:'in-progress',
+    color:'var(--blush)'
+  },
+  {
+    id:'dheas',
+    label:'DHEAS',
+    icon:'⚡',
+    why:'Adrenal depletion from 8 months of chronic stress',
+    start:1.1, target:8, current:1.1, unit:'ng/mL',
+    test:'Retest in 3-6 months',
+    status:'in-progress',
+    color:'var(--gold)'
+  },
+  {
+    id:'sleep',
+    label:'Sleep quality',
+    icon:'🌙',
+    why:'Everything repairs during sleep — GABA variants + PharmaGABA + PEMF',
+    start:4, target:8, current:null, unit:'/10',
+    test:'Track via Symptoms tab daily',
+    status:'tracking',
+    color:'var(--sage)'
+  },
+];
+
+var WINS = [
+  {date:'March 2026', text:'Started protocol. Switched from folic acid to Methyl Guard Plus (5-MTHF).'},
+  {date:'March 2026', text:'Ferritin confirmed at 18 — iron bisglycinate started immediately.'},
+  {date:'April 2026', text:'Lumebox brain fog response discovered — single session clears fog.'},
+  {date:'April 2026', text:'PharmaGABA "brain not having to work overtime" — clear calm effect confirmed.'},
+  {date:'May 2026', text:'Got up Saturday before period, cleaned house, cooked, did laundry — previously impossible.'},
+  {date:'May 2026', text:'Everlywell results — estradiol and DHEAS confirmed. Now treating root causes not symptoms.'},
+  {date:'May 2026', text:'Barometric pressure identified as major headache trigger — now checking predictively.'},
+  {date:'May 2026', text:'Acute stress resolved — divorce finalised, remodel winding down.'},
+];
+
+var TIMELINE = [
+  {label:'Protocol started',date:'Mar 2026',done:true,note:'Iron, Methyl Guard, Lumebox, PEMF — foundation in place'},
+  {label:'Now — 2 months',date:'May 2026',done:true,note:'Sleep improving, brain fog less frequent, baseline energy higher, emotional volatility beginning to reduce'},
+  {label:'3 months',date:'Aug 2026',done:false,note:'Ferritin retest target 35-50. Vitamin D optimised. Luteal phase meaningfully better. First real sense of shift.'},
+  {label:'6 months',date:'Nov 2026',done:false,note:'Ferritin heading toward 70. Estradiol coming down. DHEAS rebuilding. PMS noticeably reduced.'},
+  {label:'12 months',date:'May 2027',done:false,note:'Ferritin optimal 70-100. Hormonal balance restored. Baseline energy and clarity fundamentally different.'},
+];
+
+function buildDashboard(){
+  var el=document.getElementById('dashboard-content');
+  if(!el)return;
+
+  var daysSinceStart=Math.floor((TODAY-PROTOCOL_START)/864e5);
+
+  // Header
+  var header='<div class="card" style="background:linear-gradient(135deg,#fdf0f3,#faf4e8);border:none;margin-bottom:.75rem">'
+    +'<div style="font-family:Cormorant Garamond,serif;font-size:20px;font-weight:500;color:var(--ink);margin-bottom:4px">Your progress</div>'
+    +'<div style="font-size:12px;color:var(--muted)">Protocol started March 2026 · <strong style="color:var(--ink)">Day '+daysSinceStart+'</strong> of your recovery</div>'
+    +'<div style="height:6px;background:rgba(255,255,255,.6);border-radius:3px;overflow:hidden;margin-top:.75rem">'
+    +'<div style="height:100%;width:'+Math.min(Math.round(daysSinceStart/365*100),100)+'%;background:linear-gradient(90deg,var(--blush),var(--gold));border-radius:3px"></div>'
+    +'</div>'
+    +'<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:3px"><span>Start</span><span>3 months</span><span>6 months</span><span>12 months</span></div>'
+    +'</div>';
+
+  // 5 Key Goals
+  var goalsHtml='<div class="section-title">The 5 things that move the needle</div>'
+    +GOALS.map(function(g){
+      // Progress calculation
+      var pct=0;
+      if(g.current!==null&&g.start!==null){
+        if(g.id==='estradiol'){
+          // Lower is better
+          pct=Math.min(Math.round(Math.max(g.start-g.current,0)/(g.start-g.target)*100),100);
+        } else {
+          pct=Math.min(Math.round(Math.max(g.current-g.start,0)/(g.target-g.start)*100),100);
+        }
+      }
+      var statusBadge=g.status==='untested'
+        ?'<span style="font-size:10px;background:var(--gold-light);color:var(--gold);padding:2px 8px;border-radius:8px;font-weight:600">Test ordered</span>'
+        :g.status==='tracking'
+        ?'<span style="font-size:10px;background:var(--sage-light);color:var(--sage-dark);padding:2px 8px;border-radius:8px;font-weight:600">Tracking</span>'
+        :'<span style="font-size:10px;background:#fdf0f3;color:var(--blush);padding:2px 8px;border-radius:8px;font-weight:600">In progress</span>';
+      var currentDisplay=g.current!==null?(g.id==='sleep'?'?'+g.unit:g.current+g.unit):'Not yet tested';
+      var targetDisplay=g.target+g.unit;
+      return'<div class="card" style="margin-bottom:.6rem">'
+        +'<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:.6rem">'
+        +'<span style="font-size:20px">'+g.icon+'</span>'
+        +'<div style="flex:1"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">'
+        +'<span style="font-size:14px;font-weight:600;color:var(--ink)">'+g.label+'</span>'
+        +statusBadge
+        +'</div><div style="font-size:11px;color:var(--muted)">'+g.why+'</div></div>'
+        +'</div>'
+        // Progress bar
+        +(g.current!==null&&g.start!==null?
+          '<div style="margin-bottom:.5rem">'
+          +'<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px">'
+          +'<span>Started: <strong style="color:var(--ink)">'+g.start+g.unit+'</strong></span>'
+          +'<span>Now: <strong style="color:'+g.color+'">'+currentDisplay+'</strong></span>'
+          +'<span>Target: <strong style="color:var(--sage)">'+targetDisplay+'</strong></span>'
+          +'</div>'
+          +'<div style="height:8px;background:var(--cream-dark);border-radius:4px;overflow:hidden">'
+          +'<div style="height:100%;width:'+pct+'%;background:'+g.color+';border-radius:4px;opacity:.75;transition:width .4s"></div>'
+          +'</div>'
+          +'<div style="font-size:10px;color:var(--muted);margin-top:3px">'+pct+'% toward target</div>'
+          +'</div>'
+          :'<div style="background:var(--gold-light);border-radius:var(--radius);padding:5px 9px;font-size:11px;color:var(--gold);margin-bottom:.5rem">'+currentDisplay+' — test needed to track progress</div>'
+        )
+        +'<div style="font-size:11px;color:var(--muted)">📋 '+g.test+'</div>'
+        +'</div>';
+    }).join('');
+
+  // Timeline
+  var timelineHtml='<div class="section-title">Recovery roadmap</div>'
+    +'<div class="card">'
+    +TIMELINE.map(function(t,i){
+      var isLast=i===TIMELINE.length-1;
+      var isCurrent=i===1;
+      return'<div style="display:flex;gap:12px;padding:8px 0;'+(isLast?'':'border-bottom:1px solid var(--cream-dark)')+'">'
+        +'<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0">'
+        +'<div style="width:20px;height:20px;border-radius:50%;background:'+(t.done?isCurrent?'var(--blush)':'var(--sage)':'var(--cream-dark)')+';border:2px solid '+(t.done?isCurrent?'var(--blush)':'var(--sage)':'var(--border)')+';display:flex;align-items:center;justify-content:center;font-size:10px;color:'+(t.done?'#fff':'var(--muted)')+';">'+(t.done?isCurrent?'★':'✓':'')+'</div>'
+        +(isLast?'':'<div style="width:2px;flex:1;background:'+(t.done?'var(--sage-light)':'var(--cream-dark)')+';margin-top:2px"></div>')
+        +'</div>'
+        +'<div style="flex:1;padding-bottom:'+(isLast?'0':'.5rem')+'">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">'
+        +'<span style="font-size:13px;font-weight:600;color:'+(isCurrent?'var(--blush)':t.done?'var(--sage)':'var(--muted)')+'">'+t.label+'</span>'
+        +'<span style="font-size:11px;color:var(--muted)">'+t.date+'</span>'
+        +'</div>'
+        +'<div style="font-size:11px;color:var(--muted);line-height:1.5">'+t.note+'</div>'
+        +'</div>'
+        +'</div>';
+    }).join('')
+    +'</div>';
+
+  // Wins
+  var winsHtml='<div class="section-title">Wins since March 2026</div>'
+    +'<div class="card">'
+    +WINS.map(function(w,i){
+      return'<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--cream-dark)'+(i===WINS.length-1?';border-bottom:none':'')+'">'
+        +'<span style="font-size:14px;flex-shrink:0">✦</span>'
+        +'<div><div style="font-size:13px;color:var(--ink);line-height:1.5">'+w.text+'</div>'
+        +'<div style="font-size:10px;color:var(--muted);margin-top:2px">'+w.date+'</div></div>'
+        +'</div>';
+    }).join('')
+    +'</div>'
+    // Add new win
+    +'<div style="margin-top:.75rem">'
+    +'<textarea id="new-win-text" placeholder="Add a new win or improvement you\'ve noticed..." style="min-height:60px;margin-bottom:.5rem"></textarea>'
+    +'<button class="btn-outline" onclick="addWin()" style="font-size:12px">Add win</button>'
+    +'</div>';
+
+  el.innerHTML=header+goalsHtml+timelineHtml+winsHtml;
+
+  // Load saved wins from localStorage
+  renderSavedWins();
+}
+
+var savedWins=JSON.parse(localStorage.getItem('amber_wins')||'[]');
+
+function addWin(){
+  var text=document.getElementById('new-win-text').value.trim();
+  if(!text)return;
+  savedWins.unshift({text:text,date:TODAY.toLocaleDateString('en-US',{month:'long',year:'numeric'})});
+  localStorage.setItem('amber_wins',JSON.stringify(savedWins));
+  document.getElementById('new-win-text').value='';
+  renderSavedWins();
+}
+
+function renderSavedWins(){
+  if(!savedWins.length)return;
+  var container=document.querySelector('#tab-dashboard .card:last-of-type');
+  if(!container)return;
+  // Prepend saved wins to the wins card
+  var existing=document.getElementById('saved-wins-list');
+  if(existing)existing.remove();
+  var list=document.createElement('div');
+  list.id='saved-wins-list';
+  list.innerHTML=savedWins.map(function(w,i){
+    return'<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--cream-dark)">'
+      +'<span style="font-size:14px;flex-shrink:0;color:var(--blush)">✦</span>'
+      +'<div style="flex:1"><div style="font-size:13px;color:var(--ink);line-height:1.5">'+w.text+'</div>'
+      +'<div style="font-size:10px;color:var(--muted);margin-top:2px">'+w.date+'</div></div>'
+      +'<button onclick="deleteWin('+i+')" style="font-size:16px;color:var(--muted-light);background:none;border:none;cursor:pointer;flex-shrink:0">×</button>'
+      +'</div>';
+  }).join('');
+  container.insertBefore(list,container.firstChild);
+}
+
+function deleteWin(i){
+  savedWins.splice(i,1);
+  localStorage.setItem('amber_wins',JSON.stringify(savedWins));
+  renderSavedWins();
+}
+
+// ── END DASHBOARD ─────────────────────────────────────────────────
 var NON_NEGOTIABLES=[
   {id:'methyl',label:'Methyl Guard Plus',note:'Most critical supplement'},
   {id:'flowbalance',label:'Flow Balance',note:'Must be uninterrupted — Vitex needs 2-3 months'},
@@ -826,8 +1072,11 @@ var CYCLE_SYMS=[
 ];
 var symVals={};
 [].concat(GENERAL_SYMS,CYCLE_SYMS).forEach(function(s){symVals[s.id]=s.def});
-var savedSyms=lsGet('symVals_'+todayKey(),{});
-Object.assign(symVals,savedSyms);
+
+function loadSymVals(){
+  var saved=lsGet('symVals_'+todayKey(),{});
+  if(Object.keys(saved).length>0)Object.assign(symVals,saved);
+}
 
 function sColor(sym,val){if(sym.inv)return val<=3?'#2e7d32':val<=6?'#e65100':'#c2185b';return val>=7?'#2e7d32':val>=4?'#e65100':'#c2185b'}
 function buildSlider(sym,cont){
@@ -847,6 +1096,7 @@ function updateSlider(id,val,inv){
   var ws=document.getElementById('wellbeing-score');if(ws)ws.textContent=avg;
 }
 function buildSymptoms(){
+  loadSymVals();
   var scores=GENERAL_SYMS.map(function(s){return s.inv?10-symVals[s.id]:symVals[s.id]});
   var avg=Math.round(scores.reduce(function(a,b){return a+b},0)/scores.length*10)/10;
   document.getElementById('sym-stats').innerHTML='<div class="stat-box" style="grid-column:span 3"><div class="stat-num" id="wellbeing-score">'+avg+'</div><div class="stat-lbl">Today\'s wellbeing score</div></div>';
@@ -856,6 +1106,7 @@ function buildSymptoms(){
   GENERAL_SYMS.forEach(function(s){buildSlider(s,gc)});
 }
 async function saveSymptoms(){
+  lsSet('symVals_'+todayKey(),symVals);
   var scores=GENERAL_SYMS.map(function(s){return s.inv?10-symVals[s.id]:symVals[s.id]});
   var avg=Math.round(scores.reduce(function(a,b){return a+b},0)/scores.length*10)/10;
   var payload=Object.assign({date:todayKey(),cycleDay:getCycleDay(TODAY),phase:getPhase(TODAY),wellbeingScore:avg},symVals);
@@ -1411,7 +1662,31 @@ var INDIANA_POLLEN={0:{trees:'Low',grass:'None',weeds:'None',note:'January — d
 var PLS={'None':{bg:'#f5f5f3',col:'#888'},'Low':{bg:'#e8f5e9',col:'#2e7d32'},'Low-Moderate':{bg:'#f1f8e9',col:'#558b2f'},'Moderate':{bg:'#fff3e0',col:'#e65100'},'Moderate-High':{bg:'#fbe9e7',col:'#bf360c'},'High':{bg:'#fce4ec',col:'#c2185b'},'Very High':{bg:'#f3e5f5',col:'#7b1fa2'}};
 var BODY_SYMPTOMS=[{id:'sneezing',label:'Sneezing',icon:'🤧'},{id:'itchy_eyes',label:'Itchy eyes',icon:'👁️'},{id:'runny_nose',label:'Runny nose',icon:'😤'},{id:'skin_reaction',label:'Itchy skin',icon:'🌡️'},{id:'head_pressure',label:'Head pressure',icon:'🤕'},{id:'puffy',label:'Puffy / swollen',icon:'💧'},{id:'scratchy_throat',label:'Scratchy throat',icon:'😮'},{id:'sudden_fog',label:'Sudden brain fog',icon:'🌫️'}];
 var HISTAMINE_FOODS=[{id:'leftovers',label:'Leftovers',icon:'🍱'},{id:'canned_fish',label:'Canned fish',icon:'🐟'},{id:'fermented',label:'Fermented foods',icon:'🫙'},{id:'alcohol',label:'Alcohol',icon:'🍷'},{id:'aged_cheese',label:'Aged cheese',icon:'🧀'},{id:'processed_meat',label:'Processed meat',icon:'🥩'},{id:'vinegar',label:'Vinegar / pickled',icon:'🥒'},{id:'chocolate',label:'Chocolate',icon:'🍫'}];
-var pollenTapped={},foodTapped={},overallBurden=null;
+var pollenTapped=lsGet('pollenTapped_'+new Date().toISOString().split('T')[0],{});
+var foodTapped=lsGet('foodTapped_'+new Date().toISOString().split('T')[0],{});
+var overallBurden=localStorage.getItem('burden_'+new Date().toISOString().split('T')[0])||null;
+var headacheLevel=localStorage.getItem('headache_'+new Date().toISOString().split('T')[0])||null;
+var headacheMedsTapped=lsGet('headacheMeds_'+new Date().toISOString().split('T')[0],{});
+var headacheTriggersTapped=lsGet('headacheTriggers_'+new Date().toISOString().split('T')[0],{});
+
+var HEADACHE_MEDS=[
+  {id:'advil',label:'Advil / Ibuprofen',icon:'💊'},
+  {id:'tylenol',label:'Tylenol',icon:'💊'},
+  {id:'excedrin',label:'Excedrin',icon:'💊'},
+  {id:'naproxen',label:'Naproxen',icon:'💊'},
+  {id:'none_med',label:'No medication',icon:'✓'},
+];
+var HEADACHE_TRIGGERS_LIST=[
+  {id:'baro_drop',label:'Barometric drop / rain',icon:'🌧️'},
+  {id:'pollen_high',label:'High pollen',icon:'🌿'},
+  {id:'hormonal',label:'Hormonal',icon:'⚡'},
+  {id:'histamine_food',label:'High-histamine food',icon:'🍷'},
+  {id:'dehydration',label:'Dehydration',icon:'💧'},
+  {id:'poor_sleep',label:'Poor sleep',icon:'🌙'},
+  {id:'stress',label:'Stress',icon:'😤'},
+  {id:'screen',label:'Screen / eye strain',icon:'💻'},
+  {id:'unknown',label:'Not sure',icon:'🤷'},
+];
 function runTriggerAnalysis(baroInHg, aqiVal){
   var el = document.getElementById('trigger-analysis');
   if (!el) return;
@@ -1466,16 +1741,69 @@ function buildPollen(){
     var level=season[x.k]||'None';var s=PLS[level]||PLS['None'];
     var el=document.createElement('div');el.className='pollen-card';el.innerHTML='<div class="pollen-type">'+x.l+'</div><div style="font-size:12px;font-weight:600;color:'+s.col+';background:'+s.bg+';display:inline-block;padding:2px 8px;border-radius:8px;margin-top:2px">'+level+'</div>';pg.appendChild(el);
   });
+  // Body symptoms — restore saved state
   var bs=document.getElementById('body-symptoms');bs.innerHTML='';
-  BODY_SYMPTOMS.forEach(function(s){var btn=document.createElement('button');btn.className='tap-btn';btn.id='bs-'+s.id;btn.textContent=s.icon+' '+s.label;btn.onclick=function(){pollenTapped[s.id]=!pollenTapped[s.id];if(pollenTapped[s.id])btn.classList.add('active-blush');else btn.classList.remove('active-blush')};bs.appendChild(btn)});
+  BODY_SYMPTOMS.forEach(function(s){
+    var btn=document.createElement('button');
+    btn.className='tap-btn'+(pollenTapped[s.id]?' active-blush':'');
+    btn.id='bs-'+s.id;btn.textContent=s.icon+' '+s.label;
+    btn.onclick=function(){pollenTapped[s.id]=!pollenTapped[s.id];lsSet('pollenTapped_'+todayKey(),pollenTapped);if(pollenTapped[s.id])btn.classList.add('active-blush');else btn.classList.remove('active-blush')};
+    bs.appendChild(btn);
+  });
+  // Food triggers — restore saved state
   var ft=document.getElementById('food-triggers');ft.innerHTML='';
-  HISTAMINE_FOODS.forEach(function(f){var btn=document.createElement('button');btn.className='tap-btn';btn.id='ft-'+f.id;btn.textContent=f.icon+' '+f.label;btn.onclick=function(){foodTapped[f.id]=!foodTapped[f.id];if(foodTapped[f.id])btn.classList.add('active-gold');else btn.classList.remove('active-gold')};ft.appendChild(btn)});
+  HISTAMINE_FOODS.forEach(function(f){
+    var btn=document.createElement('button');
+    btn.className='tap-btn'+(foodTapped[f.id]?' active-gold':'');
+    btn.id='ft-'+f.id;btn.textContent=f.icon+' '+f.label;
+    btn.onclick=function(){foodTapped[f.id]=!foodTapped[f.id];lsSet('foodTapped_'+todayKey(),foodTapped);if(foodTapped[f.id])btn.classList.add('active-gold');else btn.classList.remove('active-gold')};
+    ft.appendChild(btn);
+  });
+  // Quercetin — restore
+  var qEl=document.getElementById('quercetin-taken');
+  if(qEl){qEl.checked=localStorage.getItem('quercetin_'+todayKey())==='true';qEl.onchange=function(){localStorage.setItem('quercetin_'+todayKey(),qEl.checked)}}
+  // Burden — restore
+  if(overallBurden)setBurden(overallBurden);
+  // Pollen notes — restore
+  var pn=document.getElementById('pollen-notes');
+  if(pn){pn.value=localStorage.getItem('pollennotes_'+todayKey())||'';pn.oninput=function(){localStorage.setItem('pollennotes_'+todayKey(),pn.value)}}
+  // Luteal warn
   if(getPhase(TODAY)==='luteal'){var w=document.getElementById('luteal-warn');w.style.display='block';w.style.background='#fce4ec';w.style.color='#c2185b';w.innerHTML='<strong>⚠ Luteal phase — histamine rules active.</strong> Sardines every other day only. No leftovers. No fermented foods.'}
+  buildHeadacheSection();
   runTriggerAnalysis(lastBaroReading, null);
   fetchAQI();
 }
+
+function buildHeadacheSection(){
+  if(headacheLevel)setHeadache(headacheLevel);
+  var mc=document.getElementById('headache-meds');if(!mc)return;mc.innerHTML='';
+  HEADACHE_MEDS.forEach(function(m){
+    var btn=document.createElement('button');
+    btn.className='tap-btn'+(headacheMedsTapped[m.id]?' active-sage':'');
+    btn.id='hm-'+m.id;btn.textContent=m.icon+' '+m.label;
+    btn.onclick=function(){headacheMedsTapped[m.id]=!headacheMedsTapped[m.id];lsSet('headacheMeds_'+todayKey(),headacheMedsTapped);if(headacheMedsTapped[m.id])btn.classList.add('active-sage');else btn.classList.remove('active-sage')};
+    mc.appendChild(btn);
+  });
+  var tc=document.getElementById('headache-triggers');if(!tc)return;tc.innerHTML='';
+  HEADACHE_TRIGGERS_LIST.forEach(function(t){
+    var btn=document.createElement('button');
+    btn.className='tap-btn'+(headacheTriggersTapped[t.id]?' active-blush':'');
+    btn.id='ht-'+t.id;btn.textContent=t.icon+' '+t.label;
+    btn.onclick=function(){headacheTriggersTapped[t.id]=!headacheTriggersTapped[t.id];lsSet('headacheTriggers_'+todayKey(),headacheTriggersTapped);if(headacheTriggersTapped[t.id])btn.classList.add('active-blush');else btn.classList.remove('active-blush')};
+    tc.appendChild(btn);
+  });
+}
+
+function setHeadache(level){
+  headacheLevel=level;localStorage.setItem('headache_'+todayKey(),level);
+  var styles={none:{bg:'#eef4ef',col:'#4a6b50'},mild:{bg:'#fff3e0',col:'#e65100'},moderate:{bg:'#fdf3ea',col:'#b8763a'},severe:{bg:'#fdf0f3',col:'#c4788a'}};
+  ['none','mild','moderate','severe'].forEach(function(l){var el=document.getElementById('head-'+l);if(el){el.style.background='var(--surface)';el.style.borderColor='var(--border)';el.style.color='var(--muted)';el.style.fontWeight='400'}});
+  var el=document.getElementById('head-'+level);var s=styles[level];
+  if(el){el.style.background=s.bg;el.style.borderColor=s.col;el.style.color=s.col;el.style.fontWeight='600'}
+}
+
 function setBurden(id){
-  overallBurden=id;
+  overallBurden=id;localStorage.setItem('burden_'+todayKey(),id);
   var styles={fine:{bg:'#e8f5e9',col:'#2e7d32'},mild:{bg:'#fff3e0',col:'#e65100'},flaring:{bg:'#fce4ec',col:'#c2185b'}};
   ['fine','mild','flaring'].forEach(function(b){var el=document.getElementById('burden-'+b);if(el){el.style.background='var(--surface)';el.style.borderColor='var(--border)';el.style.color='var(--muted)';el.style.fontWeight='400'}});
   var el=document.getElementById('burden-'+id);var s=styles[id];if(el){el.style.background=s.bg;el.style.borderColor=s.col;el.style.color=s.col;el.style.fontWeight='600'}
