@@ -331,20 +331,30 @@ textarea{resize:vertical;min-height:70px}
   <div class="card">
     <div class="baro-big" id="baro-val">—<span class="baro-unit"> inHg</span></div>
     <div style="text-align:center"><div class="baro-status" id="baro-status"></div></div>
-    <div style="text-align:center;font-size:11px;color:var(--muted);margin:.5rem 0" id="baro-updated"></div>
+    <div id="baro-trend" style="text-align:center;margin:.5rem 0;min-height:24px"></div>
+    <div style="text-align:center;font-size:11px;color:var(--muted);margin:.25rem 0" id="baro-updated"></div>
     <button class="btn-outline" onclick="fetchBaro()" style="width:100%">Refresh pressure</button>
   </div>
   <div class="card">
     <div class="info-row"><span class="info-lbl">≥ 29.80 inHg</span><span class="badge badge-normal">Typically fine</span></div>
     <div class="info-row"><span class="info-lbl">29.50–29.80 inHg</span><span class="badge badge-low">Mild symptoms likely</span></div>
     <div class="info-row"><span class="info-lbl">< 29.50 inHg</span><span class="badge badge-high">Headache / fog / agitation risk</span></div>
+    <div style="margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--cream-dark);font-size:12px;color:var(--muted);line-height:1.5">Rate of change matters more than the absolute number. A drop of 0.15+ inHg in 3 hours is your key trigger — even if the reading looks "fine."</div>
+  </div>
+  <div class="section-title">Pressure history</div>
+  <div class="card">
+    <div id="baro-log"></div>
   </div>
   <div class="card">
     <div style="display:flex;gap:8px;align-items:center">
       <input type="number" id="baro-manual" placeholder="29.82" step="0.01" style="flex:1">
       <button class="btn-primary" onclick="logBaroManual()">Log manually</button>
     </div>
-    <div id="baro-log" style="margin-top:.75rem"></div>
+  </div>
+  <div class="section-title">Headache correlation</div>
+  <div class="card">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:.5rem;line-height:1.5">Comparing your logged headache days against barometric pressure to prove the pattern over time.</div>
+    <div id="baro-correlation"><div style="font-size:12px;color:var(--muted)">Loading...</div></div>
   </div>
 
   <div class="section-title">Pollen — Carmel, IN</div>
@@ -392,6 +402,16 @@ textarea{resize:vertical;min-height:70px}
         <button class="big-tap" id="head-mild" onclick="setHeadache('mild')">Mild</button>
         <button class="big-tap" id="head-moderate" onclick="setHeadache('moderate')">Moderate</button>
         <button class="big-tap" id="head-severe" onclick="setHeadache('severe')">Severe</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:.75rem" id="headache-times-row">
+      <div>
+        <div style="font-size:12px;font-weight:500;color:var(--ink);margin-bottom:.35rem">Started around</div>
+        <input type="time" id="headache-onset" style="width:100%" onchange="saveHeadacheTimes()">
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:500;color:var(--ink);margin-bottom:.35rem">Resolved around</div>
+        <input type="time" id="headache-resolved" placeholder="Still going" style="width:100%" onchange="saveHeadacheTimes()">
       </div>
     </div>
     <div style="margin-bottom:.75rem">
@@ -1619,7 +1639,47 @@ function renderExLog(){
 }
 
 // ── BAROMETRIC ────────────────────────────────────────────────────
-var lastBaroReading = 29.80; // default until fetched
+var lastBaroReading = 29.80;
+// Long-term baro log — stores every auto-fetch with timestamp, kept for 90 days
+var baroHistory = JSON.parse(localStorage.getItem('baro_history')||'[]');
+
+function autoSaveBaro(v){
+  var now = Date.now();
+  // Calculate direction vs last reading
+  var direction = null;
+  var dropRate = null;
+  if(baroHistory.length > 0){
+    var last = baroHistory[0];
+    var diff = Math.round((v - last.v)*100)/100;
+    var hoursAgo = (now - last.ts)/3600000;
+    dropRate = hoursAgo > 0 ? Math.round(diff/hoursAgo*100)/100 : null;
+    direction = diff <= -0.15 ? 'dropping-fast' : diff <= -0.05 ? 'dropping' : diff >= 0.05 ? 'rising' : 'stable';
+  }
+  baroHistory.unshift({v:v, ts:now, dir:direction, dropRate:dropRate});
+  baroHistory = baroHistory.filter(function(e){return now-e.ts < 90*864e5}).slice(0,400);
+  localStorage.setItem('baro_history', JSON.stringify(baroHistory));
+}
+
+function getBaroTrend(){
+  if(baroHistory.length < 2) return null;
+  var now = baroHistory[0];
+  // Find reading ~3 hours ago
+  var threeHoursAgo = now.ts - 3*3600*1000;
+  var ref = baroHistory.find(function(e){return e.ts <= threeHoursAgo});
+  if(!ref) ref = baroHistory[baroHistory.length-1];
+  var diff = Math.round((now.v - ref.v)*100)/100;
+  var hoursDiff = Math.round((now.ts - ref.ts)/3600000*10)/10;
+  return {diff:diff, hours:hoursDiff, rate:Math.round(diff/hoursDiff*100)/100};
+}
+
+function getTrendDisplay(trend){
+  if(!trend) return {arrow:'', label:'No history yet', col:'var(--muted)', risk:'unknown'};
+  var d = trend.diff;
+  if(d <= -0.15) return {arrow:'↓↓', label:'Dropping fast ('+d+' inHg in '+trend.hours+'h) — high headache risk', col:'#c4788a', risk:'high'};
+  if(d <= -0.05) return {arrow:'↓', label:'Dropping slowly ('+d+' inHg in '+trend.hours+'h) — watch symptoms', col:'#b8763a', risk:'medium'};
+  if(d >= 0.05) return {arrow:'↑', label:'Rising ('+d+' inHg in '+trend.hours+'h) — symptoms should ease', col:'#6b8f71', risk:'low'};
+  return {arrow:'→', label:'Stable ('+d+' inHg in '+trend.hours+'h) — likely fine', col:'#6b8f71', risk:'low'};
+}
 
 function fetchBaro(){
   document.getElementById('baro-val').innerHTML='…<span class="baro-unit"> inHg</span>';
@@ -1627,34 +1687,134 @@ function fetchBaro(){
   fetch('https://api.open-meteo.com/v1/forecast?latitude=39.9784&longitude=-86.118&current=surface_pressure&wind_speed_unit=mph&precipitation_unit=inch&timezone=America%2FIndianapolis')
     .then(function(r){return r.json()}).then(function(data){
       var pressure = data && data.current && data.current.surface_pressure;
-      if(!pressure){
-        document.getElementById('baro-val').innerHTML='Unavailable<span class="baro-unit"> inHg</span>';
-        return;
-      }
+      if(!pressure){document.getElementById('baro-val').innerHTML='Unavailable<span class="baro-unit"> inHg</span>';return}
       var inHg=(pressure*0.02953).toFixed(2);
-      document.getElementById('baro-val').innerHTML=inHg+'<span class="baro-unit"> inHg</span>';
-      document.getElementById('baro-updated').textContent='Updated '+new Date().toLocaleTimeString();
       var v=parseFloat(inHg);
       lastBaroReading = v;
+      autoSaveBaro(v);
+      var trend = getBaroTrend();
+      var td = getTrendDisplay(trend);
+      document.getElementById('baro-val').innerHTML=inHg+'<span class="baro-unit"> inHg</span>';
+      document.getElementById('baro-updated').textContent='Updated '+new Date().toLocaleTimeString();
+      // Status — combines absolute AND trend
       var el=document.getElementById('baro-status');
-      if(v>=29.80){el.style.background='#eef4ef';el.style.color='#4a6b50';el.textContent='✓ Good — typically fine for you'}
-      else if(v>=29.50){el.style.background='#fdf3ea';el.style.color='#b8763a';el.textContent='⚠ Mild symptoms possible'}
-      else{el.style.background='#fdf0f3';el.style.color='#c4788a';el.textContent='⛔ Headache / fog / agitation risk'}
-      // Run trigger analysis with live baro
-      runTriggerAnalysis(v, null);
-    }).catch(function(e){
+      var absRisk=v>=29.80?'low':v>=29.50?'medium':'high';
+      var finalRisk=td.risk==='high'||absRisk==='high'?'high':td.risk==='medium'||absRisk==='medium'?'medium':'low';
+      if(finalRisk==='high'){el.style.background='#fdf0f3';el.style.color='#c4788a';el.textContent='⛔ High risk — headache / fog / agitation likely'}
+      else if(finalRisk==='medium'){el.style.background='#fdf3ea';el.style.color='#b8763a';el.textContent='⚠ Moderate — watch your symptoms'}
+      else{el.style.background='#eef4ef';el.style.color='#4a6b50';el.textContent='✓ Good — typically fine for you'}
+      // Trend display
+      var trendEl=document.getElementById('baro-trend');
+      if(trendEl){
+        trendEl.innerHTML='<span style="font-size:18px;font-weight:700;color:'+td.col+'">'+td.arrow+'</span>'
+          +' <span style="font-size:12px;color:'+td.col+'">'+td.label+'</span>';
+      }
+      runTriggerAnalysis(v, trend);
+      renderBaroLog();
+    }).catch(function(){
       document.getElementById('baro-val').innerHTML='Error<span class="baro-unit"> inHg</span>';
       document.getElementById('baro-updated').textContent='Failed — tap Refresh to try again';
     });
 }
+
 function logBaroManual(){
   var v=parseFloat(document.getElementById('baro-manual').value);if(isNaN(v))return;
+  autoSaveBaro(v);
+  lastBaroReading=v;
   baroLog.unshift({v:v,t:new Date().toLocaleString()});baroLog=baroLog.slice(0,10);lsSet('baro_log',baroLog);
-  document.getElementById('baro-manual').value='';renderBaroLog();
+  document.getElementById('baro-manual').value='';
+  renderBaroLog();
+  var trend=getBaroTrend();
+  var trendEl=document.getElementById('baro-trend');
+  if(trendEl){var td=getTrendDisplay(trend);trendEl.innerHTML='<span style="font-size:18px;font-weight:700;color:'+td.col+'">'+td.arrow+'</span> <span style="font-size:12px;color:'+td.col+'">'+td.label+'</span>'}
+  runTriggerAnalysis(v,trend);
 }
+
 function renderBaroLog(){
-  var el=document.getElementById('baro-log');if(!baroLog.length){el.innerHTML='<span style="font-size:12px;color:var(--muted)">No entries yet</span>';return}
-  el.innerHTML=baroLog.slice(0,5).map(function(e){var col=e.v>=29.80?'#2e7d32':e.v>=29.50?'#e65100':'#c2185b';return'<div class="info-row"><span class="info-lbl">'+e.t+'</span><span style="font-weight:600;color:'+col+'">'+e.v+' inHg</span></div>'}).join('');
+  var el=document.getElementById('baro-log');if(!el)return;
+  var recent=baroHistory.slice(0,10);
+  if(!recent.length){el.innerHTML='<span style="font-size:12px;color:var(--muted)">No readings yet — tap Refresh above</span>';return}
+  el.innerHTML=recent.map(function(e){
+    var col=e.v>=29.80?'#4a6b50':e.v>=29.50?'#b8763a':'#c4788a';
+    // Use saved direction if available, otherwise calculate from neighbours
+    var dir=e.dir||null;
+    var arrow=dir==='dropping-fast'?'↓↓':dir==='dropping'?'↓':dir==='rising'?'↑':dir==='stable'?'→':'';
+    var arrowCol=dir==='dropping-fast'||dir==='dropping'?'#c4788a':dir==='rising'?'#4a6b50':'#9a8f88';
+    var d=new Date(e.ts);
+    var label=d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    var rateLabel=e.dropRate&&Math.abs(e.dropRate)>=0.01?'<span style="font-size:10px;color:var(--muted);margin-left:2px">('+e.dropRate+'/hr)</span>':'';
+    return'<div class="info-row">'
+      +'<span class="info-lbl" style="font-size:11px">'+label+'</span>'
+      +'<div style="display:flex;align-items:center;gap:5px">'
+      +(arrow?'<span style="font-size:14px;font-weight:700;color:'+arrowCol+'">'+arrow+'</span>':'')
+      +'<span style="font-weight:600;color:'+col+'">'+e.v+' inHg</span>'
+      +rateLabel
+      +'</div>'
+      +'</div>';
+  }).join('');
+  renderBaroCorrelation();
+}
+
+function renderBaroCorrelation(){
+  var el=document.getElementById('baro-correlation');if(!el)return;
+  var headacheDays=[];
+  for(var i=0;i<90;i++){
+    var d=new Date(TODAY);d.setDate(d.getDate()-i);
+    var key=d.toISOString().split('T')[0];
+    var h=localStorage.getItem('headache_'+key);
+    if(h&&h!=='none'){
+      var dayStart=d.getTime();var dayEnd=dayStart+864e5;
+      var dayReadings=baroHistory.filter(function(e){return e.ts>=dayStart&&e.ts<dayEnd});
+      var minReading=dayReadings.length?Math.min.apply(null,dayReadings.map(function(e){return e.v})):null;
+      var hadDrop=dayReadings.some(function(e){return e.dir==='dropping-fast'||e.dir==='dropping'});
+      var fastDrop=dayReadings.some(function(e){return e.dir==='dropping-fast'});
+      var onset=localStorage.getItem('headache_onset_'+key);
+      var resolved=localStorage.getItem('headache_resolved_'+key);
+      var duration=null;
+      if(onset&&resolved){
+        var oMins=parseInt(onset.split(':')[0])*60+parseInt(onset.split(':')[1]);
+        var rMins=parseInt(resolved.split(':')[0])*60+parseInt(resolved.split(':')[1]);
+        if(rMins>oMins)duration=Math.round((rMins-oMins)/60*10)/10;
+      }
+      headacheDays.push({date:key,level:h,minBaro:minReading,hadDrop:hadDrop,fastDrop:fastDrop,onset:onset,resolved:resolved,duration:duration,d:d});
+    }
+  }
+  if(!headacheDays.length){
+    el.innerHTML='<div style="font-size:12px;color:var(--muted);padding:.5rem 0">No headache days logged yet. Log headaches in the Headache & pain section above and correlations will appear here automatically.</div>';
+    return;
+  }
+  var lowPressureDays=headacheDays.filter(function(d){return d.minBaro&&d.minBaro<29.80}).length;
+  var dropDays=headacheDays.filter(function(d){return d.hadDrop}).length;
+  var fastDropDays=headacheDays.filter(function(d){return d.fastDrop}).length;
+  var total=headacheDays.length;
+  var lowPct=Math.round(lowPressureDays/total*100);
+  var dropPct=dropDays?Math.round(dropDays/total*100):0;
+  el.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:.75rem">'
+    +'<div style="background:var(--cream-dark);border-radius:var(--radius);padding:.6rem;text-align:center"><div style="font-family:Cormorant Garamond,serif;font-size:22px;font-weight:500;color:var(--ink)">'+total+'</div><div style="font-size:10px;color:var(--muted);margin-top:2px">Headache days</div></div>'
+    +'<div style="background:#fdf3ea;border-radius:var(--radius);padding:.6rem;text-align:center"><div style="font-family:Cormorant Garamond,serif;font-size:22px;font-weight:500;color:var(--col-warn)">'+dropPct+'%</div><div style="font-size:10px;color:var(--muted);margin-top:2px">Had pressure drop</div></div>'
+    +'<div style="background:#fdf0f3;border-radius:var(--radius);padding:.6rem;text-align:center"><div style="font-family:Cormorant Garamond,serif;font-size:22px;font-weight:500;color:var(--blush)">'+lowPct+'%</div><div style="font-size:10px;color:var(--muted);margin-top:2px">Low pressure day</div></div>'
+    +'</div>'
+    +(dropPct>=60||lowPct>=60?'<div style="background:#fdf0f3;border-radius:var(--radius);padding:.6rem .9rem;font-size:12px;color:var(--blush);line-height:1.5;margin-bottom:.75rem">Strong pattern detected — barometric pressure appears to be a significant trigger for you.</div>':'')
+    +'<div style="font-size:11px;color:var(--muted);font-weight:500;margin-bottom:.5rem">Recent headache days</div>'
+    +headacheDays.slice(0,5).map(function(day){
+      var levelCol=day.level==='severe'?'var(--blush)':day.level==='moderate'?'var(--col-warn)':'var(--gold)';
+      var levelBg=day.level==='severe'?'#fdf0f3':day.level==='moderate'?'#fdf3ea':'#faf4e8';
+      return'<div class="info-row">'
+        +'<div>'
+        +'<div style="font-size:13px;font-weight:500;color:var(--ink)">'+day.d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</div>'
+        +'<div style="font-size:11px;color:var(--muted)">'
+        +(day.onset?'Started '+day.onset:'No time logged')
+        +(day.resolved?' → resolved '+day.resolved:'')
+        +(day.duration?' ('+day.duration+'h)':'')
+        +' · '
+        +(day.fastDrop?'↓↓ Fast drop · ':'')
+        +(day.hadDrop&&!day.fastDrop?'↓ Dropping · ':'')
+        +(day.minBaro?day.minBaro+' inHg min':'No pressure data')
+        +'</div>'
+        +'</div>'
+        +'<span style="font-size:11px;font-weight:600;color:'+levelCol+';background:'+levelBg+';padding:2px 8px;border-radius:8px">'+day.level+'</span>'
+        +'</div>';
+    }).join('');
 }
 
 // ── POLLEN ────────────────────────────────────────────────────────
@@ -1687,15 +1847,24 @@ var HEADACHE_TRIGGERS_LIST=[
   {id:'screen',label:'Screen / eye strain',icon:'💻'},
   {id:'unknown',label:'Not sure',icon:'🤷'},
 ];
-function runTriggerAnalysis(baroInHg, aqiVal){
+function runTriggerAnalysis(baroInHg, trend){
   var el = document.getElementById('trigger-analysis');
   if (!el) return;
   var month = TODAY.getMonth();
   var season = INDIANA_POLLEN[month];
   var phase = getPhase(TODAY);
 
-  // Score each trigger
-  var baroRisk = baroInHg >= 29.80 ? 'low' : baroInHg >= 29.50 ? 'medium' : 'high';
+  // Score baro — both absolute AND rate of change
+  var absRisk = baroInHg >= 29.80 ? 'low' : baroInHg >= 29.50 ? 'medium' : 'high';
+  var trendRisk = 'low';
+  var trendNote = '';
+  if(trend){
+    if(trend.diff <= -0.15){trendRisk='high';trendNote=' — dropping fast ↓↓ ('+trend.diff+' inHg/'+trend.hours+'h)'}
+    else if(trend.diff <= -0.05){trendRisk='medium';trendNote=' — dropping ↓ ('+trend.diff+' inHg/'+trend.hours+'h)'}
+    else if(trend.diff >= 0.05){trendNote=' — rising ↑, symptoms should ease'}
+    else trendNote=' — stable →';
+  }
+  var baroRisk = absRisk==='high'||trendRisk==='high'?'high':absRisk==='medium'||trendRisk==='medium'?'medium':'low';
   var pollenHighLevels = ['High','Very High','Moderate-High'];
   var pollenMedLevels = ['Moderate'];
   var pollenRisk = (pollenHighLevels.includes(season.trees)||pollenHighLevels.includes(season.grass)||pollenHighLevels.includes(season.weeds)) ? 'high'
@@ -1705,9 +1874,9 @@ function runTriggerAnalysis(baroInHg, aqiVal){
   var triggers = [];
   var overallRisk = 'low';
 
-  if (baroRisk === 'high') { triggers.push({label:'Barometric pressure drop',detail:baroInHg+' inHg — below your threshold',col:'var(--col-high)',icon:'🌩️'}); overallRisk='high'; }
-  else if (baroRisk === 'medium') { triggers.push({label:'Barometric pressure',detail:baroInHg+' inHg — mild zone',col:'var(--col-warn)',icon:'⛅'}); if(overallRisk==='low')overallRisk='medium'; }
-  else { triggers.push({label:'Barometric pressure',detail:baroInHg+' inHg — stable, unlikely trigger',col:'var(--col-ok)',icon:'☀️'}); }
+  if (baroRisk === 'high') { triggers.push({label:'Barometric pressure',detail:baroInHg+' inHg'+trendNote+' — below your threshold',col:'var(--col-high)',icon:'🌩️'}); overallRisk='high'; }
+  else if (baroRisk === 'medium') { triggers.push({label:'Barometric pressure',detail:baroInHg+' inHg'+trendNote,col:'var(--col-warn)',icon:'⛅'}); if(overallRisk==='low')overallRisk='medium'; }
+  else { triggers.push({label:'Barometric pressure',detail:baroInHg+' inHg'+trendNote+' — unlikely trigger today',col:'var(--col-ok)',icon:'☀️'}); }
 
   if (pollenRisk === 'high') { triggers.push({label:'Pollen load',detail:season.grass+' grass / '+season.trees+' trees — high histamine load',col:'var(--col-high)',icon:'🌿'}); overallRisk='high'; }
   else if (pollenRisk === 'medium') { triggers.push({label:'Pollen load',detail:'Moderate — possible histamine contribution',col:'var(--col-warn)',icon:'🌱'}); if(overallRisk==='low')overallRisk='medium'; }
@@ -1774,8 +1943,22 @@ function buildPollen(){
   fetchAQI();
 }
 
+function saveHeadacheTimes(){
+  var onset=document.getElementById('headache-onset').value;
+  var resolved=document.getElementById('headache-resolved').value;
+  if(onset)localStorage.setItem('headache_onset_'+todayKey(),onset);
+  if(resolved)localStorage.setItem('headache_resolved_'+todayKey(),resolved);
+}
+
 function buildHeadacheSection(){
   if(headacheLevel)setHeadache(headacheLevel);
+  // Restore times
+  var onset=localStorage.getItem('headache_onset_'+todayKey());
+  var resolved=localStorage.getItem('headache_resolved_'+todayKey());
+  var onsetEl=document.getElementById('headache-onset');
+  var resolvedEl=document.getElementById('headache-resolved');
+  if(onsetEl&&onset)onsetEl.value=onset;
+  if(resolvedEl&&resolved)resolvedEl.value=resolved;
   var mc=document.getElementById('headache-meds');if(!mc)return;mc.innerHTML='';
   HEADACHE_MEDS.forEach(function(m){
     var btn=document.createElement('button');
