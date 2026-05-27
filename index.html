@@ -170,12 +170,11 @@ textarea{resize:vertical;min-height:70px}
 <div class="tabs">
   <button class="tab-btn" onclick="showTab('protocol',this)">Protocol</button>
   <button class="tab-btn" onclick="showTab('symptoms',this)">Symptoms</button>
-  <button class="tab-btn" onclick="showTab('cycle',this)">Cycle</button>
   <button class="tab-btn" onclick="showTab('stress',this)">Stress & NS</button>
   <button class="tab-btn" onclick="showTab('exercise',this)">Exercise</button>
-  <button class="tab-btn" onclick="showTab('baro',this)">Barometric</button>
-  <button class="tab-btn" onclick="showTab('pollen',this)">Pollen</button>
+  <button class="tab-btn" onclick="showTab('environment',this)">Environment</button>
   <button class="tab-btn" onclick="showTab('meals',this)">Meals</button>
+  <button class="tab-btn" onclick="showTab('cycle',this)">Cycle</button>
   <button class="tab-btn" onclick="showTab('results',this)">Lab Results</button>
   <button class="tab-btn" onclick="showTab('genetics',this)">Genetics</button>
   <button class="tab-btn" onclick="showTab('notes',this)">Notes</button>
@@ -187,8 +186,16 @@ textarea{resize:vertical;min-height:70px}
     <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:var(--muted)">Today's protocol</span><span id="proto-count" style="font-weight:600;color:var(--sage)"></span></div>
     <div class="progress-bar"><div class="progress-fill" id="proto-fill" style="width:0%"></div></div>
   </div>
+
+  <div class="section-title">Upcoming tests</div>
+  <div class="card" id="test-reminders"></div>
+
   <div id="proto-sections"></div>
-  <div class="btn-row"><button class="btn-primary" onclick="saveProtocol()">Save to Sheets</button><span id="proto-fb" class="save-feedback"></span></div>
+  <div class="btn-row">
+    <button class="btn-primary" onclick="saveProtocol()">Save to Sheets</button>
+    <button class="btn-outline" onclick="sendProtocolToClauде()">Ask Claude ↗</button>
+    <span id="proto-fb" class="save-feedback"></span>
+  </div>
 </div>
 
 <div id="tab-symptoms" class="panel">
@@ -196,10 +203,30 @@ textarea{resize:vertical;min-height:70px}
   <div class="phase-note" id="sym-phase-note"></div>
   <div class="section-title">General daily wellbeing</div>
   <div class="card" id="general-sliders"></div>
-  <div class="btn-row"><button class="btn-primary" onclick="saveSymptoms()">Save to Sheets</button><span id="sym-fb" class="save-feedback"></span></div>
+  <div class="btn-row">
+    <button class="btn-primary" onclick="saveSymptoms()">Save to Sheets</button>
+    <button class="btn-outline" onclick="sendSymptomsToClauде()">Ask Claude ↗</button>
+    <span id="sym-fb" class="save-feedback"></span>
+  </div>
 </div>
 
 <div id="tab-cycle" class="panel">
+  <div class="card" style="margin-bottom:.75rem">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+      <div>
+        <div style="font-size:13px;font-weight:500;color:var(--ink)">Period started</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:1px" id="period-start-display"></div>
+      </div>
+      <button class="btn-outline" style="padding:5px 12px;font-size:11px" onclick="togglePeriodEdit()">Update</button>
+    </div>
+    <div id="period-edit-row" style="display:none;margin-top:.75rem;display:none">
+      <input type="date" id="cycle-period-start-input" style="margin-bottom:.5rem">
+      <div style="display:flex;gap:8px">
+        <button class="btn-primary" onclick="savePeriodStartFromCycle()" style="font-size:12px;padding:7px 16px">Save</button>
+        <button class="btn-outline" onclick="togglePeriodEdit()" style="font-size:12px;padding:7px 16px">Cancel</button>
+      </div>
+    </div>
+  </div>
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
       <button onclick="prevMonth()" class="btn-outline" style="padding:4px 12px">‹</button>
@@ -225,10 +252,22 @@ textarea{resize:vertical;min-height:70px}
     <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)"><div style="width:10px;height:10px;border-radius:2px;background:#e3f2fd"></div>Ovulation</div>
     <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)"><div style="width:10px;height:10px;border-radius:2px;background:#fff3e0"></div>Luteal</div>
   </div>
-  <div class="section-title" style="margin-top:1.25rem">Cycle & PMS symptoms</div>
-  <p style="font-size:12px;color:var(--muted);margin-bottom:.5rem">0 = none, 10 = severe</p>
-  <div class="card" id="cycle-sliders"></div>
+  <div class="section-title" style="margin-top:1.25rem">Mood today</div>
+  <div class="tap-grid" id="cycle-mood-grid"></div>
+  <div class="section-title">Symptoms today</div>
+  <div class="tap-grid" id="cycle-symptom-grid"></div>
+  <div class="section-title">Physical symptoms</div>
+  <div class="tap-grid" id="cycle-physical-grid"></div>
   <div class="btn-row"><button class="btn-primary" onclick="saveCycleSymptoms()">Save to Sheets</button><span id="cycle-sym-fb" class="save-feedback"></span></div>
+
+  <div class="section-title">Cycle history</div>
+  <div id="cycle-history-section"></div>
+
+  <div class="section-title">Trends</div>
+  <div id="cycle-trends-section"></div>
+
+  <div class="section-title">Symptom patterns</div>
+  <div id="cycle-patterns-section"></div>
 </div>
 
 <div id="tab-stress" class="panel">
@@ -280,59 +319,77 @@ textarea{resize:vertical;min-height:70px}
   </div>
 </div>
 
-<div id="tab-baro" class="panel">
+<div id="tab-environment" class="panel">
+
+  <div class="section-title">What's causing your symptoms?</div>
+  <div class="card" id="trigger-analysis">
+    <div style="font-size:12px;color:var(--muted)">Loading trigger analysis...</div>
+  </div>
+
+  <div class="section-title">Barometric pressure — Carmel, IN</div>
   <div class="card">
     <div class="baro-big" id="baro-val">—<span class="baro-unit"> inHg</span></div>
     <div style="text-align:center"><div class="baro-status" id="baro-status"></div></div>
     <div style="text-align:center;font-size:11px;color:var(--muted);margin:.5rem 0" id="baro-updated"></div>
     <button class="btn-outline" onclick="fetchBaro()" style="width:100%">Refresh pressure</button>
   </div>
-  <div class="section-title">Your thresholds (Carmel, IN)</div>
   <div class="card">
     <div class="info-row"><span class="info-lbl">≥ 29.80 inHg</span><span class="badge badge-normal">Typically fine</span></div>
     <div class="info-row"><span class="info-lbl">29.50–29.80 inHg</span><span class="badge badge-low">Mild symptoms likely</span></div>
     <div class="info-row"><span class="info-lbl">< 29.50 inHg</span><span class="badge badge-high">Headache / fog / agitation risk</span></div>
   </div>
-  <div class="section-title">Manual log</div>
   <div class="card">
     <div style="display:flex;gap:8px;align-items:center">
       <input type="number" id="baro-manual" placeholder="29.82" step="0.01" style="flex:1">
-      <button class="btn-primary" onclick="logBaroManual()">Log</button>
+      <button class="btn-primary" onclick="logBaroManual()">Log manually</button>
     </div>
     <div id="baro-log" style="margin-top:.75rem"></div>
   </div>
-</div>
 
-<div id="tab-pollen" class="panel">
-  <div class="section-title">Pollen season — Carmel, IN</div>
+  <div class="section-title">Pollen — Carmel, IN</div>
   <div class="card">
     <p id="season-note" style="font-size:12px;color:var(--muted);margin-bottom:.75rem;line-height:1.6"></p>
     <div class="pollen-grid" id="pollen-season-grid"></div>
-    <p style="font-size:11px;color:var(--muted);margin-top:.75rem">Seasonal averages for Carmel, IN. Live granular pollen counts not available for US via free APIs.</p>
+    <p style="font-size:11px;color:var(--muted);margin-top:.75rem">Seasonal averages for Carmel, IN. Live granular pollen counts not available for the US via free APIs.</p>
   </div>
+
   <div class="section-title">Live air quality — Carmel, IN</div>
   <div class="card">
     <div class="aqi-grid" id="aqi-grid"><div style="grid-column:span 2;font-size:12px;color:var(--muted)">Loading...</div></div>
     <div id="aqi-updated" style="font-size:11px;color:var(--muted)"></div>
     <button class="btn-outline" onclick="fetchAQI()" style="width:100%;margin-top:.75rem">Refresh air quality</button>
   </div>
+
   <div id="luteal-warn" style="display:none" class="warn-box"></div>
-  <div class="section-title">Overall histamine burden today</div>
-  <div style="display:flex;gap:8px;margin-bottom:1rem">
+
+  <div class="section-title">How is your body today?</div>
+  <p style="font-size:12px;color:var(--muted);margin-bottom:.6rem">Tap anything that applies — no need to self-diagnose</p>
+  <div class="tap-grid" id="body-symptoms"></div>
+
+  <div class="section-title">High-histamine foods eaten today</div>
+  <div class="tap-grid" id="food-triggers"></div>
+
+  <div style="display:flex;align-items:center;gap:12px;background:var(--cream-dark);border-radius:10px;padding:.75rem 1rem;margin-bottom:.75rem;border:1px solid var(--border)">
+    <input type="checkbox" id="quercetin-taken" style="width:16px;height:16px;cursor:pointer;accent-color:var(--sage);flex-shrink:0">
+    <div><div style="font-size:13px;font-weight:500">Quercetin + Bromelain taken today</div><div style="font-size:11px;color:var(--muted);margin-top:1px">Primary mast cell stabiliser — especially important on high pollen or low pressure days</div></div>
+  </div>
+
+  <div class="section-title">Overall burden today</div>
+  <div style="display:flex;gap:8px;margin-bottom:.85rem">
     <button class="big-tap" id="burden-fine" onclick="setBurden('fine')">✓ Feeling fine</button>
     <button class="big-tap" id="burden-mild" onclick="setBurden('mild')">⚡ Mild</button>
     <button class="big-tap" id="burden-flaring" onclick="setBurden('flaring')">🔥 Flaring</button>
   </div>
-  <div class="section-title">What are you noticing?</div>
-  <div class="tap-grid" id="body-symptoms"></div>
-  <div class="section-title">High-histamine foods today</div>
-  <div class="tap-grid" id="food-triggers"></div>
-  <div style="display:flex;align-items:center;gap:12px;background:var(--base);border-radius:10px;padding:.75rem 1rem;margin-bottom:.75rem">
-    <input type="checkbox" id="quercetin-taken" style="width:16px;height:16px;cursor:pointer;accent-color:var(--sage);flex-shrink:0">
-    <div><div style="font-size:13px;font-weight:500">Quercetin + Bromelain taken today</div><div style="font-size:11px;color:var(--muted);margin-top:1px">Primary mast cell stabiliser</div></div>
-  </div>
-  <textarea id="pollen-notes" placeholder="Anything else — where you went, how long outside..."></textarea>
+
+  <textarea id="pollen-notes" placeholder="Any other notes — where you went, how long outside, what you ate..."></textarea>
   <div class="btn-row"><button class="btn-primary" onclick="savePollen()">Save to Sheets</button><span id="pollen-fb" class="save-feedback"></span></div>
+
+  <div class="section-title">Your sensitivity profile</div>
+  <div class="card" style="font-size:12px;color:var(--muted);line-height:1.8">
+    <div style="margin-bottom:.4rem"><strong style="color:var(--ink)">Why you're sensitive:</strong> FCER1A (reactive mast cells) + AOC1 (low DAO enzyme) + ESR1 = histamine released easily, cleared slowly, amplified by estrogen.</div>
+    <div style="margin-bottom:.4rem"><strong style="color:var(--ink)">Triggers stack:</strong> Low pressure + high pollen + luteal phase + high-histamine foods = severe symptoms. One alone is manageable. All four together is not.</div>
+    <div><strong style="color:var(--ink)">Your symptoms aren't classic allergy.</strong> More likely: fatigue, agitation, brain fog, crawling-out-of-skin feeling — especially in luteal phase.</div>
+  </div>
 </div>
 
 <div id="tab-meals" class="panel">
@@ -356,6 +413,8 @@ textarea{resize:vertical;min-height:70px}
   </div>
   <div class="section-title">Priority foods today</div>
   <div class="card" id="priority-foods"></div>
+  <div class="section-title">Meal history</div>
+  <div id="meal-history"></div>
 </div>
 
 <div id="tab-results" class="panel">
@@ -396,9 +455,9 @@ textarea{resize:vertical;min-height:70px}
       <span id="conn-status" class="sheet-status disconnected">Not connected</span>
     </div>
   </div>
-  <div class="section-title">Cycle tab PIN lock</div>
+  <div class="section-title">Private tab PIN lock</div>
   <div class="card">
-    <p style="font-size:12px;color:var(--muted);margin-bottom:.75rem;line-height:1.6">Set a 4-digit PIN so the Cycle tab requires a code before showing. Stays unlocked for your current session once entered.</p>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:.75rem;line-height:1.6">Set a 4-digit PIN so private tabs require a code before showing. Stays unlocked for your current session once entered.</p>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <button class="btn-primary" onclick="openPinModal('set')">Set PIN</button>
       <button class="btn-outline" onclick="clearCyclePin()">Remove PIN</button>
@@ -407,7 +466,7 @@ textarea{resize:vertical;min-height:70px}
   </div>
   <div class="section-title">Period start date</div>
   <div class="card">
-    <p style="font-size:12px;color:var(--muted);margin-bottom:.75rem">Update each time your period starts to keep cycle calculations accurate.</p>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:.75rem">Update each time your period starts to keep date calculations accurate.</p>
     <input type="date" id="period-start-input" style="margin-bottom:.75rem">
     <button class="btn-primary" onclick="savePeriodStart()">Update</button>
   </div>
@@ -522,13 +581,12 @@ function activateTab(id,btn){
     else if(id==='cycle')buildCalendar();
     else if(id==='stress')buildStress();
     else if(id==='exercise')buildExercise();
-    else if(id==='pollen')buildPollen();
+    else if(id==='environment'){buildPollen();fetchBaro();}
     else if(id==='meals')buildMeals();
     else if(id==='results')buildResults();
     else if(id==='genetics')buildGenetics();
     builtTabs[id]=true;
   }
-  if(id==='baro')fetchBaro();
 }
 
 // ── HEADER ────────────────────────────────────────────────────────
@@ -537,6 +595,143 @@ function initHeader(){
   document.getElementById('note-date').textContent=TODAY.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
   var el=document.getElementById('hdr-phase');
   el.textContent='';el.style.background='';el.style.color='';
+}
+
+// ── STREAKS ───────────────────────────────────────────────────────
+var NON_NEGOTIABLES=[
+  {id:'methyl',label:'Methyl Guard Plus',note:'Most critical supplement'},
+  {id:'flowbalance',label:'Flow Balance',note:'Must be uninterrupted — Vitex needs 2-3 months'},
+  {id:'iron',label:'Iron Bisglycinate',note:'Rebuilding ferritin from 18'},
+  {id:'cruciferous',label:'Cruciferous vegetables',note:'Confirmed estrogen dominance'},
+  {id:'lumebox',label:'Lumebox Red Light',note:'6-7 min daily'},
+  {id:'pemf',label:'PEMF Mat Level 1',note:'Every night — adrenal recovery'},
+  {id:'magnesium',label:'Magnesium + PharmaGABA',note:'Every night at bedtime'},
+  {id:'sunlight',label:'Morning sunlight',note:'10 min within 30 min of waking'},
+];
+
+function calcStreak(supplementId){
+  var streak=0;
+  for(var i=1;i<=90;i++){
+    var d=new Date(TODAY);d.setDate(d.getDate()-i);
+    var key=d.toISOString().split('T')[0];
+    var dayChecks=lsGet('checks_'+key,{});
+    if(dayChecks[supplementId])streak++;
+    else break;
+  }
+  return streak;
+}
+
+function buildStreaks(){
+  var el=document.getElementById('streak-section');
+  if(!el)return;
+  el.innerHTML=NON_NEGOTIABLES.map(function(item){
+    var streak=calcStreak(item.id);
+    var todayDone=!!checks[item.id];
+    var streakCol=streak>=14?'var(--sage)':streak>=7?'var(--gold)':streak>=3?'var(--ink-mid)':'var(--muted)';
+    var emoji=streak>=21?'🔥🔥':streak>=14?'🔥':streak>=7?'⭐':streak>=3?'✓':'·';
+    return'<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--cream-dark)">'
+      +'<div style="width:16px;height:16px;border-radius:4px;background:'+(todayDone?'var(--sage)':'var(--cream-dark)')+';border:1.5px solid '+(todayDone?'var(--sage)':'var(--border)')+';flex-shrink:0"></div>'
+      +'<div style="flex:1"><div style="font-size:13px;font-weight:500;color:'+(todayDone?'var(--ink)':'var(--muted)')+'">'+item.label+'</div>'
+      +'<div style="font-size:11px;color:var(--muted);margin-top:1px">'+item.note+'</div></div>'
+      +'<div style="text-align:right;flex-shrink:0">'
+      +'<div style="font-size:14px;font-weight:600;color:'+streakCol+'">'+emoji+' '+streak+'</div>'
+      +'<div style="font-size:10px;color:var(--muted)">day streak</div>'
+      +'</div></div>';
+  }).join('');
+}
+
+// ── TEST REMINDERS ────────────────────────────────────────────────
+var UPCOMING_TESTS=[
+  {name:'Vitamin D 25-OH',date:'2026-06-01',location:'Everlywell — at-home kit',prep:'URGENT — 3 genetic variants impairing conversion, transport, and receptor response. Almost certainly deficient.',urgent:true},
+  {name:'Choose Health Metabolic 7-in-1',date:'2026-06-05',location:'Mail-in — awaiting results',prep:'Mailed May 24. Results expected any day. Covers: Cholesterol, hsCRP, Insulin Resistance, GGT, HbA1c, Fasting Glucose, Visceral Fat.',urgent:false,waiting:true},
+  {name:'Ferritin recheck',date:'2026-06-15',location:'Quest Diagnostics, 11911 N Meridian St, Carmel',prep:'Morning, no fasting required. Target result: 35-50 ng/mL (was 18 in March).',urgent:false},
+  {name:'Ulta Lab Tests bundle',date:'2026-12-31',location:'Quest Diagnostics, 11911 N Meridian St, Carmel',prep:'Fasting required. Before 10am. Order: Free Testosterone, Homocysteine, Reverse T3. Add Serum Progesterone on Day 21 only.',urgent:false,waiting:true},
+];
+
+function daysUntil(dateStr){
+  var target=new Date(dateStr+'T00:00:00');
+  return Math.round((target-TODAY)/864e5);
+}
+
+function buildTestReminders(){
+  var el=document.getElementById('test-reminders');
+  if(!el)return;
+  var sorted=UPCOMING_TESTS.slice().sort(function(a,b){return daysUntil(a.date)-daysUntil(b.date)});
+  el.innerHTML=sorted.map(function(t){
+    var days=daysUntil(t.date);
+    var daysLabel=t.waiting?'Awaiting results':days<0?'Overdue by '+Math.abs(days)+'d':days===0?'Today!':days===1?'Tomorrow':'In '+days+' days';
+    var urgCol=t.waiting?'var(--col-pending)':t.urgent||days<=0?'var(--col-high)':days<=7?'var(--col-warn)':'var(--sage)';
+    var urgBg=t.waiting?'var(--col-pending-bg)':t.urgent||days<=0?'var(--col-high-bg)':days<=7?'var(--col-warn-bg)':'var(--col-ok-bg)';
+    return'<div style="padding:10px 0;border-bottom:1px solid var(--cream-dark)">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:5px">'
+      +'<div style="font-size:13px;font-weight:500;color:var(--ink)">'+t.name+(t.urgent?' <span style="font-size:10px;background:var(--col-high-bg);color:var(--col-high);padding:1px 7px;border-radius:8px;font-weight:600;margin-left:4px">URGENT</span>':'')+'</div>'
+      +'<span style="font-size:11px;font-weight:600;color:'+urgCol+';background:'+urgBg+';padding:3px 9px;border-radius:10px;flex-shrink:0;white-space:nowrap">'+daysLabel+'</span>'
+      +'</div>'
+      +'<div style="font-size:11px;color:var(--muted);margin-bottom:3px">📍 '+t.location+'</div>'
+      +'<div style="font-size:11px;color:var(--ink-mid);line-height:1.5">'+t.prep+'</div>'
+      +'</div>';
+  }).join('');
+}
+
+// ── SMART CLAUDE BUTTONS ──────────────────────────────────────────
+function getRecentSymAvg(days){
+  var totals={};var counts={};
+  for(var i=1;i<=days;i++){
+    var d=new Date(TODAY);d.setDate(d.getDate()-i);
+    var key=d.toISOString().split('T')[0];
+    var saved=lsGet('symVals_'+key,null);
+    if(saved){
+      Object.keys(saved).forEach(function(k){
+        if(!totals[k])totals[k]=0;if(!counts[k])counts[k]=0;
+        totals[k]+=parseFloat(saved[k]||0);counts[k]++;
+      });
+    }
+  }
+  var avgs={};Object.keys(totals).forEach(function(k){avgs[k]=Math.round(totals[k]/counts[k]*10)/10});
+  return avgs;
+}
+
+function getStreakSummary(){
+  return NON_NEGOTIABLES.map(function(item){return item.label+': '+calcStreak(item.id)+'d'}).join(', ');
+}
+
+function sendToClaudeOrCopy(msg){
+  if(typeof sendPrompt==='function'){sendPrompt(msg)}
+  else{navigator.clipboard.writeText(msg).then(function(){alert('✓ Copied! Paste into Claude.ai')}).catch(function(){alert('Copy this and paste into Claude:\n\n'+msg.slice(0,400)+'...')})}
+}
+
+function sendProtocolToClauде(){
+  var all=Object.values(SUPPLEMENTS).flat();
+  var done=all.filter(function(i){return checks[i.id]}).map(function(i){return i.name});
+  var missed=all.filter(function(i){return!checks[i.id]}).map(function(i){return i.name});
+  var avgs=getRecentSymAvg(7);
+  var symLine=GENERAL_SYMS.map(function(s){return s.label.split(' ')[0]+': '+(avgs[s.id]||'?')}).join(', ');
+  var msg='PROTOCOL SUMMARY — '+new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})+':\n\n'
+    +'Completed today: '+(done.join(', ')||'none')+'.\n'
+    +'Not yet done: '+(missed.join(', ')||'none')+'.\n\n'
+    +'NON-NEGOTIABLE STREAKS: '+getStreakSummary()+'.\n\n'
+    +'7-DAY SYMPTOM AVERAGES: '+symLine+'.\n\n'
+    +'UPCOMING TESTS: Vitamin D (URGENT), Choose Health Metabolic (arriving soon), Ferritin + Ulta bundle mid-June.\n\n'
+    +'Given all of this, what am I being most and least consistent on? What patterns stand out in my symptom averages? What should I prioritise for the rest of today based on what I\'ve missed?';
+  sendToClaudeOrCopy(msg);
+}
+
+function sendSymptomsToClauде(){
+  var current={};
+  GENERAL_SYMS.forEach(function(s){current[s.id]=symVals[s.id]||'?'});
+  var avgs7=getRecentSymAvg(7);
+  var lines=GENERAL_SYMS.map(function(s){
+    var now=current[s.id];
+    var avg=avgs7[s.id];
+    var diff=avg!=null?Math.round((parseFloat(now)-avg)*10)/10:null;
+    var trend=diff===null?'no history':diff>0.5?'↑ +'+diff:diff<-0.5?'↓ '+diff:'→ stable';
+    return s.label+': '+now+'/10 ('+trend+' vs 7d avg)';
+  });
+  var msg='SYMPTOM CHECK-IN — '+new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})+':\n\n'
+    +lines.join('\n')+'\n\n'
+    +'MY CONTEXT: Ferritin 18 (rebuilding), DHEAS depleted, estrogen dominant, slow histamine clearance (FCER1A+AOC1), GABA receptor variants, DRD2 low dopamine density, GSTP1 detox weakness.\n\n'
+    +'What do these numbers suggest given my genetic profile? Are any trends concerning or encouraging? What should I focus on today?';
+  sendToClaudeOrCopy(msg);
 }
 
 // ── SUPPLEMENTS ───────────────────────────────────────────────────
@@ -571,17 +766,13 @@ var SUPPLEMENTS={
     {id:'coldshower',name:'Cold shower',note:'30-60 sec cold at end — dopamine spike + NRF2',time:'Morning',test:'Monitor via mood and energy sliders'},
     {id:'vibration',name:'Vibration plate',note:'10 min — lymphatic drainage, bone density, circulation',time:'Evening',test:'Future: DEXA scan for bone density'},
     {id:'sauna',name:'Infrared sauna blanket',note:'30-45 min — detox via sweat. Shower after.',time:'Evening',test:'GGT (Choose Health Metabolic)'},
-    {id:'cruciferous',name:'Cruciferous vegetables',note:'DAILY — confirmed estrogen dominance, non-negotiable',time:'Meals',warn:true,test:'Estradiol retest (Everlywell ~3 months)'},
     {id:'walk',name:'20-30 min walk',note:'IL6 blood sugar superpower — after meals best',time:'Daily',test:'HbA1c + Fasting Glucose (Choose Health Metabolic)'},
-    {id:'castorliver',name:'Castor oil pack — Liver',note:'45-60 min with heat on right ribcage. Glutathione + estrogen clearance.',time:'Evening',test:'GGT + Estradiol retest'},
-    {id:'castorabdomen',name:'Castor oil pack — Lower abdomen',note:'2 nights before expected period. Uterine circulation.',time:'Evening',test:'Symptom tracker — cramps and bloating'},
-    {id:'grounding',name:'Grounding / Earthing',note:'Barefoot on grass — parasympathetic activation',time:'Morning',test:'Monitor via stress tab NS rating'},
-    {id:'breathwork',name:'Breathwork',note:'Box breathing (4-4-4-4), 4-7-8, or physiological sigh',time:'As needed',test:'Monitor via stress tab NS rating'},
-    {id:'mouthtape',name:'Mouth tape during sleep',note:'3M micropore tape. Nasal breathing → nitric oxide → parasympathetic.',time:'Bedtime',test:'Monitor via sleep quality slider'},
+    {id:'castor',name:'Castor oil pack',note:'Liver position (right ribcage) nightly. Switch to lower abdomen 2 nights before Day 1.',time:'Evening',test:'GGT + Estradiol retest — liver function and estrogen clearance'},
   ]
 };
 
 function buildProtocol(){
+  buildTestReminders();
   var cont=document.getElementById('proto-sections');
   cont.innerHTML='';
   Object.keys(SUPPLEMENTS).forEach(function(section){
@@ -597,7 +788,7 @@ function buildProtocol(){
   });
   updateProtoProgress();
 }
-function toggleCheck(id,val){checks[id]=val;lsSet('checks_'+todayKey(),checks);updateProtoProgress()}
+function toggleCheck(id,val){checks[id]=val;lsSet('checks_'+todayKey(),checks);updateProtoProgress();}
 function updateProtoProgress(){
   var all=Object.values(SUPPLEMENTS).flat();
   var done=all.filter(function(i){return checks[i.id]}).length;
@@ -661,9 +852,8 @@ function buildSymptoms(){
   document.getElementById('sym-stats').innerHTML='<div class="stat-box" style="grid-column:span 3"><div class="stat-num" id="wellbeing-score">'+avg+'</div><div class="stat-lbl">Today\'s wellbeing score</div></div>';
   document.getElementById('sym-phase-note').style.display='none';
   var gc=document.getElementById('general-sliders');gc.innerHTML='';
-  var cc=document.getElementById('cycle-sliders');cc.innerHTML='';
+  var gc=document.getElementById('general-sliders');gc.innerHTML='';
   GENERAL_SYMS.forEach(function(s){buildSlider(s,gc)});
-  CYCLE_SYMS.forEach(function(s){buildSlider(s,cc)});
 }
 async function saveSymptoms(){
   var scores=GENERAL_SYMS.map(function(s){return s.inv?10-symVals[s.id]:symVals[s.id]});
@@ -676,13 +866,374 @@ async function saveSymptoms(){
 // ── CALENDAR ──────────────────────────────────────────────────────
 var calViewMonth=new Date(TODAY.getFullYear(),TODAY.getMonth(),1);
 var selectedCalDay=null;
+var CYCLE_MOODS=[
+  {id:'calm',label:'Calm',icon:'😌'},{id:'happy',label:'Happy',icon:'😊'},
+  {id:'energetic',label:'Energetic',icon:'⚡'},{id:'frisky',label:'Frisky',icon:'😜'},
+  {id:'mood_swings',label:'Mood swings',icon:'😤'},{id:'irritated',label:'Irritated',icon:'😠'},
+  {id:'sad',label:'Sad',icon:'😢'},{id:'anxious',label:'Anxious',icon:'😰'},
+  {id:'depressed',label:'Depressed',icon:'😔'},{id:'feeling_guilty',label:'Feeling guilty',icon:'😣'},
+  {id:'obsessive',label:'Obsessive thoughts',icon:'🌀'},{id:'low_energy',label:'Low energy',icon:'🪫'},
+  {id:'apathetic',label:'Apathetic',icon:'😑'},{id:'confused',label:'Confused',icon:'😵'},
+  {id:'self_critical',label:'Very self-critical',icon:'😖'},{id:'everything_fine',label:'Everything is fine',icon:'👍'},
+];
+var CYCLE_SYMPTOMS=[
+  {id:'cramps',label:'Cramps',icon:'🌀'},{id:'tender_breasts',label:'Tender breasts',icon:'💗'},
+  {id:'headache',label:'Headache',icon:'🤕'},{id:'acne',label:'Acne',icon:'😓'},
+  {id:'backache',label:'Backache',icon:'🔙'},{id:'fatigue_c',label:'Fatigue',icon:'😴'},
+  {id:'hot_flashes',label:'Hot flashes',icon:'🔥'},{id:'night_sweats',label:'Night sweats',icon:'💦'},
+  {id:'brain_fog_c',label:'Brain fog',icon:'🌫️'},{id:'joint_pain',label:'Joint pain',icon:'🦴'},
+  {id:'burning_mouth',label:'Burning mouth',icon:'🌶️'},{id:'cravings',label:'Cravings',icon:'🍫'},
+  {id:'insomnia',label:'Insomnia',icon:'🌙'},{id:'abdominal_pain',label:'Abdominal pain',icon:'😣'},
+  {id:'bloating_c',label:'Bloating',icon:'🎈'},{id:'nausea',label:'Nausea',icon:'🤢'},
+  {id:'spotting',label:'Spotting',icon:'🩸'},{id:'discharge',label:'Unusual discharge',icon:'💧'},
+  {id:'vaginal_itching',label:'Vaginal itching',icon:'🌿'},{id:'vaginal_dryness',label:'Vaginal dryness',icon:'🏜️'},
+  {id:'low_libido',label:'Low libido',icon:'❄️'},{id:'high_libido',label:'High libido',icon:'🌹'},
+  {id:'swollen',label:'Swollen / puffy',icon:'💦'},{id:'skin_reaction_c',label:'Skin reaction',icon:'🌡️'},
+];
+var cycleMoodTapped={};
+var cycleSymTapped={};
+
+// ── HISTORICAL CYCLE DATA ─────────────────────────────────────────
+var CYCLE_HISTORY=[
+  {start:'2026-05-15',length:null,notes:'Current. Extended flow, slower onset. Post-stress recalibration.'},
+  {start:'2026-04-22',length:26,notes:''},
+  {start:'2026-03-27',length:26,notes:''},
+  {start:'2026-03-01',length:26,notes:''},
+  {start:'2026-02-03',length:26,notes:''},
+  {start:'2026-01-07',length:27,notes:''},
+  {start:'2025-12-13',length:25,notes:''},
+  {start:'2025-11-16',length:27,notes:'Stress period: divorce, remodel, work'},
+  {start:'2025-02-26',length:27,notes:''},
+  {start:'2025-02-01',length:25,notes:''},
+  {start:'2025-01-07',length:25,notes:''},
+  {start:'2024-12-11',length:27,notes:''},
+  {start:'2024-11-17',length:24,notes:''},
+  {start:'2024-10-22',length:26,notes:''},
+  {start:'2024-09-28',length:24,notes:''},
+  {start:'2024-09-03',length:25,notes:''},
+  {start:'2024-08-08',length:26,notes:''},
+  {start:'2024-07-11',length:28,notes:''},
+  {start:'2024-06-13',length:28,notes:''},
+  {start:'2024-05-16',length:28,notes:''},
+  {start:'2024-04-19',length:27,notes:''},
+  {start:'2024-03-21',length:29,notes:''},
+  {start:'2024-02-25',length:25,notes:''},
+  {start:'2024-01-31',length:25,notes:''},
+  {start:'2024-01-01',length:30,notes:''},
+  {start:'2023-12-08',length:24,notes:''},
+  {start:'2023-11-14',length:24,notes:''},
+  {start:'2023-10-18',length:27,notes:''},
+  {start:'2023-09-21',length:27,notes:''},
+  {start:'2023-08-28',length:24,notes:''},
+  {start:'2023-08-01',length:27,notes:''},
+  {start:'2023-07-05',length:27,notes:''},
+  {start:'2023-06-08',length:27,notes:''},
+  {start:'2023-05-13',length:26,notes:''},
+  {start:'2023-04-15',length:28,notes:''},
+  {start:'2023-03-21',length:25,notes:''},
+  {start:'2023-02-21',length:28,notes:''},
+  {start:'2023-01-25',length:27,notes:''},
+  {start:'2022-12-29',length:27,notes:''},
+  {start:'2022-12-03',length:26,notes:''},
+  {start:'2022-11-07',length:26,notes:''},
+  {start:'2022-10-13',length:25,notes:''},
+  {start:'2022-09-12',length:31,notes:'Longest on record'},
+  {start:'2022-08-19',length:24,notes:''},
+  {start:'2022-07-22',length:28,notes:''},
+  {start:'2022-06-25',length:27,notes:''},
+];
+
+function buildCycleInsights(){
+  buildCycleHistory();
+  buildCycleTrends();
+  buildCyclePatterns();
+}
+
+function buildCycleHistory(){
+  var el=document.getElementById('cycle-history-section');
+  if(!el)return;
+  var lengths=CYCLE_HISTORY.filter(function(c){return c.length}).map(function(c){return c.length});
+  var avg=Math.round(lengths.reduce(function(a,b){return a+b},0)/lengths.length*10)/10;
+  var min=Math.min.apply(null,lengths);
+  var max=Math.max.apply(null,lengths);
+  var recent=CYCLE_HISTORY.filter(function(c){return c.start.startsWith('2026')&&c.length}).map(function(c){return c.length});
+  var avg2026=recent.length?Math.round(recent.reduce(function(a,b){return a+b},0)/recent.length*10)/10:null;
+  var longestCycle=CYCLE_HISTORY.filter(function(c){return c.length}).reduce(function(a,b){return b.length>a.length?b:a});
+  var shortestCycle=CYCLE_HISTORY.filter(function(c){return c.length}).reduce(function(a,b){return b.length<a.length?b:a});
+  function cycleMonthLabel(c){var d=new Date(c.start+'T12:00:00');return d.toLocaleDateString('en-US',{month:'long',year:'numeric'})}
+  var statsHtml='<div class="card" style="margin-bottom:.75rem">'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;text-align:center;margin-bottom:.75rem">'
+    +'<div><div style="font-family:Cormorant Garamond,serif;font-size:22px;font-weight:500">'+avg+'</div><div style="font-size:10px;color:var(--muted);margin-top:2px">All-time avg</div></div>'
+    +'<div><div style="font-family:Cormorant Garamond,serif;font-size:22px;font-weight:500">'+(avg2026||'—')+'</div><div style="font-size:10px;color:var(--muted);margin-top:2px">2026 avg</div></div>'
+    +'<div><div style="font-family:Cormorant Garamond,serif;font-size:22px;font-weight:500;color:var(--blush)">'+min+'</div><div style="font-size:10px;color:var(--muted);margin-top:2px">Shortest</div></div>'
+    +'<div><div style="font-family:Cormorant Garamond,serif;font-size:22px;font-weight:500;color:var(--gold)">'+max+'</div><div style="font-size:10px;color:var(--muted);margin-top:2px">Longest</div></div>'
+    +'</div>'
+    +'<div style="display:flex;gap:8px;margin-bottom:.6rem">'
+    +'<div style="flex:1;background:#faf4e8;border-radius:var(--radius);padding:.5rem .75rem;font-size:11px;color:var(--ink-mid);line-height:1.5"><strong style="color:var(--gold)">Longest:</strong> '+cycleMonthLabel(longestCycle)+' — '+longestCycle.length+' days</div>'
+    +'<div style="flex:1;background:#fdf0f3;border-radius:var(--radius);padding:.5rem .75rem;font-size:11px;color:var(--ink-mid);line-height:1.5"><strong style="color:var(--blush)">Shortest:</strong> '+cycleMonthLabel(shortestCycle)+' — '+shortestCycle.length+' days</div>'
+    +'</div>'
+    +'<div style="font-size:11px;color:var(--muted)">Based on '+CYCLE_HISTORY.length+' records from June 2022 to present.</div></div>';
+  var cycleHistoryShowing=window._cycleShowing||3;
+  var listHtml=CYCLE_HISTORY.slice(0,cycleHistoryShowing).map(function(c){
+    var startD=new Date(c.start+'T12:00:00');
+    var len=c.length||Math.floor((TODAY-startD)/864e5)+1;
+    var isOngoing=!c.length;
+    var endD=new Date(startD);endD.setDate(endD.getDate()+len-1);
+    var startLbl=startD.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    var endLbl=isOngoing?'today':endD.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    // Phase day counts
+    var mensualDays=6;
+    var follicularDays=7;
+    var ovulationDays=1;
+    var lutealDays=Math.max(len-mensualDays-follicularDays-ovulationDays,0);
+    // Key dates
+    var fertStart=new Date(startD);fertStart.setDate(fertStart.getDate()+10);
+    var ovulD=new Date(startD);ovulD.setDate(ovulD.getDate()+13);
+    var pmsD=new Date(startD);pmsD.setDate(pmsD.getDate()+19);
+    function fmt(d){return d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}
+    var col=isOngoing?'var(--muted)':len<25?'var(--blush)':len>28?'var(--gold)':'var(--sage)';
+    var bg=isOngoing?'var(--cream-dark)':len<25?'#fdf0f3':len>28?'#faf4e8':'#eef4ef';
+    // Phase widths as percentages
+    var mPct=Math.round(mensualDays/len*100);
+    var fPct=Math.round(follicularDays/len*100);
+    var oPct=Math.round(ovulationDays/len*100);
+    var lPct=100-mPct-fPct-oPct;
+    return'<div style="padding:14px 0;border-bottom:1px solid var(--cream-dark)">'
+      // Header
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">'
+      +'<div>'
+      +'<div style="font-size:15px;font-weight:600;color:var(--ink)">'+(isOngoing?'Current — day '+len:len+' days')+'</div>'
+      +'<div style="font-size:12px;color:var(--muted);margin-top:1px">'+startLbl+' – '+endLbl+'</div>'
+      +'</div>'
+      +'<span style="font-size:11px;font-weight:600;color:'+col+';background:'+bg+';padding:3px 10px;border-radius:10px;flex-shrink:0;margin-left:8px">'+(isOngoing?'ongoing':len<25?'short':len>28?'long':'normal')+'</span>'
+      +'</div>'
+      // Phase bar
+      +'<div style="border-radius:8px;overflow:hidden;height:14px;display:flex;margin-bottom:10px">'
+      +'<div style="width:'+mPct+'%;background:#e8a0b0;height:100%" title="Menstrual"></div>'
+      +'<div style="width:'+fPct+'%;background:#b8d4b8;height:100%" title="Follicular"></div>'
+      +'<div style="width:'+oPct+'%;background:#5a8f6a;height:100%" title="Ovulation"></div>'
+      +'<div style="width:'+lPct+'%;background:#d4b87a;height:100%" title="Luteal"></div>'
+      +'</div>'
+      // Phase labels under bar
+      +'<div style="display:flex;margin-bottom:10px">'
+      +'<div style="width:'+mPct+'%;font-size:9px;color:var(--muted);text-align:center;overflow:hidden">Days 1-6</div>'
+      +'<div style="width:'+fPct+'%;font-size:9px;color:var(--muted);text-align:center;overflow:hidden">Days 7-13</div>'
+      +'<div style="width:'+oPct+'%;font-size:9px;color:var(--muted);text-align:center;overflow:hidden">14</div>'
+      +'<div style="width:'+lPct+'%;font-size:9px;color:var(--muted);text-align:center;overflow:hidden">Days 15-'+len+'</div>'
+      +'</div>'
+      // Key dates
+      +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">'
+      +'<div style="background:#eef4ef;border-radius:6px;padding:5px 7px"><div style="font-size:9px;color:var(--sage-dark);font-weight:600;letter-spacing:.04em;text-transform:uppercase">Fertile window</div><div style="font-size:12px;color:var(--ink);font-weight:500;margin-top:2px">'+fmt(fertStart)+'</div></div>'
+      +'<div style="background:#d8ead8;border-radius:6px;padding:5px 7px;border:1px solid var(--sage-mid)"><div style="font-size:9px;color:var(--sage-dark);font-weight:600;letter-spacing:.04em;text-transform:uppercase">Ovulation est.</div><div style="font-size:12px;color:var(--ink);font-weight:500;margin-top:2px">~'+fmt(ovulD)+'</div></div>'
+      +'<div style="background:var(--gold-light);border-radius:6px;padding:5px 7px"><div style="font-size:9px;color:var(--gold);font-weight:600;letter-spacing:.04em;text-transform:uppercase">PMS starts</div><div style="font-size:12px;color:var(--ink);font-weight:500;margin-top:2px">~'+fmt(pmsD)+'</div></div>'
+      +'</div>'
+      +(c.notes?'<div style="font-size:11px;color:var(--muted);margin-top:6px;font-style:italic">'+c.notes+'</div>':'')
+      +'</div>';
+  }).join('');
+  // Legend
+  var legend='<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:.75rem;padding-top:.5rem;border-top:1px solid var(--cream-dark)">'
+    +'<span style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted)"><span style="display:inline-block;width:14px;height:8px;border-radius:2px;background:#e8a0b0"></span>Menstrual</span>'
+    +'<span style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted)"><span style="display:inline-block;width:14px;height:8px;border-radius:2px;background:#b8d4b8"></span>Follicular</span>'
+    +'<span style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted)"><span style="display:inline-block;width:14px;height:8px;border-radius:2px;background:#5a8f6a"></span>Ovulation</span>'
+    +'<span style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted)"><span style="display:inline-block;width:14px;height:8px;border-radius:2px;background:#d4b87a"></span>Luteal</span>'
+    +'</div>';
+  var loadMore=cycleHistoryShowing<CYCLE_HISTORY.length
+    ?'<div style="text-align:center;padding:.75rem 0"><button class="btn-outline" style="font-size:12px" onclick="loadMoreCycles()">Show more history</button></div>'
+    :'<div style="font-size:11px;color:var(--muted);text-align:center;padding:.5rem 0">All '+CYCLE_HISTORY.length+' records shown</div>';
+  el.innerHTML=statsHtml+'<div class="card">'+listHtml+legend+loadMore+'</div>';
+}
+
+function loadMoreCycles(){
+  window._cycleShowing=(window._cycleShowing||3)+5;
+  buildCycleHistory();
+}
+
+function buildCycleTrends(){
+  var el=document.getElementById('cycle-trends-section');
+  if(!el)return;
+  var data=CYCLE_HISTORY.filter(function(c){return c.length}).slice().reverse();
+  var avg=Math.round(data.map(function(c){return c.length}).reduce(function(a,b){return a+b},0)/data.length*10)/10;
+  var minLen=Math.min.apply(null,data.map(function(c){return c.length}));
+  var maxLen=Math.max.apply(null,data.map(function(c){return c.length}));
+  var chartH=120;
+  var barW=Math.max(8,Math.floor(320/data.length));
+  var gap=2;
+  // Build SVG bar chart
+  var svgW=data.length*(barW+gap);
+  var bars=data.map(function(c,i){
+    var pct=(c.length-minLen+1)/(maxLen-minLen+2);
+    var barH=Math.round(pct*(chartH-20));
+    var y=chartH-barH;
+    var col=c.length<25?'#e8a0b0':c.length>28?'#d4b87a':'#9ab89a';
+    var x=i*(barW+gap);
+    var d=new Date(c.start+'T12:00:00');
+    var lbl=d.toLocaleDateString('en-US',{month:'short',year:'2-digit'});
+    return'<g>'
+      +'<rect x="'+x+'" y="'+y+'" width="'+barW+'" height="'+barH+'" fill="'+col+'" rx="2" opacity="0.85"/>'
+      +'<text x="'+(x+barW/2)+'" y="'+(y-4)+'" text-anchor="middle" font-size="8" fill="#9a8f88">'+c.length+'</text>'
+      +'</g>';
+  }).join('');
+  // Avg line
+  var avgPct=(avg-minLen+1)/(maxLen-minLen+2);
+  var avgY=Math.round(chartH-avgPct*(chartH-20));
+  var svgChart='<svg width="100%" viewBox="0 0 '+svgW+' '+(chartH+20)+'" style="overflow:visible">'
+    +bars
+    +'<line x1="0" y1="'+avgY+'" x2="'+svgW+'" y2="'+avgY+'" stroke="#5a8f6a" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.7"/>'
+    +'<text x="'+svgW+'" y="'+(avgY-3)+'" text-anchor="end" font-size="8" fill="#5a8f6a">avg '+avg+'d</text>'
+    +'</svg>';
+  // Year summary table
+  var byYear={};
+  data.forEach(function(c){
+    var yr=c.start.split('-')[0];
+    if(!byYear[yr])byYear[yr]=[];
+    byYear[yr].push(c.length);
+  });
+  var yearRows=Object.keys(byYear).sort(function(a,b){return b-a}).map(function(yr){
+    var vals=byYear[yr];
+    var yavg=Math.round(vals.reduce(function(a,b){return a+b},0)/vals.length*10)/10;
+    var ymin=Math.min.apply(null,vals);
+    var ymax=Math.max.apply(null,vals);
+    var diff=Math.round((yavg-avg)*10)/10;
+    var diffCol=diff>1?'var(--gold)':diff<-1?'var(--blush)':'var(--sage)';
+    var diffStr=diff>0?'↑ +'+diff+'d':diff<0?'↓ '+diff+'d':'→ on avg';
+    return'<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--cream-dark)">'
+      +'<div style="width:36px;font-size:13px;font-weight:600;color:var(--ink)">'+yr+'</div>'
+      +'<div style="flex:1">'
+      +'<div style="height:6px;background:var(--cream-dark);border-radius:3px;overflow:hidden;position:relative">'
+      +'<div style="position:absolute;height:100%;background:#9ab89a;border-radius:3px;left:'+(Math.round((ymin-22)/(32-22)*100))+'%;width:'+(Math.round((ymax-ymin)/(32-22)*100))+'%;opacity:.5"></div>'
+      +'<div style="position:absolute;height:100%;width:3px;background:#5a8f6a;border-radius:2px;left:'+(Math.round((yavg-22)/(32-22)*100))+'%"></div>'
+      +'</div>'
+      +'<div style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-top:2px"><span>'+ymin+'d</span><span>'+ymax+'d</span></div>'
+      +'</div>'
+      +'<div style="text-align:right;flex-shrink:0"><div style="font-size:12px;font-weight:600;color:var(--ink)">'+yavg+'d</div>'
+      +'<div style="font-size:10px;color:'+diffCol+'">'+diffStr+'</div></div>'
+      +'</div>';
+  }).join('');
+  el.innerHTML='<div class="card" style="margin-bottom:.75rem">'
+    +'<div style="font-size:11px;color:var(--muted);margin-bottom:.5rem;font-weight:500">Cycle length over time — '+data.length+' records (2022–2026)</div>'
+    +'<div style="overflow-x:auto;padding-bottom:4px">'+svgChart+'</div>'
+    +'<div style="display:flex;gap:10px;margin-top:.5rem;flex-wrap:wrap">'
+    +'<span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)"><span style="display:inline-block;width:10px;height:6px;border-radius:1px;background:#e8a0b0"></span>Short &lt;25d</span>'
+    +'<span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)"><span style="display:inline-block;width:10px;height:6px;border-radius:1px;background:#9ab89a"></span>Normal 25-28d</span>'
+    +'<span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)"><span style="display:inline-block;width:10px;height:6px;border-radius:1px;background:#d4b87a"></span>Long &gt;28d</span>'
+    +'<span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)"><span style="display:inline-block;width:14px;height:1.5px;background:#5a8f6a;margin-top:2px"></span>Your average ('+avg+'d)</span>'
+    +'</div>'
+    +'</div>'
+    +'<div class="card"><div style="font-size:11px;color:var(--muted);margin-bottom:.5rem;font-weight:500">Year by year</div>'+yearRows+'</div>';
+}
+
+function buildCyclePatterns(){
+  var el=document.getElementById('cycle-patterns-section');
+  if(!el)return;
+  el.innerHTML='<div class="card" style="margin-bottom:.75rem">'
+    +'<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:.75rem">Known patterns from your history</div>'
+    +'<div style="padding:8px 0;border-bottom:1px solid var(--cream-dark)"><div style="font-size:13px;font-weight:500;color:var(--blush)">Days 20-26 — Peak symptoms</div><div style="font-size:12px;color:var(--muted);margin-top:2px;line-height:1.5">Fatigue, agitation, brain fog, emotional flooding, dysphoria, hunger, constipation, night sweats. Driven by estrogen dominance + GABA receptor variants + serotonin floor.</div></div>'
+    +'<div style="padding:8px 0;border-bottom:1px solid var(--cream-dark)"><div style="font-size:13px;font-weight:500;color:var(--gold)">Days 13-14 — Ovulation</div><div style="font-size:12px;color:var(--muted);margin-top:2px;line-height:1.5">Peak energy. Histamine surge from estrogen peak via ESR1 variant. Quercetin most important today.</div></div>'
+    +'<div style="padding:8px 0;border-bottom:1px solid var(--cream-dark)"><div style="font-size:13px;font-weight:500;color:var(--sage)">Days 6-13 — Best window</div><div style="font-size:12px;color:var(--muted);margin-top:2px;line-height:1.5">Best energy, focus, and resilience. Demanding tasks, exercise, social plans. Estrogen rising supports mood and cognition.</div></div>'
+    +'<div style="padding:8px 0"><div style="font-size:13px;font-weight:500;color:var(--blush)">Days 1-5 — Rest phase</div><div style="font-size:12px;color:var(--muted);margin-top:2px;line-height:1.5">Iron most critical. Historically clots Day 1-2 (May 2026 delayed to Day 3 — estrogen dominance). Rest, warmth, Lumebox lower abdomen. No intense exercise.</div></div>'
+    +'</div>'
+    +'<div class="card">'
+    +'<div style="font-size:12px;color:var(--muted);line-height:1.6">As you log moods and symptoms each day, this section will update with your actual patterns — how they shift as hormones rebalance over the coming months.</div>'
+    +'</div>';
+}
+
+function buildCycleTapSections(){
+  var savedMoods=lsGet('cycleMood_'+todayKey(),{});
+  var savedSyms=lsGet('cycleSym_'+todayKey(),{});
+  Object.assign(cycleMoodTapped,savedMoods);
+  Object.assign(cycleSymTapped,savedSyms);
+
+  var mg=document.getElementById('cycle-mood-grid');
+  if(mg){
+    mg.innerHTML='';
+    CYCLE_MOODS.forEach(function(m){
+      var btn=document.createElement('button');
+      btn.className='tap-btn'+(cycleMoodTapped[m.id]?' active-blush':'');
+      btn.id='cm-'+m.id;
+      btn.textContent=m.icon+' '+m.label;
+      btn.onclick=function(){
+        cycleMoodTapped[m.id]=!cycleMoodTapped[m.id];
+        lsSet('cycleMood_'+todayKey(),cycleMoodTapped);
+        if(cycleMoodTapped[m.id])btn.classList.add('active-blush');
+        else btn.classList.remove('active-blush');
+      };
+      mg.appendChild(btn);
+    });
+  }
+
+  var sg=document.getElementById('cycle-symptom-grid');
+  if(sg){
+    sg.innerHTML='';
+    CYCLE_SYMPTOMS.forEach(function(s){
+      var btn=document.createElement('button');
+      btn.className='tap-btn'+(cycleSymTapped[s.id]?' active-blush':'');
+      btn.id='cs-'+s.id;
+      btn.textContent=s.icon+' '+s.label;
+      btn.onclick=function(){
+        cycleSymTapped[s.id]=!cycleSymTapped[s.id];
+        lsSet('cycleSym_'+todayKey(),cycleSymTapped);
+        if(cycleSymTapped[s.id])btn.classList.add('active-blush');
+        else btn.classList.remove('active-blush');
+      };
+      sg.appendChild(btn);
+    });
+  }
+
+  // hide the now-unused physical grid
+  var pg=document.getElementById('cycle-physical-grid');
+  if(pg)pg.style.display='none';
+}
+
 async function saveCycleSymptoms(){
-  var payload=Object.assign({date:todayKey(),cycleDay:getCycleDay(TODAY),phase:getPhase(TODAY)},symVals);
-  var r=await sendToSheets('symptoms',payload);
+  var moods=CYCLE_MOODS.filter(function(m){return cycleMoodTapped[m.id]}).map(function(m){return m.label}).join(', ');
+  var syms=CYCLE_SYMPTOMS.filter(function(s){return cycleSymTapped[s.id]}).map(function(s){return s.label}).join(', ');
+  var r=await sendToSheets('cycle',{
+    date:todayKey(),cycleDay:getCycleDay(TODAY),phase:getPhase(TODAY),
+    moods:moods,symptoms:syms,flow:''
+  });
   showFeedback('cycle-sym-fb',r.ok,r.msg);
 }
+
+function togglePeriodEdit(){
+  var row=document.getElementById('period-edit-row');
+  var input=document.getElementById('cycle-period-start-input');
+  if(row.style.display==='none'||!row.style.display){
+    row.style.display='block';
+    var ps=localStorage.getItem('period_start');
+    if(ps)input.value=ps;
+  } else {
+    row.style.display='none';
+  }
+}
+
+function savePeriodStartFromCycle(){
+  var val=document.getElementById('cycle-period-start-input').value;
+  if(!val)return;
+  PERIOD_START=new Date(val+'T00:00:00');
+  localStorage.setItem('period_start',val);
+  // Update display
+  var d=new Date(val+'T12:00:00');
+  var el=document.getElementById('period-start-display');
+  if(el)el.textContent=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  // Also update settings input if visible
+  var si=document.getElementById('period-start-input');
+  if(si)si.value=val;
+  // Rebuild calendar with new start
+  document.getElementById('period-edit-row').style.display='none';
+  buildCalendar();
+}
+
+function initPeriodDisplay(){
+  var ps=localStorage.getItem('period_start')||'2026-05-15';
+  var d=new Date(ps+'T12:00:00');
+  var el=document.getElementById('period-start-display');
+  if(el)el.textContent=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+}
+
 function buildCalendar(){
-  var cc=document.getElementById('cycle-sliders');if(cc){cc.innerHTML='';CYCLE_SYMS.forEach(function(s){buildSlider(s,cc)})}
+  initPeriodDisplay();
+  buildCycleTapSections();
+  buildCycleInsights();
   document.getElementById('cal-month-label').textContent=MONTHS[calViewMonth.getMonth()]+' '+calViewMonth.getFullYear();
   var heads=document.getElementById('cal-heads');heads.innerHTML='';
   DAYS_SHORT.forEach(function(d){var el=document.createElement('div');el.className='cal-head';el.textContent=d;heads.appendChild(el)});
@@ -745,8 +1296,8 @@ var VAGAL_TOOLS=[
 ];
 function buildStress(){
   var phase=getPhase(TODAY);
-  var pn={menstrual:'Menstrual — parasympathetic priority. Rest is the protocol.',follicular:'Follicular — nervous system resilience building.',ovulation:'Ovulation — peak resilience. Watch for histamine-triggered agitation.',luteal:'Luteal — GABA less responsive, serotonin dropping. Avoid overstimulation.'};
-  document.getElementById('stress-phase-note').textContent='Day '+getCycleDay(TODAY)+' — '+PHASE_LABELS[phase]+': '+pn[phase];
+  var pn={menstrual:'Parasympathetic priority. Rest is the protocol. GABA receptors most sensitive now.',follicular:'Nervous system resilience building. Good time for cold showers and more demanding work.',ovulation:'Peak resilience. Watch for histamine-triggered agitation.',luteal:'GABA less responsive, serotonin dropping. Avoid overstimulation. Level 1-2 PEMF only.'};
+  document.getElementById('stress-phase-note').textContent=pn[phase];
   var cont=document.getElementById('ns-options');cont.innerHTML='';
   NS_OPTIONS.forEach(function(o){
     var btn=document.createElement('div');btn.id='ns-'+o.id;
@@ -792,7 +1343,7 @@ var EX_FELT=[{id:'great',label:'Great — energised',col:'#2e7d32',bg:'#e8f5e9'}
 function buildExercise(){
   var phase=getPhase(TODAY);
   var guides={menstrual:{text:'Rest or very gentle movement. Pvolve or yoga at most.',bg:'#fce4ec',col:'#c2185b'},follicular:{text:'Rising energy — Pvolve, walks, beginning to add more.',bg:'#e8f5e9',col:'#2e7d32'},ovulation:{text:'Peak strength window. Your ACE endurance variant shines here.',bg:'#e3f2fd',col:'#1565c0'},luteal:{text:'Gentle preferred. Walks and Pvolve. No Shred 415 yet.',bg:'#fff3e0',col:'#e65100'}};
-  var g=guides[phase];var pn=document.getElementById('ex-phase-note');pn.style.background=g.bg;pn.style.color=g.col;pn.innerHTML='<strong>Day '+getCycleDay(TODAY)+' — '+PHASE_LABELS[phase]+':</strong> '+g.text;
+  var g=guides[phase];var pn=document.getElementById('ex-phase-note');pn.style.background=g.bg;pn.style.color=g.col;pn.innerHTML=g.text;
   var tc=document.getElementById('ex-types');tc.innerHTML='';
   EX_TYPES.forEach(function(t){var btn=document.createElement('button');btn.className='tap-btn';btn.id='ext-'+t.id;btn.textContent=t.icon+' '+t.label;btn.onclick=function(){selExType=t.id;document.querySelectorAll('#ex-types .tap-btn').forEach(function(b){b.classList.remove('active-sage')});btn.classList.add('active-sage')};tc.appendChild(btn)});
   var fc=document.getElementById('ex-felt');fc.innerHTML='';
@@ -817,6 +1368,8 @@ function renderExLog(){
 }
 
 // ── BAROMETRIC ────────────────────────────────────────────────────
+var lastBaroReading = 29.80; // default until fetched
+
 function fetchBaro(){
   document.getElementById('baro-val').innerHTML='…<span class="baro-unit"> inHg</span>';
   document.getElementById('baro-status').textContent='';
@@ -830,10 +1383,14 @@ function fetchBaro(){
       var inHg=(pressure*0.02953).toFixed(2);
       document.getElementById('baro-val').innerHTML=inHg+'<span class="baro-unit"> inHg</span>';
       document.getElementById('baro-updated').textContent='Updated '+new Date().toLocaleTimeString();
-      var v=parseFloat(inHg);var el=document.getElementById('baro-status');
+      var v=parseFloat(inHg);
+      lastBaroReading = v;
+      var el=document.getElementById('baro-status');
       if(v>=29.80){el.style.background='#eef4ef';el.style.color='#4a6b50';el.textContent='✓ Good — typically fine for you'}
       else if(v>=29.50){el.style.background='#fdf3ea';el.style.color='#b8763a';el.textContent='⚠ Mild symptoms possible'}
       else{el.style.background='#fdf0f3';el.style.color='#c4788a';el.textContent='⛔ Headache / fog / agitation risk'}
+      // Run trigger analysis with live baro
+      runTriggerAnalysis(v, null);
     }).catch(function(e){
       document.getElementById('baro-val').innerHTML='Error<span class="baro-unit"> inHg</span>';
       document.getElementById('baro-updated').textContent='Failed — tap Refresh to try again';
@@ -855,6 +1412,52 @@ var PLS={'None':{bg:'#f5f5f3',col:'#888'},'Low':{bg:'#e8f5e9',col:'#2e7d32'},'Lo
 var BODY_SYMPTOMS=[{id:'sneezing',label:'Sneezing',icon:'🤧'},{id:'itchy_eyes',label:'Itchy eyes',icon:'👁️'},{id:'runny_nose',label:'Runny nose',icon:'😤'},{id:'skin_reaction',label:'Itchy skin',icon:'🌡️'},{id:'head_pressure',label:'Head pressure',icon:'🤕'},{id:'puffy',label:'Puffy / swollen',icon:'💧'},{id:'scratchy_throat',label:'Scratchy throat',icon:'😮'},{id:'sudden_fog',label:'Sudden brain fog',icon:'🌫️'}];
 var HISTAMINE_FOODS=[{id:'leftovers',label:'Leftovers',icon:'🍱'},{id:'canned_fish',label:'Canned fish',icon:'🐟'},{id:'fermented',label:'Fermented foods',icon:'🫙'},{id:'alcohol',label:'Alcohol',icon:'🍷'},{id:'aged_cheese',label:'Aged cheese',icon:'🧀'},{id:'processed_meat',label:'Processed meat',icon:'🥩'},{id:'vinegar',label:'Vinegar / pickled',icon:'🥒'},{id:'chocolate',label:'Chocolate',icon:'🍫'}];
 var pollenTapped={},foodTapped={},overallBurden=null;
+function runTriggerAnalysis(baroInHg, aqiVal){
+  var el = document.getElementById('trigger-analysis');
+  if (!el) return;
+  var month = TODAY.getMonth();
+  var season = INDIANA_POLLEN[month];
+  var phase = getPhase(TODAY);
+
+  // Score each trigger
+  var baroRisk = baroInHg >= 29.80 ? 'low' : baroInHg >= 29.50 ? 'medium' : 'high';
+  var pollenHighLevels = ['High','Very High','Moderate-High'];
+  var pollenMedLevels = ['Moderate'];
+  var pollenRisk = (pollenHighLevels.includes(season.trees)||pollenHighLevels.includes(season.grass)||pollenHighLevels.includes(season.weeds)) ? 'high'
+    : (pollenMedLevels.includes(season.trees)||pollenMedLevels.includes(season.grass)||pollenMedLevels.includes(season.weeds)) ? 'medium' : 'low';
+  var lutealRisk = phase === 'luteal' ? 'high' : phase === 'ovulation' ? 'medium' : 'low';
+
+  var triggers = [];
+  var overallRisk = 'low';
+
+  if (baroRisk === 'high') { triggers.push({label:'Barometric pressure drop',detail:baroInHg+' inHg — below your threshold',col:'var(--col-high)',icon:'🌩️'}); overallRisk='high'; }
+  else if (baroRisk === 'medium') { triggers.push({label:'Barometric pressure',detail:baroInHg+' inHg — mild zone',col:'var(--col-warn)',icon:'⛅'}); if(overallRisk==='low')overallRisk='medium'; }
+  else { triggers.push({label:'Barometric pressure',detail:baroInHg+' inHg — stable, unlikely trigger',col:'var(--col-ok)',icon:'☀️'}); }
+
+  if (pollenRisk === 'high') { triggers.push({label:'Pollen load',detail:season.grass+' grass / '+season.trees+' trees — high histamine load',col:'var(--col-high)',icon:'🌿'}); overallRisk='high'; }
+  else if (pollenRisk === 'medium') { triggers.push({label:'Pollen load',detail:'Moderate — possible histamine contribution',col:'var(--col-warn)',icon:'🌱'}); if(overallRisk==='low')overallRisk='medium'; }
+  else { triggers.push({label:'Pollen load',detail:'Low for this time of year',col:'var(--col-ok)',icon:'✓'}); }
+
+  if (lutealRisk === 'high') { triggers.push({label:'Luteal phase amplifier',detail:'Estrogen + mast cell reactivity at highest — multiplies both pollen and baro sensitivity',col:'var(--col-high)',icon:'⚠️'}); overallRisk='high'; }
+  else if (lutealRisk === 'medium') { triggers.push({label:'Ovulation histamine spike',detail:'ESR1 variant — estrogen peak can trigger mast cell surge',col:'var(--col-warn)',icon:'⚡'}); }
+
+  var summaries = {
+    high: 'Multiple triggers stacking today. Headache, agitation, brain fog, and fatigue are likely environmental — not just "in your head." Take quercetin, stay hydrated, avoid high-histamine foods.',
+    medium: 'Moderate trigger load. Symptoms may have an environmental component. Monitor and take quercetin proactively.',
+    low: 'Low environmental trigger load today. If you have symptoms, look to sleep quality, stress, or food as the more likely cause.'
+  };
+  var summaryColors = {high:'var(--col-high-bg)',medium:'var(--col-warn-bg)',low:'var(--col-ok-bg)'};
+  var summaryBorder = {high:'var(--col-high)',medium:'var(--col-warn)',low:'var(--col-ok)'};
+
+  el.innerHTML = '<div style="background:'+summaryColors[overallRisk]+';border-left:3px solid '+summaryBorder[overallRisk]+';border-radius:var(--radius);padding:.75rem 1rem;margin-bottom:.85rem;font-size:12px;line-height:1.6;color:var(--ink-mid)">'+summaries[overallRisk]+'</div>'
+    + triggers.map(function(t){
+      return '<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--cream-dark)">'
+        +'<span style="font-size:16px;flex-shrink:0">'+t.icon+'</span>'
+        +'<div><div style="font-size:13px;font-weight:500;color:'+t.col+'">'+t.label+'</div>'
+        +'<div style="font-size:11px;color:var(--muted);margin-top:1px">'+t.detail+'</div></div></div>';
+    }).join('').replace(/<\/div><\/div>(?!.*border-bottom)/,'</div></div>'.replace('border-bottom:1px solid var(--cream-dark)',''));
+}
+
 function buildPollen(){
   var month=TODAY.getMonth();var season=INDIANA_POLLEN[month];
   document.getElementById('season-note').textContent=season.note;
@@ -868,6 +1471,7 @@ function buildPollen(){
   var ft=document.getElementById('food-triggers');ft.innerHTML='';
   HISTAMINE_FOODS.forEach(function(f){var btn=document.createElement('button');btn.className='tap-btn';btn.id='ft-'+f.id;btn.textContent=f.icon+' '+f.label;btn.onclick=function(){foodTapped[f.id]=!foodTapped[f.id];if(foodTapped[f.id])btn.classList.add('active-gold');else btn.classList.remove('active-gold')};ft.appendChild(btn)});
   if(getPhase(TODAY)==='luteal'){var w=document.getElementById('luteal-warn');w.style.display='block';w.style.background='#fce4ec';w.style.color='#c2185b';w.innerHTML='<strong>⚠ Luteal phase — histamine rules active.</strong> Sardines every other day only. No leftovers. No fermented foods.'}
+  runTriggerAnalysis(lastBaroReading, null);
   fetchAQI();
 }
 function setBurden(id){
@@ -915,22 +1519,40 @@ function deleteMeal(i){
   meals=meals.filter(function(m){return m!==toDelete});lsSet('meals',meals);renderMeals();
 }
 function renderMeals(){
-  var today=todayKey();var todayMeals=meals.filter(function(m){return m.date===today});
+  var today=todayKey();
+  var todayMeals=meals.filter(function(m){return m.date===today});
   var el=document.getElementById('meal-list');
-  if(!todayMeals.length){el.innerHTML='<p style="font-size:12px;color:var(--muted);padding:.5rem 0">No meals logged today</p>';return}
-  el.innerHTML=todayMeals.map(function(m,i){return'<div class="meal-entry"><span class="meal-time-badge">'+m.time+'</span><span style="font-size:13px;flex:1">'+m.text+'</span><button class="meal-del" onclick="deleteMeal('+i+')">×</button></div>'}).join('');
+  if(!todayMeals.length){el.innerHTML='<p style="font-size:12px;color:var(--muted);padding:.5rem 0">No meals logged today</p>';}
+  else{el.innerHTML=todayMeals.map(function(m,i){return'<div class="meal-entry"><span class="meal-time-badge">'+m.time+'</span><span style="font-size:13px;flex:1">'+m.text+'</span><button class="meal-del" onclick="deleteMeal('+i+')">×</button></div>'}).join('');}
+  // Render history grouped by day
+  var hist=document.getElementById('meal-history');if(!hist)return;
+  var pastMeals=meals.filter(function(m){return m.date!==today});
+  if(!pastMeals.length){hist.innerHTML='<p style="font-size:12px;color:var(--muted)">No previous meals logged yet</p>';return;}
+  // Group by date
+  var byDate={};
+  pastMeals.forEach(function(m){if(!byDate[m.date])byDate[m.date]=[];byDate[m.date].push(m)});
+  var dates=Object.keys(byDate).sort(function(a,b){return b.localeCompare(a)}).slice(0,14);
+  hist.innerHTML=dates.map(function(date){
+    var d=new Date(date+'T12:00:00');
+    var label=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+    var dayMeals=byDate[date];
+    return'<div class="card" style="margin-bottom:.75rem">'
+      +'<div style="font-family:\'Cormorant Garamond\',serif;font-size:14px;font-weight:600;color:var(--ink);margin-bottom:.5rem">'+label+'</div>'
+      +dayMeals.map(function(m){return'<div class="meal-entry"><span class="meal-time-badge">'+m.time+'</span><span style="font-size:13px;flex:1;color:var(--ink-mid)">'+m.text+'</span></div>'}).join('')
+      +'</div>';
+  }).join('');
 }
 
 // ── LAB RESULTS ───────────────────────────────────────────────────
 var EVERLYWELL=[{name:'Estradiol',val:'263.38 pg/mL',flag:'badge-high',ref:'Ref: 36.50–246.00'},{name:'DHEAS',val:'1.1 ng/mL',flag:'badge-low',ref:'Ref: 2.0–19.0'},{name:'Progesterone',val:'<0.1 ng/mL',flag:'badge-normal',ref:'Saliva — normal'},{name:'Testosterone (Total)',val:'22.9 pg/mL',flag:'badge-normal',ref:'Ref: 10.0–130.0'},{name:'TSH',val:'1.54 uIU/mL',flag:'badge-normal',ref:'Ref: 0.45–5.33'},{name:'Free T3',val:'2.55 pg/mL',flag:'badge-normal',ref:'Ref: 2.07–3.87'},{name:'Free T4',val:'0.91 ng/dL',flag:'badge-normal',ref:'Ref: 0.50–1.14'},{name:'TPO Antibodies',val:'<0.25 IU/mL',flag:'badge-normal',ref:"No Hashimoto's"},{name:'Cortisol Morning',val:'3.05 ng/mL',flag:'badge-normal',ref:'HPA rhythm intact'},{name:'FSH',val:'4.91 mIU/mL',flag:'badge-normal',ref:'Ref: 3.85–8.78'},{name:'LH',val:'3.62 mIU/mL',flag:'badge-normal',ref:'Ref: 2.12–10.89'},{name:'LH/FSH Ratio',val:'0.74',flag:'badge-normal',ref:'No PCOS (threshold >2.0)'}];
-var PENDING=[{name:'Choose Health Metabolic 7-in-1',val:'Mailed May 24',ref:'Results late May/early June'},{name:'Ferritin recheck',val:'Due mid-June',ref:'Quest, 11911 N Meridian St'},{name:'Vitamin D (25-OH)',val:'URGENT',ref:'Everlywell ordered'},{name:'Serum Progesterone Day 21',val:'Next cycle Day 21',ref:'Blood confirmation'},{name:'Free Testosterone',val:'Pending',ref:'SHBG variant'},{name:'Homocysteine',val:'Pending',ref:'Confirms methylation working'},{name:'Reverse T3',val:'Pending',ref:'Pairs with Free T3'}];
+var PENDING=[{name:'Choose Health Metabolic 7-in-1',val:'Mailed May 24',ref:'Results late May/early June'},{name:'Ferritin recheck',val:'Due mid-June',ref:'Quest, 11911 N Meridian St'},{name:'Vitamin D (25-OH)',val:'URGENT',ref:'Everlywell ordered'},{name:'Serum Progesterone Day 21',val:'Next test Day 21',ref:'Blood confirmation'},{name:'Free Testosterone',val:'Pending',ref:'SHBG variant'},{name:'Homocysteine',val:'Pending',ref:'Confirms methylation working'},{name:'Reverse T3',val:'Pending',ref:'Pairs with Free T3'}];
 function buildResults(){
   document.getElementById('everlywell-results').innerHTML=EVERLYWELL.map(function(r){return'<div class="info-row"><div><div style="font-size:13px">'+r.name+'</div><div style="font-size:11px;color:var(--muted)">'+r.ref+'</div></div><span class="badge '+r.flag+'">'+r.val+'</span></div>'}).join('');
   document.getElementById('pending-results').innerHTML=PENDING.map(function(r){return'<div class="info-row"><div><div style="font-size:13px">'+r.name+'</div><div style="font-size:11px;color:var(--muted)">'+r.ref+'</div></div><span class="badge badge-pending">'+r.val+'</span></div>'}).join('');
 }
 
 // ── GENETICS ──────────────────────────────────────────────────────
-var GENETICS=[{id:'methylation',label:'Methylation & Folate',icon:'🧬',impact:'high',summary:'Folic acid from supplements largely unusable. Requires 5-MTHF methylfolate directly.',supplement:'Methyl Guard Plus',test:'Homocysteine (Ulta Lab Tests) — confirms correction working',variants:[{gene:'DHFR rs70991108',alleles:'2 effect alleles',sig:true,effect:'Synthetic folic acid largely unusable — must use 5-MTHF methylfolate'},{gene:'MTHFR rs1801131',alleles:'1 effect allele',effect:'Modest reduction in active folate production'},{gene:'MTHFD1 rs2236225',alleles:'2 effect alleles',effect:'Reduced folate processing, increased choline reliance'},{gene:'PEMT rs7946',alleles:'1 effect allele',effect:'Less efficient internal choline production — daily eggs critical'}]},{id:'iron',label:'Iron Absorption',icon:'🔩',impact:'high',summary:'Body actively blocks iron absorption even when deficient. Ferritin at 18 — confirmed.',supplement:'Iron Bisglycinate + Vitamin C',test:'Ferritin recheck mid-June (Quest) — target 70+',variants:[{gene:'TMPRSS6 rs855791',alleles:'2 effect alleles',sig:true,effect:'Higher hepcidin blocks iron absorption even when deficient'},{gene:'TF rs3811647',alleles:'2 effect alleles',effect:'Reduced transferrin — less efficient iron transport'},{gene:'TFR2',alleles:'variant',effect:'Reduced cellular iron uptake'}]},{id:'detox',label:'Detoxification',icon:'🧹',impact:'high',summary:'Primary detox weakness. Estrogen metabolites, heavy metals, BPA clear slowly.',supplement:'NAC + cruciferous vegetables daily',test:'GGT (Choose Health Metabolic)',variants:[{gene:'GSTP1 rs1695',alleles:'2 effect alleles',sig:true,effect:'Reduced Phase 2 detox of heavy metals, BPA, estrogen metabolites'},{gene:'COMT rs4680',alleles:'1 effect allele',effect:'Slower estrogen and dopamine clearance'},{gene:'CYP1B1 rs1056836',alleles:'1 effect allele',effect:'Increased toxic 4-OH estrogen intermediate'}]},{id:'vitd',label:'Vitamin D',icon:'☀️',impact:'high',summary:'Triple impairment: poor conversion, poor transport, poor receptor response.',supplement:'Vitamin D3 — 1000 IU likely insufficient, may need 4000-5000 IU',test:'Vitamin D 25-OH (Everlywell — URGENT)',variants:[{gene:'CYP2R1 rs10741657',alleles:'2 effect alleles',sig:true,effect:'Reduced liver conversion of Vitamin D to active form'},{gene:'GC rs7041+rs2282679',alleles:'2+1 effect alleles',effect:'Reduced Vitamin D Binding Protein — poor transport'},{gene:'VDR rs1544410+rs731236',alleles:'1+1 effect alleles',effect:"Reduced receptor response — cells don't use Vit D efficiently"}]},{id:'brain',label:'Brain Chemistry',icon:'🧠',impact:'high',summary:'Low dopamine density, reduced serotonin, impaired GABA — amplified in luteal phase.',supplement:'PharmaGABA + Amino Complex + Methyl Guard Plus',test:'No direct blood test — monitor via symptom tracker',variants:[{gene:'QDPR rs1111875',alleles:'2 effect alleles',sig:true,effect:'Reduced BH4 recycling — fuel for dopamine, serotonin, melatonin'},{gene:'DRD2 rs1800497',alleles:'2 effect alleles',effect:'Lower dopamine receptor density — motivation, focus, reward'},{gene:'TPH2 rs4570625',alleles:'1 effect allele',effect:'Slightly reduced serotonin — amplified pre-menstrually'},{gene:'SLC6A4',alleles:'2 effect alleles',effect:'Lower serotonin transporter — stress mood symptoms + disrupted sleep'}]},{id:'histamine',label:'Histamine',icon:'🌿',impact:'medium',summary:'Produced in excess and cleared slowly. Estrogen amplifies mast cell reactivity.',supplement:'Quercetin + Bromelain + dietary management',test:'Track via pollen tab body check-in',variants:[{gene:'FCER1A rs2251746',alleles:'2 effect alleles',sig:true,effect:'Reactive mast cells — histamine released more easily'},{gene:'AOC1 (multiple)',alleles:'1+1 effect alleles',effect:'Reduced DAO enzyme — histamine cleared slowly from gut'},{gene:'ESR1 rs2234693',alleles:'1 effect allele',effect:'Estrogen receptor amplifies mast cell activity directly'}]},{id:'hormones',label:'Hormones',icon:'⚖️',impact:'high',summary:'Estrogen dominance confirmed (263.38 HIGH). Genetic variants impair clearance.',supplement:'Flow Balance + Liver Tincture + cruciferous vegetables daily',test:'Estradiol — confirmed HIGH May 2026. Serum Progesterone Day 21 next cycle',variants:[{gene:'GSTP1 rs1695',alleles:'2 effect alleles',sig:true,effect:'Impairs Phase 2 conjugation — estrogen metabolites not fully cleared'},{gene:'COMT rs4680',alleles:'1 effect allele',effect:'Slower estrogen breakdown — contributes to dominance'},{gene:'CYP1B1 rs1056836',alleles:'1 effect allele',effect:'More 4-OH estrogen (carcinogenic metabolite) over 2-OH'}]},{id:'longevity',label:'Strengths & Longevity',icon:'✨',impact:'strength',summary:'Several significant longevity and performance variants working in your favour.',supplement:'Exercise (ACE endurance) + antioxidant-rich diet',test:'HbA1c + Fasting Glucose (Choose Health Metabolic)',variants:[{gene:'ACE I/I',alleles:'endurance genotype',effect:'STRENGTH — exceptional cardiovascular adaptation to sustained aerobic exercise'},{gene:'BPIFB4 rs2070325',alleles:'AG',effect:'STRENGTH — longevity protein. Reduced arterial plaque, reduced frailty'},{gene:'IGF1R rs2229765',alleles:'AG',effect:'STRENGTH — centenarian variant. More frequent in people living to 100+'},{gene:'SIRT1 rs3758391',alleles:'CT',effect:'STRENGTH — lower cardiovascular mortality, better cognitive function with ageing'}]}];
+var GENETICS=[{id:'methylation',label:'Methylation & Folate',icon:'🧬',impact:'high',summary:'Folic acid from supplements largely unusable. Requires 5-MTHF methylfolate directly.',supplement:'Methyl Guard Plus',test:'Homocysteine (Ulta Lab Tests) — confirms correction working',variants:[{gene:'DHFR rs70991108',alleles:'2 effect alleles',sig:true,effect:'Synthetic folic acid largely unusable — must use 5-MTHF methylfolate'},{gene:'MTHFR rs1801131',alleles:'1 effect allele',effect:'Modest reduction in active folate production'},{gene:'MTHFD1 rs2236225',alleles:'2 effect alleles',effect:'Reduced folate processing, increased choline reliance'},{gene:'PEMT rs7946',alleles:'1 effect allele',effect:'Less efficient internal choline production — daily eggs critical'}]},{id:'iron',label:'Iron Absorption',icon:'🔩',impact:'high',summary:'Body actively blocks iron absorption even when deficient. Ferritin at 18 — confirmed.',supplement:'Iron Bisglycinate + Vitamin C',test:'Ferritin recheck mid-June (Quest) — target 70+',variants:[{gene:'TMPRSS6 rs855791',alleles:'2 effect alleles',sig:true,effect:'Higher hepcidin blocks iron absorption even when deficient'},{gene:'TF rs3811647',alleles:'2 effect alleles',effect:'Reduced transferrin — less efficient iron transport'},{gene:'TFR2',alleles:'variant',effect:'Reduced cellular iron uptake'}]},{id:'detox',label:'Detoxification',icon:'🧹',impact:'high',summary:'Primary detox weakness. Estrogen metabolites, heavy metals, BPA clear slowly.',supplement:'NAC + cruciferous vegetables daily',test:'GGT (Choose Health Metabolic)',variants:[{gene:'GSTP1 rs1695',alleles:'2 effect alleles',sig:true,effect:'Reduced Phase 2 detox of heavy metals, BPA, estrogen metabolites'},{gene:'COMT rs4680',alleles:'1 effect allele',effect:'Slower estrogen and dopamine clearance'},{gene:'CYP1B1 rs1056836',alleles:'1 effect allele',effect:'Increased toxic 4-OH estrogen intermediate'}]},{id:'vitd',label:'Vitamin D',icon:'☀️',impact:'high',summary:'Triple impairment: poor conversion, poor transport, poor receptor response.',supplement:'Vitamin D3 — 1000 IU likely insufficient, may need 4000-5000 IU',test:'Vitamin D 25-OH (Everlywell — URGENT)',variants:[{gene:'CYP2R1 rs10741657',alleles:'2 effect alleles',sig:true,effect:'Reduced liver conversion of Vitamin D to active form'},{gene:'GC rs7041+rs2282679',alleles:'2+1 effect alleles',effect:'Reduced Vitamin D Binding Protein — poor transport'},{gene:'VDR rs1544410+rs731236',alleles:'1+1 effect alleles',effect:"Reduced receptor response — cells don't use Vit D efficiently"}]},{id:'brain',label:'Brain Chemistry',icon:'🧠',impact:'high',summary:'Low dopamine density, reduced serotonin, impaired GABA — amplified in luteal phase.',supplement:'PharmaGABA + Amino Complex + Methyl Guard Plus',test:'No direct blood test — monitor via symptom tracker',variants:[{gene:'QDPR rs1111875',alleles:'2 effect alleles',sig:true,effect:'Reduced BH4 recycling — fuel for dopamine, serotonin, melatonin'},{gene:'DRD2 rs1800497',alleles:'2 effect alleles',effect:'Lower dopamine receptor density — motivation, focus, reward'},{gene:'TPH2 rs4570625',alleles:'1 effect allele',effect:'Slightly reduced serotonin — amplified pre-menstrually'},{gene:'SLC6A4',alleles:'2 effect alleles',effect:'Lower serotonin transporter — stress mood symptoms + disrupted sleep'}]},{id:'histamine',label:'Histamine',icon:'🌿',impact:'medium',summary:'Produced in excess and cleared slowly. Estrogen amplifies mast cell reactivity.',supplement:'Quercetin + Bromelain + dietary management',test:'Track via Environment tab body check-in',variants:[{gene:'FCER1A rs2251746',alleles:'2 effect alleles',sig:true,effect:'Reactive mast cells — histamine released more easily'},{gene:'AOC1 (multiple)',alleles:'1+1 effect alleles',effect:'Reduced DAO enzyme — histamine cleared slowly from gut'},{gene:'ESR1 rs2234693',alleles:'1 effect allele',effect:'Estrogen receptor amplifies mast cell activity directly'}]},{id:'hormones',label:'Hormones',icon:'⚖️',impact:'high',summary:'Estrogen dominance confirmed (263.38 HIGH). Genetic variants impair clearance.',supplement:'Flow Balance + Liver Tincture + cruciferous vegetables daily',test:'Estradiol — confirmed HIGH May 2026. Serum Progesterone Day 21 (next test)',variants:[{gene:'GSTP1 rs1695',alleles:'2 effect alleles',sig:true,effect:'Impairs Phase 2 conjugation — estrogen metabolites not fully cleared'},{gene:'COMT rs4680',alleles:'1 effect allele',effect:'Slower estrogen breakdown — contributes to dominance'},{gene:'CYP1B1 rs1056836',alleles:'1 effect allele',effect:'More 4-OH estrogen (carcinogenic metabolite) over 2-OH'}]},{id:'longevity',label:'Strengths & Longevity',icon:'✨',impact:'strength',summary:'Several significant longevity and performance variants working in your favour.',supplement:'Exercise (ACE endurance) + antioxidant-rich diet',test:'HbA1c + Fasting Glucose (Choose Health Metabolic)',variants:[{gene:'ACE I/I',alleles:'endurance genotype',effect:'STRENGTH — exceptional cardiovascular adaptation to sustained aerobic exercise'},{gene:'BPIFB4 rs2070325',alleles:'AG',effect:'STRENGTH — longevity protein. Reduced arterial plaque, reduced frailty'},{gene:'IGF1R rs2229765',alleles:'AG',effect:'STRENGTH — centenarian variant. More frequent in people living to 100+'},{gene:'SIRT1 rs3758391',alleles:'CT',effect:'STRENGTH — lower cardiovascular mortality, better cognitive function with ageing'}]}];
 var genFilter='all';var openGenetic=null;
 var IMP={high:{bg:'#fce4ec',col:'#c2185b',lbl:'Needs support'},medium:{bg:'#fff3e0',col:'#e65100',lbl:'Monitor'},low:{bg:'#e8f5e9',col:'#2e7d32',lbl:'Mild'},strength:{bg:'#e8f0ec',col:'#5a7a6a',lbl:'Strength'}};
 function buildGenetics(){
