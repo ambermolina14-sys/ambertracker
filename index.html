@@ -462,6 +462,8 @@ textarea{resize:vertical;min-height:70px}
 <div id="tab-results" class="panel">
   <div class="section-title">Everlywell — May 2026</div>
   <div class="card" id="everlywell-results"></div>
+  <div class="section-title">Choose Health Metabolic — May 28, 2026</div>
+  <div class="card" id="choosehealth-results"></div>
   <div class="section-title">Other confirmed</div>
   <div class="card">
     <div class="info-row"><div><div style="font-size:13px">Ferritin (March 2026)</div><div style="font-size:11px;color:var(--muted)">Optimal: 70–100 ng/mL</div></div><span class="badge badge-low">18 ng/mL</span></div>
@@ -909,7 +911,7 @@ function buildStreaks(){
 // ── TEST REMINDERS ────────────────────────────────────────────────
 var UPCOMING_TESTS=[
   {name:'Vitamin D 25-OH',date:'2026-06-01',location:'Everlywell — at-home kit',prep:'URGENT — 3 genetic variants impairing conversion, transport, and receptor response. Almost certainly deficient.',urgent:true},
-  {name:'Choose Health Metabolic 7-in-1',date:'2026-06-05',location:'Mail-in — awaiting results',prep:'Mailed May 24. Results expected any day. Covers: Cholesterol, hsCRP, Insulin Resistance, GGT, HbA1c, Fasting Glucose, Visceral Fat.',urgent:false,waiting:true},
+  {name:'Choose Health Metabolic 7-in-1',date:'2026-05-28',location:'Results received May 28, 2026',prep:'Complete. See Lab Results tab for full breakdown.',urgent:false,waiting:false,done:true},
   {name:'Ferritin recheck',date:'2026-06-15',location:'Quest Diagnostics, 11911 N Meridian St, Carmel',prep:'Morning, no fasting required. Target result: 35-50 ng/mL (was 18 in March).',urgent:false},
   {name:'Ulta Lab Tests bundle',date:'2026-12-31',location:'Quest Diagnostics, 11911 N Meridian St, Carmel',prep:'Fasting required. Before 10am. Order: Free Testosterone, Homocysteine, Reverse T3. Add Serum Progesterone on Day 21 only.',urgent:false,waiting:true},
 ];
@@ -925,9 +927,9 @@ function buildTestReminders(){
   var sorted=UPCOMING_TESTS.slice().sort(function(a,b){return daysUntil(a.date)-daysUntil(b.date)});
   el.innerHTML=sorted.map(function(t){
     var days=daysUntil(t.date);
-    var daysLabel=t.waiting?'Awaiting results':days<0?'Overdue by '+Math.abs(days)+'d':days===0?'Today!':days===1?'Tomorrow':'In '+days+' days';
-    var urgCol=t.waiting?'var(--col-pending)':t.urgent||days<=0?'var(--col-high)':days<=7?'var(--col-warn)':'var(--sage)';
-    var urgBg=t.waiting?'var(--col-pending-bg)':t.urgent||days<=0?'var(--col-high-bg)':days<=7?'var(--col-warn-bg)':'var(--col-ok-bg)';
+    var daysLabel=t.done?'✓ Results in':t.waiting?'Awaiting results':days<0?'Overdue by '+Math.abs(days)+'d':days===0?'Today!':days===1?'Tomorrow':'In '+days+' days';
+    var urgCol=t.done?'var(--col-ok)':t.waiting?'var(--col-pending)':t.urgent||days<=0?'var(--col-high)':days<=7?'var(--col-warn)':'var(--sage)';
+    var urgBg=t.done?'var(--col-ok-bg)':t.waiting?'var(--col-pending-bg)':t.urgent||days<=0?'var(--col-high-bg)':days<=7?'var(--col-warn-bg)':'var(--col-ok-bg)';
     return'<div style="padding:10px 0;border-bottom:1px solid var(--cream-dark)">'
       +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:5px">'
       +'<div style="font-size:13px;font-weight:500;color:var(--ink)">'+t.name+(t.urgent?' <span style="font-size:10px;background:var(--col-high-bg);color:var(--col-high);padding:1px 7px;border-radius:8px;font-weight:600;margin-left:4px">URGENT</span>':'')+'</div>'
@@ -1322,76 +1324,146 @@ function loadMoreCycles(){
 function buildCycleTrends(){
   var el=document.getElementById('cycle-trends-section');
   if(!el)return;
-  var data=CYCLE_HISTORY.filter(function(c){return c.length}).slice().reverse();
-  var avg=Math.round(data.map(function(c){return c.length}).reduce(function(a,b){return a+b},0)/data.length*10)/10;
-  var minLen=Math.min.apply(null,data.map(function(c){return c.length}));
-  var maxLen=Math.max.apply(null,data.map(function(c){return c.length}));
-  var chartH=120;
-  var barW=Math.max(8,Math.floor(320/data.length));
-  var gap=2;
-  // Build SVG bar chart
-  var svgW=data.length*(barW+gap);
-  var bars=data.map(function(c,i){
-    var pct=(c.length-minLen+1)/(maxLen-minLen+2);
-    var barH=Math.round(pct*(chartH-20));
-    var y=chartH-barH;
-    var col=c.length<25?'#e8a0b0':c.length>28?'#d4b87a':'#9ab89a';
-    var x=i*(barW+gap);
+  if(window._cycleChartInstance){window._cycleChartInstance.destroy();window._cycleChartInstance=null;}
+
+  var data=CYCLE_HISTORY.filter(function(c){return c.length});
+  var values=data.map(function(c){return c.length});
+  var avg=Math.round(values.reduce(function(a,b){return a+b},0)/values.length*10)/10;
+  var min=Math.min.apply(null,values);
+  var max=Math.max.apply(null,values);
+  var variance=values.reduce(function(a,v){return a+Math.pow(v-avg,2)},0)/values.length;
+  var sd=Math.round(Math.sqrt(variance)*10)/10;
+  var consistency=sd<=1.5?'very consistent':sd<=2.5?'mostly consistent':'variable';
+  var first10=values.slice(0,10);
+  var last10=values.slice(-10);
+  var avgFirst=Math.round(first10.reduce(function(a,b){return a+b},0)/first10.length*10)/10;
+  var avgLast=Math.round(last10.reduce(function(a,b){return a+b},0)/last10.length*10)/10;
+  var trendDiff=Math.round((avgLast-avgFirst)*10)/10;
+  var trendText=Math.abs(trendDiff)<0.5?'Your cycle length has stayed <strong>stable</strong> over 4 years — no meaningful drift in either direction.'
+    :trendDiff>0?'Your cycles have <strong>gotten slightly longer</strong> over time (+'+trendDiff+'d average across 4 years). Still within normal range.'
+    :'Your cycles have <strong>gotten slightly shorter</strong> over time ('+trendDiff+'d average across 4 years). Still within normal range.';
+  var stressData=data.filter(function(c){return c.start>='2025-01-01'&&c.start<='2025-12-31'});
+  var preStressData=data.filter(function(c){return c.start>='2023-01-01'&&c.start<='2024-06-01'});
+  var stressAvg=stressData.length?Math.round(stressData.map(function(c){return c.length}).reduce(function(a,b){return a+b},0)/stressData.length*10)/10:null;
+  var preAvg=preStressData.length?Math.round(preStressData.map(function(c){return c.length}).reduce(function(a,b){return a+b},0)/preStressData.length*10)/10:null;
+  var shortCount=values.filter(function(v){return v<25}).length;
+  var longCount=values.filter(function(v){return v>28}).length;
+  var normalCount=values.length-shortCount-longCount;
+  var normalPct=Math.round(normalCount/values.length*100);
+
+  var insights=[
+    {icon:'📊',title:'Consistency',text:'Standard deviation of <strong>'+sd+' days</strong> — you are <strong>'+consistency+'</strong>. '+normalPct+'% of your cycles fall in the normal 25-28 day range. Only '+shortCount+' short and '+longCount+' long cycles across '+values.length+' records.'},
+    {icon:'📈',title:'Trend over 4 years',text:trendText},
+    {icon:'😤',title:'Stress period (2025)',text:stressAvg&&preAvg?'Pre-stress average (2023-mid 2024): <strong>'+preAvg+' days</strong>. During stress (2025): <strong>'+stressAvg+' days</strong>. '+(Math.abs(stressAvg-preAvg)<0.5?'Remarkably, your cycle length barely changed — your body maintained its rhythm even through 8 months of extreme stress. The character changed (heavier flow, more symptoms) but the timing held.':'A shift of '+Math.round((stressAvg-preAvg)*10)/10+'d during the stress period.'):'Not enough data to compare.'},
+    {icon:'✨',title:'2026 recovery',text:'Your last 5 cycles have all been exactly <strong>26 days</strong> — the tightest streak in your 4-year history. Your body is recalibrating. As DHEAS rebuilds and estradiol normalises, expect the <em>character</em> to improve even as the timing stays the same.'}
+  ];
+
+  // Chart HTML + insight cards
+  // Show last 12 cycles in chart (most readable on mobile)
+  var chartData=data.slice(0,12).reverse();
+  var chartValues=chartData.map(function(c){return c.length});
+  var chartLabels=chartData.map(function(c){
     var d=new Date(c.start+'T12:00:00');
-    var lbl=d.toLocaleDateString('en-US',{month:'short',year:'2-digit'});
-    return'<g>'
-      +'<rect x="'+x+'" y="'+y+'" width="'+barW+'" height="'+barH+'" fill="'+col+'" rx="2" opacity="0.85"/>'
-      +'<text x="'+(x+barW/2)+'" y="'+(y-4)+'" text-anchor="middle" font-size="8" fill="#9a8f88">'+c.length+'</text>'
-      +'</g>';
-  }).join('');
-  // Avg line
-  var avgPct=(avg-minLen+1)/(maxLen-minLen+2);
-  var avgY=Math.round(chartH-avgPct*(chartH-20));
-  var svgChart='<svg width="100%" viewBox="0 0 '+svgW+' '+(chartH+20)+'" style="overflow:visible">'
-    +bars
-    +'<line x1="0" y1="'+avgY+'" x2="'+svgW+'" y2="'+avgY+'" stroke="#5a8f6a" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.7"/>'
-    +'<text x="'+svgW+'" y="'+(avgY-3)+'" text-anchor="end" font-size="8" fill="#5a8f6a">avg '+avg+'d</text>'
-    +'</svg>';
-  // Year summary table
-  var byYear={};
-  data.forEach(function(c){
-    var yr=c.start.split('-')[0];
-    if(!byYear[yr])byYear[yr]=[];
-    byYear[yr].push(c.length);
+    return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
   });
-  var yearRows=Object.keys(byYear).sort(function(a,b){return b-a}).map(function(yr){
-    var vals=byYear[yr];
-    var yavg=Math.round(vals.reduce(function(a,b){return a+b},0)/vals.length*10)/10;
-    var ymin=Math.min.apply(null,vals);
-    var ymax=Math.max.apply(null,vals);
-    var diff=Math.round((yavg-avg)*10)/10;
-    var diffCol=diff>1?'var(--gold)':diff<-1?'var(--blush)':'var(--sage)';
-    var diffStr=diff>0?'↑ +'+diff+'d':diff<0?'↓ '+diff+'d':'→ on avg';
-    return'<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--cream-dark)">'
-      +'<div style="width:36px;font-size:13px;font-weight:600;color:var(--ink)">'+yr+'</div>'
-      +'<div style="flex:1">'
-      +'<div style="height:6px;background:var(--cream-dark);border-radius:3px;overflow:hidden;position:relative">'
-      +'<div style="position:absolute;height:100%;background:#9ab89a;border-radius:3px;left:'+(Math.round((ymin-22)/(32-22)*100))+'%;width:'+(Math.round((ymax-ymin)/(32-22)*100))+'%;opacity:.5"></div>'
-      +'<div style="position:absolute;height:100%;width:3px;background:#5a8f6a;border-radius:2px;left:'+(Math.round((yavg-22)/(32-22)*100))+'%"></div>'
-      +'</div>'
-      +'<div style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-top:2px"><span>'+ymin+'d</span><span>'+ymax+'d</span></div>'
-      +'</div>'
-      +'<div style="text-align:right;flex-shrink:0"><div style="font-size:12px;font-weight:600;color:var(--ink)">'+yavg+'d</div>'
-      +'<div style="font-size:10px;color:'+diffCol+'">'+diffStr+'</div></div>'
-      +'</div>';
-  }).join('');
-  el.innerHTML='<div class="card" style="margin-bottom:.75rem">'
-    +'<div style="font-size:11px;color:var(--muted);margin-bottom:.5rem;font-weight:500">Cycle length over time — '+data.length+' records (2022–2026)</div>'
-    +'<div style="overflow-x:auto;padding-bottom:4px">'+svgChart+'</div>'
-    +'<div style="display:flex;gap:10px;margin-top:.5rem;flex-wrap:wrap">'
-    +'<span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)"><span style="display:inline-block;width:10px;height:6px;border-radius:1px;background:#e8a0b0"></span>Short &lt;25d</span>'
-    +'<span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)"><span style="display:inline-block;width:10px;height:6px;border-radius:1px;background:#9ab89a"></span>Normal 25-28d</span>'
-    +'<span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)"><span style="display:inline-block;width:10px;height:6px;border-radius:1px;background:#d4b87a"></span>Long &gt;28d</span>'
-    +'<span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)"><span style="display:inline-block;width:14px;height:1.5px;background:#5a8f6a;margin-top:2px"></span>Your average ('+avg+'d)</span>'
+
+  el.innerHTML='<div class="card" style="margin-bottom:.75rem;padding:1.25rem 1rem">'
+    +'<div style="font-size:13px;color:var(--ink-mid);line-height:1.6;margin-bottom:1rem">Your last 6 complete cycles were within the <strong style="color:var(--ink)">normal</strong> range. See the graph below for your cycle trend.</div>'
+    +'<div style="position:relative;width:100%;height:240px">'
+    +'<canvas id="cycleChart" role="img" aria-label="Cycle length trend, average '+avg+' days">Cycle lengths averaging '+avg+' days.</canvas>'
     +'</div>'
+    +'<div style="text-align:center;font-size:11px;color:var(--muted);margin-top:.35rem">Cycle start date</div>'
+    +'<div style="display:flex;align-items:center;gap:8px;margin-top:.6rem;font-size:11px;color:var(--muted)">'
+    +'<div style="width:24px;height:10px;background:rgba(200,210,200,0.35);border-radius:2px"></div>'
+    +'Within normal range (21–35 days)</div>'
     +'</div>'
-    +'<div class="card"><div style="font-size:11px;color:var(--muted);margin-bottom:.5rem;font-weight:500">Year by year</div>'+yearRows+'</div>';
+    +insights.map(function(ins){
+      return'<div class="card" style="margin-bottom:.6rem">'
+        +'<div style="display:flex;gap:10px;align-items:flex-start">'
+        +'<span style="font-size:20px;flex-shrink:0">'+ins.icon+'</span>'
+        +'<div><div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:4px">'+ins.title+'</div>'
+        +'<div style="font-size:13px;color:var(--ink-mid);line-height:1.7">'+ins.text+'</div>'
+        +'</div></div>'
+        +'</div>';
+    }).join('');
+
+  function drawChart(){
+    var ctx=document.getElementById('cycleChart');if(!ctx)return;
+    window._cycleChartInstance=new Chart(ctx,{
+      type:'line',
+      data:{
+        labels:chartLabels,
+        datasets:[
+          // Normal range band (filled area between 21 and 35)
+          {data:chartValues.map(function(){return 35}),borderWidth:0,pointRadius:0,fill:'+1',backgroundColor:'rgba(180,210,180,0.18)'},
+          {data:chartValues.map(function(){return 21}),borderWidth:0,pointRadius:0,fill:false,backgroundColor:'transparent'},
+          // Main line
+          {
+            data:chartValues,
+            borderColor:'#4a5568',
+            borderWidth:2.5,
+            pointBackgroundColor:'#2d3748',
+            pointBorderColor:'#fff',
+            pointBorderWidth:2,
+            pointRadius:7,
+            pointHoverRadius:9,
+            tension:0.35,
+            fill:false,
+            datalabels:{
+              display:true,
+              anchor:'end',
+              align:'top',
+              color:'#2d3748',
+              font:{size:12,weight:'600'},
+              formatter:function(v){return v}
+            }
+          }
+        ]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        layout:{padding:{top:28,right:8,left:8,bottom:4}},
+        plugins:{
+          legend:{display:false},
+          tooltip:{
+            callbacks:{
+              title:function(items){return chartLabels[items[0].dataIndex]},
+              label:function(item){
+                if(item.datasetIndex!==2)return null;
+                var v=item.raw;
+                return v+' days'+(v<25?' — short':v>28?' — long':' — normal');
+              }
+            },
+            filter:function(item){return item.datasetIndex===2}
+          }
+        },
+        scales:{
+          x:{
+            ticks:{font:{size:10},color:'#9a8f88',maxRotation:35,autoSkip:false},
+            grid:{display:false}
+          },
+          y:{
+            min:18,max:36,
+            position:'right',
+            ticks:{stepSize:5,font:{size:11},color:'#9a8f88',callback:function(v){return v}},
+            grid:{color:'rgba(0,0,0,0.04)'},
+            title:{display:true,text:'Cycle length, days',color:'#9a8f88',font:{size:10}}
+          }
+        }
+      }
+    });
+  }
+
+  if(typeof Chart==='undefined'){
+    var s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js';
+    s.onload=drawChart;
+    document.head.appendChild(s);
+  } else { drawChart(); }
 }
+
+
 
 function buildCyclePatterns(){
   var el=document.getElementById('cycle-patterns-section');
@@ -2056,9 +2128,33 @@ function renderMeals(){
 
 // ── LAB RESULTS ───────────────────────────────────────────────────
 var EVERLYWELL=[{name:'Estradiol',val:'263.38 pg/mL',flag:'badge-high',ref:'Ref: 36.50–246.00'},{name:'DHEAS',val:'1.1 ng/mL',flag:'badge-low',ref:'Ref: 2.0–19.0'},{name:'Progesterone',val:'<0.1 ng/mL',flag:'badge-normal',ref:'Saliva — normal'},{name:'Testosterone (Total)',val:'22.9 pg/mL',flag:'badge-normal',ref:'Ref: 10.0–130.0'},{name:'TSH',val:'1.54 uIU/mL',flag:'badge-normal',ref:'Ref: 0.45–5.33'},{name:'Free T3',val:'2.55 pg/mL',flag:'badge-normal',ref:'Ref: 2.07–3.87'},{name:'Free T4',val:'0.91 ng/dL',flag:'badge-normal',ref:'Ref: 0.50–1.14'},{name:'TPO Antibodies',val:'<0.25 IU/mL',flag:'badge-normal',ref:"No Hashimoto's"},{name:'Cortisol Morning',val:'3.05 ng/mL',flag:'badge-normal',ref:'HPA rhythm intact'},{name:'FSH',val:'4.91 mIU/mL',flag:'badge-normal',ref:'Ref: 3.85–8.78'},{name:'LH',val:'3.62 mIU/mL',flag:'badge-normal',ref:'Ref: 2.12–10.89'},{name:'LH/FSH Ratio',val:'0.74',flag:'badge-normal',ref:'No PCOS (threshold >2.0)'}];
-var PENDING=[{name:'Choose Health Metabolic 7-in-1',val:'Mailed May 24',ref:'Results late May/early June'},{name:'Ferritin recheck',val:'Due mid-June',ref:'Quest, 11911 N Meridian St'},{name:'Vitamin D (25-OH)',val:'URGENT',ref:'Everlywell ordered'},{name:'Serum Progesterone Day 21',val:'Next test Day 21',ref:'Blood confirmation'},{name:'Free Testosterone',val:'Pending',ref:'SHBG variant'},{name:'Homocysteine',val:'Pending',ref:'Confirms methylation working'},{name:'Reverse T3',val:'Pending',ref:'Pairs with Free T3'}];
+var CHOOSE_HEALTH=[
+  {name:'Average Blood Sugar (HbA1c)',val:'5.00%',flag:'badge-normal',ref:'Target: 4–5.6%'},
+  {name:'Total Cholesterol',val:'207 mg/dL',flag:'badge-high',ref:'Target: 0–200 mg/dL'},
+  {name:'HDL',val:'50.10 mg/dL',flag:'badge-normal',ref:'Target: 50–10000 mg/dL'},
+  {name:'Triglycerides',val:'91 mg/dL',flag:'badge-normal',ref:'Target: 0–150 mg/dL'},
+  {name:'LDL',val:'138 mg/dL',flag:'badge-high',ref:'Target: 0–100 mg/dL — Highly Elevated'},
+  {name:'Fasting Glucose',val:'124 mg/dL',flag:'badge-high',ref:'Target: 0–100 mg/dL — Elevated'},
+  {name:'Inflammation (hsCRP)',val:'1.20 mg/L',flag:'badge-high',ref:'Target: 0–1 mg/L — Elevated'},
+  {name:'Oxidative Stress (GGT)',val:'9.00 U/L',flag:'badge-normal',ref:'Target: 0–9 U/L'},
+  {name:'Total Cholesterol:HDL Ratio',val:'4.13:1',flag:'badge-high',ref:'Target: 0–3.8 — Elevated'},
+  {name:'Insulin Resistance',val:'1.82:1',flag:'badge-normal',ref:'Target: 0–2'},
+];
+
+var PENDING=[
+  {name:'Ferritin recheck',val:'Due mid-June',ref:'Quest, 11911 N Meridian St'},
+  {name:'Vitamin D (25-OH)',val:'URGENT',ref:'Everlywell ordered'},
+  {name:'Serum Progesterone Day 21',val:'Next test Day 21',ref:'Blood confirmation'},
+  {name:'Free Testosterone',val:'Pending',ref:'SHBG variant'},
+  {name:'Homocysteine',val:'Pending',ref:'Confirms methylation working'},
+  {name:'Reverse T3',val:'Pending',ref:'Pairs with Free T3'},
+];
+
 function buildResults(){
   document.getElementById('everlywell-results').innerHTML=EVERLYWELL.map(function(r){return'<div class="info-row"><div><div style="font-size:13px">'+r.name+'</div><div style="font-size:11px;color:var(--muted)">'+r.ref+'</div></div><span class="badge '+r.flag+'">'+r.val+'</span></div>'}).join('');
+  document.getElementById('choosehealth-results').innerHTML='<div style="font-size:11px;color:var(--muted);margin-bottom:.75rem;line-height:1.5">5 Optimal · 0 Low · 5 Elevated/High — Results date: May 28, 2026</div>'
+    +CHOOSE_HEALTH.map(function(r){return'<div class="info-row"><div><div style="font-size:13px">'+r.name+'</div><div style="font-size:11px;color:var(--muted)">'+r.ref+'</div></div><span class="badge '+r.flag+'">'+r.val+'</span></div>'}).join('')
+    +'<div style="margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--cream-dark);font-size:12px;color:var(--muted);line-height:1.6"><strong style="color:var(--ink)">Key flags:</strong> LDL and Total Cholesterol elevated — APOA1 genetic variant reduces HDL efficiency. Fasting Glucose 124 — IL6 post-meal walks are your best immediate tool. Inflammation (hsCRP 1.20) — quercetin, NAC, and omega-3s are all directly targeting this. GGT optimal — liver detox working despite GSTP1 weakness.</div>';
   document.getElementById('pending-results').innerHTML=PENDING.map(function(r){return'<div class="info-row"><div><div style="font-size:13px">'+r.name+'</div><div style="font-size:11px;color:var(--muted)">'+r.ref+'</div></div><span class="badge badge-pending">'+r.val+'</span></div>'}).join('');
 }
 
