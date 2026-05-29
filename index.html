@@ -653,71 +653,112 @@ var GOALS = [
     id:'ferritin',
     label:'Ferritin',
     icon:'🔩',
-    why:'Biggest single driver of fatigue and brain fog',
-    start:18, target:70, current:18, unit:'ng/mL',
-    test:'Retest mid-June — Quest Diagnostics',
+    why:'Biggest single driver of fatigue and brain fog. Currently rebuilding.',
+    start:18, target:70, current:18, unit:' ng/mL',
+    test:'Retest mid-June — Quest, 11911 N Meridian St',
     status:'in-progress',
-    color:'var(--blush)'
+    color:'var(--blush)',
+    note:'Iron bisglycinate + Vit C daily since March. Stomach pain post-ovulation resolved by eating 2-3 bites first.'
   },
   {
     id:'vitd',
     label:'Vitamin D',
     icon:'☀️',
-    why:'Three genetic variants impairing conversion, transport, and receptor response',
-    start:null, target:60, current:null, unit:'ng/mL',
+    why:'Three genetic variants impairing conversion (CYP2R1), transport (GC), and receptor response (VDR). Almost certainly deficient.',
+    start:null, target:60, current:null, unit:' ng/mL',
     test:'Everlywell ordered — URGENT',
     status:'untested',
-    color:'var(--gold)'
+    color:'var(--gold)',
+    note:'Currently on 1000 IU D3 — likely insufficient. May need 4000-5000 IU once tested.'
   },
   {
     id:'estradiol',
     label:'Estradiol',
     icon:'⚖️',
-    why:'Confirmed estrogen dominance — driving most PMS symptoms',
-    start:263.38, target:180, current:263.38, unit:'pg/mL',
-    test:'Retest in ~3 months',
+    why:'Confirmed estrogen dominance. Driving most PMS symptoms, mast cell reactivity, and slow detox.',
+    start:263.38, target:180, current:263.38, unit:' pg/mL',
+    test:'Retest in ~3 months (Everlywell)',
     status:'in-progress',
-    color:'var(--blush)'
+    color:'var(--blush)',
+    note:'Flow Balance + Liver Tincture daily. Cruciferous vegetables. NAC. Castor oil packs nightly.'
   },
   {
     id:'dheas',
     label:'DHEAS',
     icon:'⚡',
-    why:'Adrenal depletion from 8 months of chronic stress',
-    start:1.1, target:8, current:1.1, unit:'ng/mL',
+    why:'Adrenal depletion from 8 months of chronic stress. 3-6 month rebuild process.',
+    start:1.1, target:8, current:1.1, unit:' ng/mL',
     test:'Retest in 3-6 months',
     status:'in-progress',
-    color:'var(--gold)'
+    color:'var(--gold)',
+    note:'Adrenal Cortex + Adrenal Cocktail + PEMF Level 1 nightly. Stress resolved April 2026 — recovery underway.'
+  },
+  {
+    id:'ldl',
+    label:'LDL Cholesterol',
+    icon:'🫀',
+    why:'Highly elevated at 138. APOA1 variant reduces HDL efficiency. Post-meal walks are most powerful tool.',
+    start:138, target:100, current:138, unit:' mg/dL',
+    test:'Retest with next Choose Health panel',
+    status:'in-progress',
+    color:'var(--blush)',
+    note:'Fish oil (moderate dose). 10-15 min walk after meals. IL6 variant makes post-meal movement especially effective.'
+  },
+  {
+    id:'glucose',
+    label:'Fasting Glucose',
+    icon:'🩸',
+    why:'Elevated at 124. TCF7L2 variants reduce insulin sensitivity. Addressable with lifestyle.',
+    start:124, target:85, current:124, unit:' mg/dL',
+    test:'Retest with next Choose Health panel',
+    status:'in-progress',
+    color:'var(--blush)',
+    note:'GlucoBitters before carb-heavy meals. 10-15 min walk after every meal. Consider CGM trial (Nutrisense).'
+  },
+  {
+    id:'crp',
+    label:'Inflammation (hsCRP)',
+    icon:'🔥',
+    why:'Elevated at 1.20 mg/L. GSK3B variant = 40% higher inflammatory signalling. Quercetin + NAC + omega-3 directly targeting.',
+    start:1.20, target:0.5, current:1.20, unit:' mg/L',
+    test:'Retest with next Choose Health panel',
+    status:'in-progress',
+    color:'var(--gold)',
+    note:'Quercetin + Bromelain, NAC, Fish Oil, Lumebox all targeting inflammation. GGT already optimal — liver working.'
   },
   {
     id:'sleep',
     label:'Sleep quality',
     icon:'🌙',
-    why:'Everything repairs during sleep — GABA variants + PharmaGABA + PEMF',
+    why:'Everything repairs during sleep. GABA receptor variants + PharmaGABA + PEMF recovery.',
     start:4, target:8, current:null, unit:'/10',
     test:'Track via Symptoms tab daily',
     status:'tracking',
-    color:'var(--sage)'
+    color:'var(--sage)',
+    note:'PharmaGABA producing clear calm effect. PEMF Level 1 nightly. Magnesium CitraMate at bedtime.'
   },
 ];
 
 var WINS = [
-  {date:'March 2026', text:'Started protocol. Switched from folic acid to Methyl Guard Plus (5-MTHF).'},
-  {date:'March 2026', text:'Ferritin confirmed at 18 — iron bisglycinate started immediately.'},
-  {date:'April 2026', text:'Lumebox brain fog response discovered — single session clears fog.'},
+  {date:'May 2026', text:'Choose Health results in — GGT optimal (9 U/L). Liver detox working despite GSTP1 weakness.'},
+  {date:'May 2026', text:'Choose Health: HbA1c 5.0% optimal and Insulin Resistance 1.82 — metabolic foundation solid.'},
+  {date:'May 2026', text:'Everlywell results confirmed root causes — now treating estrogen dominance and adrenal depletion directly, not just symptoms.'},
+  {date:'May 2026', text:'Got up Saturday before period, cleaned house, went to store, cooked breakfast, did laundry — previously impossible.'},
+  {date:'May 2026', text:'Barometric pressure identified as major headache trigger — now checking predictively before bad days.'},
+  {date:'May 2026', text:'Acute stress resolved — divorce finalised, remodel winding down. Recovery can now begin properly.'},
+  {date:'April 2026', text:'Lumebox brain fog effect confirmed — single session clears fog. Using daily.'},
   {date:'April 2026', text:'PharmaGABA "brain not having to work overtime" — clear calm effect confirmed.'},
-  {date:'May 2026', text:'Got up Saturday before period, cleaned house, cooked, did laundry — previously impossible.'},
-  {date:'May 2026', text:'Everlywell results — estradiol and DHEAS confirmed. Now treating root causes not symptoms.'},
-  {date:'May 2026', text:'Barometric pressure identified as major headache trigger — now checking predictively.'},
-  {date:'May 2026', text:'Acute stress resolved — divorce finalised, remodel winding down.'},
+  {date:'March 2026', text:'Switched from folic acid to Methyl Guard Plus (5-MTHF). Correcting years of unusable folate.'},
+  {date:'March 2026', text:'Iron bisglycinate started. Ferritin confirmed at 18 — rebuilding from baseline.'},
+  {date:'March 2026', text:'Protocol started. Foundation supplements all in place.'},
 ];
 
 var TIMELINE = [
-  {label:'Protocol started',date:'Mar 2026',done:true,note:'Iron, Methyl Guard, Lumebox, PEMF — foundation in place'},
-  {label:'Now — 2 months',date:'May 2026',done:true,note:'Sleep improving, brain fog less frequent, baseline energy higher, emotional volatility beginning to reduce'},
-  {label:'3 months',date:'Aug 2026',done:false,note:'Ferritin retest target 35-50. Vitamin D optimised. Luteal phase meaningfully better. First real sense of shift.'},
-  {label:'6 months',date:'Nov 2026',done:false,note:'Ferritin heading toward 70. Estradiol coming down. DHEAS rebuilding. PMS noticeably reduced.'},
-  {label:'12 months',date:'May 2027',done:false,note:'Ferritin optimal 70-100. Hormonal balance restored. Baseline energy and clarity fundamentally different.'},
+  {label:'Protocol started',date:'Mar 2026',done:true,note:'Iron, Methyl Guard, Lumebox, PEMF — foundation in place. Ferritin confirmed 18.'},
+  {label:'Now — 3 months in',date:'May 2026',done:true,current:true,note:'Sleep improving. Brain fog less frequent. Saturday before period functional. Choose Health results in — GGT optimal, metabolic foundation solid. LDL, Glucose, and hsCRP flagged for attention.'},
+  {label:'3 months',date:'Aug 2026',done:false,note:'Ferritin retest target 35-50. Vitamin D optimised. Estradiol retest. Luteal phase meaningfully better. First real sense of hormonal shift.'},
+  {label:'6 months',date:'Nov 2026',done:false,note:'Ferritin heading toward 70. Estradiol coming down. DHEAS rebuilding. PMS noticeably reduced. LDL and glucose improving with lifestyle changes.'},
+  {label:'12 months',date:'May 2027',done:false,note:'Ferritin optimal 70-100. Hormonal balance restored. Baseline energy and clarity fundamentally different. Luteal phase manageable rather than debilitating.'},
 ];
 
 function buildDashboard(){
@@ -780,6 +821,7 @@ function buildDashboard(){
           :'<div style="background:var(--gold-light);border-radius:var(--radius);padding:5px 9px;font-size:11px;color:var(--gold);margin-bottom:.5rem">'+currentDisplay+' — test needed to track progress</div>'
         )
         +'<div style="font-size:11px;color:var(--muted)">📋 '+g.test+'</div>'
+        +(g.note?'<div style="font-size:11px;color:var(--ink-mid);margin-top:4px;line-height:1.5;font-style:italic">'+g.note+'</div>':'')
         +'</div>';
     }).join('');
 
@@ -788,7 +830,7 @@ function buildDashboard(){
     +'<div class="card">'
     +TIMELINE.map(function(t,i){
       var isLast=i===TIMELINE.length-1;
-      var isCurrent=i===1;
+      var isCurrent=!!t.current;
       return'<div style="display:flex;gap:12px;padding:8px 0;'+(isLast?'':'border-bottom:1px solid var(--cream-dark)')+'">'
         +'<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0">'
         +'<div style="width:20px;height:20px;border-radius:50%;background:'+(t.done?isCurrent?'var(--blush)':'var(--sage)':'var(--cream-dark)')+';border:2px solid '+(t.done?isCurrent?'var(--blush)':'var(--sage)':'var(--border)')+';display:flex;align-items:center;justify-content:center;font-size:10px;color:'+(t.done?'#fff':'var(--muted)')+';">'+(t.done?isCurrent?'★':'✓':'')+'</div>'
