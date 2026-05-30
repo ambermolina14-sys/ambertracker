@@ -1318,8 +1318,11 @@ async function pullSyncFromSheets(){
   if(!sheetUrl){showSyncStatus('No Sheets URL — go to Settings');return}
   showSyncStatus('Syncing...');
   try{
-    var r=await fetch(sheetUrl+'?action=sync&date='+todayKey());
-    var data=await r.json();
+    // Use no-cors for the POST (write) but regular fetch for GET (read)
+    var url=sheetUrl+'?action=sync&date='+todayKey();
+    var r=await fetch(url,{method:'GET',headers:{'Content-Type':'application/json'}});
+    var text=await r.text();
+    var data=JSON.parse(text);
     if(data.ok&&data.state){
       applySyncState(data.state);
       builtTabs={};
@@ -1328,8 +1331,12 @@ async function pullSyncFromSheets(){
       var activeBtn=document.querySelector('.tab-btn.active');
       activateTab(activeId,activeBtn);
       showSyncStatus('✓ Loaded from Sheets');
-    }else{showSyncStatus('No data for today yet')}
-  }catch(e){showSyncStatus('Could not reach Sheets')}
+    }else{
+      showSyncStatus('No data for today yet — log something first');
+    }
+  }catch(e){
+    showSyncStatus('Could not reach Sheets — check connection');
+  }
 }
 
 function showSyncStatus(msg){
