@@ -177,6 +177,8 @@ textarea{resize:vertical;min-height:70px}
   <button class="tab-btn" onclick="showTab('cycle',this)">Cycle</button>
   <button class="tab-btn" onclick="showTab('results',this)">Lab Results</button>
   <button class="tab-btn" onclick="showTab('genetics',this)">Genetics</button>
+  <button class="tab-btn" onclick="showTab('today',this)">Today</button>
+  <button class="tab-btn" onclick="showTab('insights',this)">Insights</button>
   <button class="tab-btn" onclick="showTab('dashboard',this)">Progress</button>
   <button class="tab-btn" onclick="showTab('notes',this)">Notes</button>
   <button class="tab-btn" onclick="showTab('settings',this)">⚙</button>
@@ -204,6 +206,12 @@ textarea{resize:vertical;min-height:70px}
   <div class="phase-note" id="sym-phase-note"></div>
   <div class="section-title">General daily wellbeing</div>
   <div class="card" id="general-sliders"></div>
+  <div class="section-title">Energy by time of day</div>
+  <div class="card" id="energy-time-card">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:.75rem;line-height:1.5">Rate your energy at each time of day. This tracks your cortisol rhythm — morning fog vs afternoon crash vs evening wired is a key adrenal pattern.</div>
+    <div id="energy-time-sliders"></div>
+    <div id="cortisol-insight" style="margin-top:.75rem;font-size:12px;line-height:1.6;border-radius:var(--radius);padding:.6rem .9rem;display:none"></div>
+  </div>
   <div class="btn-row">
     <button class="btn-primary" onclick="saveSymptoms()">Save to Sheets</button>
     <button class="btn-outline" onclick="sendSymptomsToClauде()">Ask Claude ↗</button>
@@ -486,6 +494,14 @@ textarea{resize:vertical;min-height:70px}
   <div id="genetics-list"></div>
 </div>
 
+<div id="tab-today" class="panel">
+  <div id="today-content"></div>
+</div>
+
+<div id="tab-insights" class="panel">
+  <div id="insights-content"></div>
+</div>
+
 <div id="tab-dashboard" class="panel">
   <div id="dashboard-content"></div>
 </div>
@@ -633,6 +649,8 @@ function activateTab(id,btn){
   if(btn)btn.classList.add('active');
   if(!builtTabs[id]){
     if(id==='protocol')buildProtocol();
+    else if(id==='today')buildToday();
+    else if(id==='insights')buildInsights();
     else if(id==='symptoms')buildSymptoms();
     else if(id==='cycle')buildCalendar();
     else if(id==='stress')buildStress();
@@ -644,6 +662,9 @@ function activateTab(id,btn){
     else if(id==='dashboard')buildDashboard();
     builtTabs[id]=true;
   }
+  // Always refresh live tabs
+  if(id==='today'){buildToday();}
+  if(id==='baro'||id==='environment'){fetchBaro();}
 }
 
 // ── HEADER ────────────────────────────────────────────────────────
@@ -654,7 +675,320 @@ function initHeader(){
   el.textContent='';el.style.background='';el.style.color='';
 }
 
-// ── DASHBOARD ─────────────────────────────────────────────────────
+// ── TODAY AT A GLANCE ─────────────────────────────────────────────
+function buildToday(){
+  var el=document.getElementById('today-content');
+  if(!el)return;
+
+  var phase=getPhase(TODAY);
+  var cycleDay=getCycleDay(TODAY);
+  var phaseColors={menstrual:'#fdf0f3',follicular:'#eef4ef',ovulation:'#e8f3fb',luteal:'#faf4e8'};
+  var phaseBorder={menstrual:'#c4788a',follicular:'#6b8f71',ovulation:'#5b8fb9',luteal:'#9a7b3c'};
+  var phaseNames={menstrual:'Menstrual',follicular:'Follicular',ovulation:'Ovulation',luteal:'Luteal'};
+  var phaseTips={
+    menstrual:'Rest, warmth, iron critical. No intense exercise. Castor oil on lower abdomen.',
+    follicular:'Energy rising. Best window for demanding tasks, exercise, social plans.',
+    ovulation:'Peak energy. Take quercetin — estrogen surge activates mast cells.',
+    luteal:'PMS window. Extra quercetin, sardines every other day, PEMF Level 1-2 only.'
+  };
+
+  // Symptom scores today
+  var savedSym=lsGet('symVals_'+todayKey(),{});
+  var scores=GENERAL_SYMS.map(function(s){return s.inv?10-(savedSym[s.id]||s.def):savedSym[s.id]||s.def});
+  var wellbeing=Math.round(scores.reduce(function(a,b){return a+b},0)/scores.length*10)/10;
+  var wellbeingCol=wellbeing>=7?'#4a6b50':wellbeing>=4?'#b8763a':'#c4788a';
+
+  // NS state today
+  var ns=localStorage.getItem('nsState_'+todayKey());
+  var nsDisplay={wired:{label:'⚡ Wired',col:'#c4788a',bg:'#fdf0f3'},steady:{label:'✓ Steady',col:'#4a6b50',bg:'#eef4ef'},depleted:{label:'🪫 Depleted',col:'#b8763a',bg:'#fdf3ea'}};
+  var nsEl=ns&&nsDisplay[ns]?nsDisplay[ns]:{label:'Not logged',col:'var(--muted)',bg:'var(--cream-dark)'};
+
+  // Headache today
+  var headache=localStorage.getItem('headache_'+todayKey());
+  var headacheDisplay={none:{label:'✓ No headache',col:'#4a6b50',bg:'#eef4ef'},mild:{label:'Mild headache',col:'#b8763a',bg:'#fdf3ea'},moderate:{label:'Moderate headache',col:'#b8763a',bg:'#fdf3ea'},severe:{label:'⚠ Severe headache',col:'#c4788a',bg:'#fdf0f3'}};
+  var headacheEl=headache&&headacheDisplay[headache]?headacheDisplay[headache]:{label:'Not logged',col:'var(--muted)',bg:'var(--cream-dark)'};
+
+  // Protocol completion
+  var all=Object.values(SUPPLEMENTS).flat();
+  var done=all.filter(function(i){return checks[i.id]}).length;
+  var protoPct=Math.round(done/all.length*100);
+  var protoCol=protoPct>=80?'#4a6b50':protoPct>=50?'#b8763a':'#c4788a';
+
+  // Burden today
+  var burden=localStorage.getItem('burden_'+todayKey());
+  var burdenDisplay={fine:{label:'✓ Feeling fine',col:'#4a6b50',bg:'#eef4ef'},mild:{label:'⚡ Mild burden',col:'#b8763a',bg:'#fdf3ea'},flaring:{label:'🔥 Flaring',col:'#c4788a',bg:'#fdf0f3'}};
+  var burdenEl=burden&&burdenDisplay[burden]?burdenDisplay[burden]:{label:'Not logged',col:'var(--muted)',bg:'var(--cream-dark)'};
+
+  // Stress level
+  var stress=localStorage.getItem('stressLevel_'+todayKey());
+  var stressDisplay={low:{label:'Low stress',col:'#4a6b50',bg:'#eef4ef'},moderate:{label:'Moderate stress',col:'#b8763a',bg:'#fdf3ea'},high:{label:'High stress',col:'#c4788a',bg:'#fdf0f3'}};
+  var stressEl=stress&&stressDisplay[stress]?stressDisplay[stress]:{label:'Not logged',col:'var(--muted)',bg:'var(--cream-dark)'};
+
+  // Days logging streak
+  var streak=0;
+  for(var i=0;i<60;i++){
+    var d=new Date(TODAY);d.setDate(d.getDate()-i);
+    var k=d.toISOString().split('T')[0];
+    var s=lsGet('symVals_'+k,null);
+    if(s&&Object.keys(s).length>0)streak++;
+    else if(i>0)break;
+  }
+
+  // Burden score (0-100) combining baro + pollen + histamine + phase
+  var month=TODAY.getMonth();
+  var season=INDIANA_POLLEN[month];
+  var pollenHighLevels=['High','Very High','Moderate-High'];
+  var pollenScore=pollenHighLevels.includes(season.grass)||pollenHighLevels.includes(season.trees)?30:season.grass==='Moderate'||season.trees==='Moderate'?15:5;
+  var baroScore=lastBaroReading<29.50?30:lastBaroReading<29.80?15:0;
+  var phaseScore=phase==='luteal'?25:phase==='ovulation'?10:0;
+  var histamineCount=Object.keys(foodTapped).filter(function(k){return foodTapped[k]}).length;
+  var histamineScore=Math.min(histamineCount*8,20);
+  var headacheScore=headache==='severe'?25:headache==='moderate'?15:headache==='mild'?5:0;
+  var totalBurden=Math.min(pollenScore+baroScore+phaseScore+histamineScore+headacheScore,100);
+  var burdenColor=totalBurden>=60?'#c4788a':totalBurden>=30?'#b8763a':'#4a6b50';
+  var burdenLabel=totalBurden>=60?'High — symptoms expected':totalBurden>=30?'Moderate — watch for symptoms':'Low — good day ahead';
+
+  el.innerHTML=
+    // Header
+    '<div style="font-family:Cormorant Garamond,serif;font-size:22px;font-weight:500;color:var(--ink);margin-bottom:4px">'+TODAY.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})+'</div>'
+    +'<div style="font-size:12px;color:var(--muted);margin-bottom:1.25rem">Day '+streak+' logging streak</div>'
+
+    // Burden score — big single number
+    +'<div class="card" style="background:linear-gradient(135deg,'+phaseColors[phase]+',var(--cream-dark));border:none;margin-bottom:.75rem;text-align:center;padding:1.25rem">'
+    +'<div style="font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.25rem">Today\'s burden score</div>'
+    +'<div style="font-family:Cormorant Garamond,serif;font-size:52px;font-weight:300;color:'+burdenColor+';line-height:1">'+totalBurden+'</div>'
+    +'<div style="font-size:12px;color:'+burdenColor+';font-weight:500;margin-top:4px">'+burdenLabel+'</div>'
+    +'<div style="height:6px;background:rgba(255,255,255,.5);border-radius:3px;overflow:hidden;margin-top:.75rem">'
+    +'<div style="height:100%;width:'+totalBurden+'%;background:'+burdenColor+';border-radius:3px;opacity:.7;transition:width .4s"></div>'
+    +'</div>'
+    +'<div style="font-size:10px;color:var(--muted);margin-top:4px">Pollen '+pollenScore+' · Pressure '+baroScore+' · Phase '+phaseScore+(histamineScore?' · Histamine '+histamineScore:'')+(headacheScore?' · Headache '+headacheScore:'')+'</div>'
+    +'</div>'
+
+    // 2-col quick stats
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:.75rem">'
+    // Wellbeing
+    +'<div class="card" style="padding:.85rem;cursor:pointer" onclick="showTab(\'symptoms\',document.querySelectorAll(\'.tab-btn\')[1])">'
+    +'<div style="font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Wellbeing</div>'
+    +'<div style="font-family:Cormorant Garamond,serif;font-size:26px;font-weight:500;color:'+wellbeingCol+'">'+wellbeing+'<span style="font-size:13px;color:var(--muted)">/10</span></div>'
+    +'<div style="font-size:10px;color:var(--muted);margin-top:2px">Tap to update</div>'
+    +'</div>'
+    // NS State
+    +'<div class="card" style="padding:.85rem;background:'+nsEl.bg+';cursor:pointer" onclick="showTab(\'stress\',document.querySelectorAll(\'.tab-btn\')[3])">'
+    +'<div style="font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Nervous system</div>'
+    +'<div style="font-size:14px;font-weight:600;color:'+nsEl.col+'">'+nsEl.label+'</div>'
+    +'<div style="font-size:10px;color:var(--muted);margin-top:2px">Tap to update</div>'
+    +'</div>'
+    // Protocol
+    +'<div class="card" style="padding:.85rem;cursor:pointer" onclick="showTab(\'protocol\',document.querySelectorAll(\'.tab-btn\')[0])">'
+    +'<div style="font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Protocol</div>'
+    +'<div style="font-family:Cormorant Garamond,serif;font-size:26px;font-weight:500;color:'+protoCol+'">'+protoPct+'<span style="font-size:13px;color:var(--muted)">%</span></div>'
+    +'<div style="font-size:10px;color:var(--muted);margin-top:2px">'+done+' of '+all.length+' done</div>'
+    +'</div>'
+    // Stress
+    +'<div class="card" style="padding:.85rem;background:'+stressEl.bg+';cursor:pointer" onclick="showTab(\'stress\',document.querySelectorAll(\'.tab-btn\')[3])">'
+    +'<div style="font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Stress</div>'
+    +'<div style="font-size:14px;font-weight:600;color:'+stressEl.col+'">'+stressEl.label+'</div>'
+    +'<div style="font-size:10px;color:var(--muted);margin-top:2px">Tap to update</div>'
+    +'</div>'
+    +'</div>'
+
+    // Barometric
+    +'<div class="card" style="margin-bottom:.75rem;display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="showTab(\'environment\',document.querySelectorAll(\'.tab-btn\')[5])">'
+    +'<div><div style="font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px">Barometric pressure</div>'
+    +'<div id="today-baro-val" style="font-size:20px;font-weight:500;color:var(--ink)">'+lastBaroReading+' inHg</div>'
+    +'<div id="today-baro-trend" style="font-size:12px;color:var(--muted);margin-top:2px"></div>'
+    +'</div>'
+    +'<div style="font-size:11px;color:var(--muted)">→ Environment</div>'
+    +'</div>'
+
+    // Headache
+    +'<div class="card" style="margin-bottom:.75rem;background:'+headacheEl.bg+';cursor:pointer" onclick="showTab(\'environment\',document.querySelectorAll(\'.tab-btn\')[5])">'
+    +'<div style="font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px">Headache</div>'
+    +'<div style="font-size:14px;font-weight:600;color:'+headacheEl.col+'">'+headacheEl.label+'</div>'
+    +'</div>'
+
+    // Phase tip
+    +'<div class="card" style="background:'+phaseColors[phase]+';border-left:3px solid '+phaseBorder[phase]+';margin-bottom:.75rem">'
+    +'<div style="font-size:10px;color:'+phaseBorder[phase]+';font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">'+phaseNames[phase]+' phase</div>'
+    +'<div style="font-size:13px;color:var(--ink-mid);line-height:1.6">'+phaseTips[phase]+'</div>'
+    +'</div>'
+
+    // Quick links
+    +'<div class="section-title">Quick log</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:8px">'
+    +'<button class="btn-outline" style="font-size:12px" onclick="showTab(\'symptoms\',document.querySelectorAll(\'.tab-btn\')[1])">Log symptoms</button>'
+    +'<button class="btn-outline" style="font-size:12px" onclick="showTab(\'meals\',document.querySelectorAll(\'.tab-btn\')[7])">Log meal</button>'
+    +'<button class="btn-outline" style="font-size:12px" onclick="showTab(\'exercise\',document.querySelectorAll(\'.tab-btn\')[4])">Log exercise</button>'
+    +'<button class="btn-outline" style="font-size:12px" onclick="showTab(\'notes\',document.querySelectorAll(\'.tab-btn\')[12])">Add note</button>'
+    +'</div>';
+
+  // Update baro trend display
+  var trend=getBaroTrend();
+  var td=getTrendDisplay(trend);
+  var tvEl=document.getElementById('today-baro-trend');
+  if(tvEl)tvEl.innerHTML='<span style="color:'+td.col+'">'+td.arrow+' '+td.label+'</span>';
+}
+
+// ── INSIGHTS ──────────────────────────────────────────────────────
+function buildInsights(){
+  var el=document.getElementById('insights-content');
+  if(!el)return;
+
+  // Gather last 30 days of data
+  var days=[];
+  for(var i=0;i<30;i++){
+    var d=new Date(TODAY);d.setDate(d.getDate()-i);
+    var key=d.toISOString().split('T')[0];
+    var sym=lsGet('symVals_'+key,null);
+    var ns=localStorage.getItem('nsState_'+key);
+    var stress=localStorage.getItem('stressLevel_'+key);
+    var headache=localStorage.getItem('headache_'+key);
+    var burden=localStorage.getItem('burden_'+key);
+    var phase=getPhase(d);
+    var dayReadings=baroHistory.filter(function(e){var ds=d.getTime();return e.ts>=ds&&e.ts<ds+864e5});
+    var minBaro=dayReadings.length?Math.min.apply(null,dayReadings.map(function(e){return e.v})):null;
+    var hadBaroDrop=dayReadings.some(function(e){return e.dir==='dropping-fast'||e.dir==='dropping'});
+    if(sym||ns||headache){
+      days.push({key:key,d:d,sym:sym,ns:ns,stress:stress,headache:headache,burden:burden,phase:phase,minBaro:minBaro,hadBaroDrop:hadBaroDrop});
+    }
+  }
+
+  var loggedDays=days.length;
+  if(!loggedDays){
+    el.innerHTML='<div class="card" style="text-align:center;padding:2rem"><div style="font-size:32px;margin-bottom:.75rem">📊</div><div style="font-size:14px;font-weight:500;color:var(--ink);margin-bottom:.5rem">Not enough data yet</div><div style="font-size:12px;color:var(--muted);line-height:1.6">Log symptoms, stress, and headaches daily for at least a week and your personal patterns will appear here automatically.</div></div>';
+    return;
+  }
+
+  // ── Correlation: stress + luteal → headache
+  var lutealDays=days.filter(function(d){return d.phase==='luteal'});
+  var lutealHighStress=lutealDays.filter(function(d){return d.stress==='high'||d.ns==='wired'});
+  var lutealHighStressHeadache=lutealHighStress.filter(function(d){return d.headache&&d.headache!=='none'});
+  var stressLutealPct=lutealHighStress.length>=3?Math.round(lutealHighStressHeadache.length/lutealHighStress.length*100):null;
+
+  // ── Correlation: baro drop → headache
+  var baroDropDays=days.filter(function(d){return d.hadBaroDrop});
+  var baroDropHeadache=baroDropDays.filter(function(d){return d.headache&&d.headache!=='none'});
+  var baroDropPct=baroDropDays.length>=3?Math.round(baroDropHeadache.length/baroDropDays.length*100):null;
+
+  // ── Best and worst days by phase
+  var phaseWellbeing={menstrual:[],follicular:[],ovulation:[],luteal:[]};
+  days.forEach(function(d){
+    if(d.sym){
+      var sc=GENERAL_SYMS.map(function(s){return s.inv?10-(d.sym[s.id]||s.def):d.sym[s.id]||s.def});
+      var avg=Math.round(sc.reduce(function(a,b){return a+b},0)/sc.length*10)/10;
+      phaseWellbeing[d.phase].push(avg);
+    }
+  });
+
+  // ── Symptom burden by day of week
+  var dowWellbeing={0:[],1:[],2:[],3:[],4:[],5:[],6:[]};
+  var dowNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  days.forEach(function(d){
+    if(d.sym){
+      var sc=GENERAL_SYMS.map(function(s){return s.inv?10-(d.sym[s.id]||s.def):d.sym[s.id]||s.def});
+      var avg=Math.round(sc.reduce(function(a,b){return a+b},0)/sc.length*10)/10;
+      dowWellbeing[d.d.getDay()].push(avg);
+    }
+  });
+  var dowAvgs=dowNames.map(function(n,i){
+    var vals=dowWellbeing[i];
+    return{name:n,avg:vals.length?Math.round(vals.reduce(function(a,b){return a+b},0)/vals.length*10)/10:null};
+  });
+  var bestDow=dowAvgs.filter(function(d){return d.avg}).reduce(function(a,b){return b.avg>a.avg?b:a},{avg:0});
+  var worstDow=dowAvgs.filter(function(d){return d.avg}).reduce(function(a,b){return b.avg<a.avg?b:a},{avg:10});
+
+  // ── Weekly summary
+  var thisWeek=days.filter(function(d){return(TODAY-d.d)/864e5<7});
+  var weekWellbeing=thisWeek.filter(function(d){return d.sym}).map(function(d){
+    var sc=GENERAL_SYMS.map(function(s){return s.inv?10-(d.sym[s.id]||s.def):d.sym[s.id]||s.def});
+    return Math.round(sc.reduce(function(a,b){return a+b},0)/sc.length*10)/10;
+  });
+  var weekAvg=weekWellbeing.length?Math.round(weekWellbeing.reduce(function(a,b){return a+b},0)/weekWellbeing.length*10)/10:null;
+  var weekHeadaches=thisWeek.filter(function(d){return d.headache&&d.headache!=='none'}).length;
+  var weekHighStress=thisWeek.filter(function(d){return d.stress==='high'||d.ns==='wired'}).length;
+
+  // Build HTML
+  var html='';
+
+  // Weekly summary card
+  html+='<div class="section-title">This week</div>'
+    +'<div class="card" style="margin-bottom:.75rem">'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center">'
+    +'<div><div style="font-family:Cormorant Garamond,serif;font-size:24px;font-weight:500;color:var(--ink)">'+(weekAvg||'—')+'</div><div style="font-size:10px;color:var(--muted);margin-top:2px">Avg wellbeing</div></div>'
+    +'<div><div style="font-family:Cormorant Garamond,serif;font-size:24px;font-weight:500;color:'+(weekHeadaches>=3?'var(--blush)':'var(--ink)')+'">'+weekHeadaches+'</div><div style="font-size:10px;color:var(--muted);margin-top:2px">Headache days</div></div>'
+    +'<div><div style="font-family:Cormorant Garamond,serif;font-size:24px;font-weight:500;color:'+(weekHighStress>=3?'var(--blush)':'var(--ink)')+'">'+weekHighStress+'</div><div style="font-size:10px;color:var(--muted);margin-top:2px">High stress days</div></div>'
+    +'</div>'
+    +'<div style="font-size:12px;color:var(--muted);margin-top:.75rem">Based on '+thisWeek.length+' logged days this week · '+loggedDays+' days total</div>'
+    +'</div>';
+
+  // Correlation cards
+  html+='<div class="section-title">Patterns detected</div>';
+
+  if(baroDropPct!==null){
+    var strong=baroDropPct>=60;
+    html+='<div class="card" style="margin-bottom:.6rem;border-left:3px solid '+(strong?'var(--blush)':'var(--gold)')+'">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'
+      +'<div style="font-size:13px;font-weight:600;color:var(--ink)">🌧️ Barometric drop → Headache</div>'
+      +'<span style="font-size:15px;font-weight:700;color:'+(strong?'var(--blush)':'var(--gold)')+'">'+baroDropPct+'%</span>'
+      +'</div>'
+      +'<div style="font-size:12px;color:var(--muted);line-height:1.5">On '+baroDropDays.length+' days with a pressure drop, you had a headache '+baroDropPct+'% of the time. '+(strong?'<strong style="color:var(--blush)">Strong pattern — barometric pressure is a confirmed trigger for you.</strong>':'Pattern emerging.')+'</div>'
+      +'</div>';
+  }
+
+  if(stressLutealPct!==null){
+    var strong2=stressLutealPct>=60;
+    html+='<div class="card" style="margin-bottom:.6rem;border-left:3px solid '+(strong2?'var(--blush)':'var(--gold)')+'">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'
+      +'<div style="font-size:13px;font-weight:600;color:var(--ink)">⚡ High stress + luteal → Headache</div>'
+      +'<span style="font-size:15px;font-weight:700;color:'+(strong2?'var(--blush)':'var(--gold)')+'">'+stressLutealPct+'%</span>'
+      +'</div>'
+      +'<div style="font-size:12px;color:var(--muted);line-height:1.5">On high stress days during the luteal phase, you had a headache '+stressLutealPct+'% of the time. '+(strong2?'<strong style="color:var(--blush)">Strong pattern — stress management in luteal phase is critical.</strong>':'Pattern emerging.')+'</div>'
+      +'</div>';
+  }
+
+  if(baroDropPct===null&&stressLutealPct===null){
+    html+='<div class="card" style="font-size:12px;color:var(--muted);line-height:1.6;text-align:center;padding:1.5rem">'
+      +'Keep logging daily — correlations appear automatically once you have enough data. Aim for 2 weeks of consistent logging.</div>';
+  }
+
+  // Wellbeing by phase
+  var phaseNames2={menstrual:'Menstrual',follicular:'Follicular',ovulation:'Ovulation',luteal:'Luteal'};
+  var phaseColors2={menstrual:'#e8a0b0',follicular:'#9ab89a',ovulation:'#89b4d4',luteal:'#d4b87a'};
+  var hasPhaseData=Object.values(phaseWellbeing).some(function(v){return v.length>0});
+  if(hasPhaseData){
+    html+='<div class="section-title">Wellbeing by phase</div>'
+      +'<div class="card">';
+    Object.keys(phaseWellbeing).forEach(function(phase){
+      var vals=phaseWellbeing[phase];
+      if(!vals.length)return;
+      var avg=Math.round(vals.reduce(function(a,b){return a+b},0)/vals.length*10)/10;
+      var pct=Math.round(avg/10*100);
+      html+='<div style="margin-bottom:.75rem">'
+        +'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">'
+        +'<span style="font-weight:500;color:var(--ink)">'+phaseNames2[phase]+'</span>'
+        +'<span style="font-weight:600;color:var(--ink)">'+avg+'/10 <span style="font-size:10px;color:var(--muted)">('+vals.length+' days)</span></span>'
+        +'</div>'
+        +'<div style="height:8px;background:var(--cream-dark);border-radius:4px;overflow:hidden">'
+        +'<div style="height:100%;width:'+pct+'%;background:'+phaseColors2[phase]+';border-radius:4px;opacity:.8"></div>'
+        +'</div>'
+        +'</div>';
+    });
+    html+='</div>';
+  }
+
+  // Best/worst days
+  if(bestDow.avg&&worstDow.avg&&bestDow.name!==worstDow.name){
+    html+='<div class="section-title">Day of week patterns</div>'
+      +'<div class="card">'
+      +'<div class="info-row"><span class="info-lbl">Best day on average</span><span style="font-size:13px;font-weight:600;color:#4a6b50">'+bestDow.name+' ('+bestDow.avg+'/10)</span></div>'
+      +'<div class="info-row"><span class="info-lbl">Hardest day on average</span><span style="font-size:13px;font-weight:600;color:#c4788a">'+worstDow.name+' ('+worstDow.avg+'/10)</span></div>'
+      +'</div>';
+  }
+
+  el.innerHTML=html;
+}
+
+// ── END INSIGHTS ──────────────────────────────────────────────────
 var PROTOCOL_START = new Date('2026-03-01');
 var GOALS = [
   {
@@ -1167,6 +1501,84 @@ function updateSlider(id,val,inv){
   var avg=Math.round(scores.reduce(function(a,b){return a+b},0)/scores.length*10)/10;
   var ws=document.getElementById('wellbeing-score');if(ws)ws.textContent=avg;
 }
+var ENERGY_TIMES=[
+  {id:'early_morning',label:'Early morning (6–9am)',note:'Should be highest — cortisol peaks here'},
+  {id:'mid_morning',label:'Mid morning (9–12pm)',note:'Should stay strong'},
+  {id:'afternoon',label:'Afternoon (12–3pm)',note:'Natural slight dip normal — severe crash = adrenal pattern'},
+  {id:'late_afternoon',label:'Late afternoon (3–6pm)',note:'Second wind if cortisol rhythm healthy'},
+  {id:'evening',label:'Evening (6–9pm)',note:'Should be winding down — wired here = inverted rhythm'},
+  {id:'night',label:'Night (9pm+)',note:'Should be lowest — alert/wired at night = cortisol dysregulation'},
+];
+
+var energyTimeVals=lsGet('energyTime_'+new Date().toISOString().split('T')[0],{});
+
+function buildEnergyTimeSliders(){
+  var cont=document.getElementById('energy-time-sliders');
+  if(!cont)return;
+  cont.innerHTML='';
+  ENERGY_TIMES.forEach(function(t){
+    var val=energyTimeVals[t.id]!==undefined?energyTimeVals[t.id]:5;
+    var col=val>=7?'#4a6b50':val>=4?'#b8763a':'#c4788a';
+    var row=document.createElement('div');
+    row.className='slider-row';
+    row.innerHTML='<div class="slider-header">'
+      +'<div><span class="slider-label">'+t.label+'</span>'
+      +'<div style="font-size:10px;color:var(--muted);margin-top:1px">'+t.note+'</div></div>'
+      +'<span class="slider-val" id="et-'+t.id+'" style="color:'+col+'">'+val+'</span>'
+      +'</div>'
+      +'<input type="range" min="0" max="10" value="'+val+'" oninput="updateEnergyTime(\''+t.id+'\',this.value)">'
+      +'<div class="slider-ends"><span>Crashed</span><span>Energised</span></div>';
+    cont.appendChild(row);
+  });
+  updateCortisolInsight();
+}
+
+function updateEnergyTime(id,val){
+  energyTimeVals[id]=parseInt(val);
+  lsSet('energyTime_'+todayKey(),energyTimeVals);
+  var el=document.getElementById('et-'+id);
+  var v=parseInt(val);
+  if(el)el.style.color=v>=7?'#4a6b50':v>=4?'#b8763a':'#c4788a';
+  if(el)el.textContent=val;
+  updateCortisolInsight();
+}
+
+function updateCortisolInsight(){
+  var el=document.getElementById('cortisol-insight');
+  if(!el)return;
+  var morning=energyTimeVals['early_morning'];
+  var night=energyTimeVals['night'];
+  var afternoon=energyTimeVals['afternoon'];
+  if(morning===undefined||night===undefined)return;
+
+  var pattern='';var col='var(--muted)';var bg='var(--cream-dark)';
+
+  if(morning<=3&&night>=7){
+    pattern='⚠️ Classic inverted cortisol — low in the morning, high at night. This is the adrenal depletion pattern. Morning Adrenal Cocktail, sunlight within 30 min of waking, and PEMF Level 1 nightly are your most important tools right now.';
+    col='#c4788a';bg='#fdf0f3';
+  } else if(morning<=4&&afternoon<=3){
+    pattern='⚠️ Morning fog + afternoon crash — cortisol not sustaining through the day. This is low cortisol output. Adrenal Cortex supplement and Adrenal Cocktail mid-morning are directly targeting this.';
+    col='#b8763a';bg='#fdf3ea';
+  } else if(morning>=7&&night<=3){
+    pattern='✓ Healthy cortisol rhythm — high in the morning, winding down at night. This is what recovery looks like.';
+    col='#4a6b50';bg='#eef4ef';
+  } else if(afternoon<=3&&morning>=6){
+    pattern='⚡ Afternoon crash pattern — morning energy then a significant drop. Classic post-lunch cortisol dip. 10-15 min walk after lunch is your best tool here.';
+    col='#b8763a';bg='#fdf3ea';
+  } else if(night>=7){
+    pattern='⚠️ Evening/night wired — cortisol too high at night. This directly disrupts sleep. PharmaGABA + Magnesium at bedtime, PEMF Level 1, and avoiding screens after 8pm.';
+    col='#c4788a';bg='#fdf0f3';
+  } else {
+    pattern='Log all time windows to see your cortisol pattern.';
+    col='var(--muted)';bg='var(--cream-dark)';
+  }
+
+  el.style.display='block';
+  el.style.background=bg;
+  el.style.color=col;
+  el.textContent=pattern;
+}
+
 function buildSymptoms(){
   loadSymVals();
   var scores=GENERAL_SYMS.map(function(s){return s.inv?10-symVals[s.id]:symVals[s.id]});
@@ -1174,14 +1586,16 @@ function buildSymptoms(){
   document.getElementById('sym-stats').innerHTML='<div class="stat-box" style="grid-column:span 3"><div class="stat-num" id="wellbeing-score">'+avg+'</div><div class="stat-lbl">Today\'s wellbeing score</div></div>';
   document.getElementById('sym-phase-note').style.display='none';
   var gc=document.getElementById('general-sliders');gc.innerHTML='';
-  var gc=document.getElementById('general-sliders');gc.innerHTML='';
   GENERAL_SYMS.forEach(function(s){buildSlider(s,gc)});
+  buildEnergyTimeSliders();
 }
 async function saveSymptoms(){
   lsSet('symVals_'+todayKey(),symVals);
+  lsSet('energyTime_'+todayKey(),energyTimeVals);
   var scores=GENERAL_SYMS.map(function(s){return s.inv?10-symVals[s.id]:symVals[s.id]});
   var avg=Math.round(scores.reduce(function(a,b){return a+b},0)/scores.length*10)/10;
-  var payload=Object.assign({date:todayKey(),cycleDay:getCycleDay(TODAY),phase:getPhase(TODAY),wellbeingScore:avg},symVals);
+  var energySummary=ENERGY_TIMES.map(function(t){return t.label.split('(')[0].trim()+':'+(energyTimeVals[t.id]!==undefined?energyTimeVals[t.id]:'?')}).join(', ');
+  var payload=Object.assign({date:todayKey(),cycleDay:getCycleDay(TODAY),phase:getPhase(TODAY),wellbeingScore:avg,energyByTime:energySummary},symVals);
   var r=await sendToSheets('symptoms',payload);
   showFeedback('sym-fb',r.ok,r.msg);
 }
