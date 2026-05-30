@@ -396,6 +396,14 @@ textarea{resize:vertical;min-height:70px}
   <div class="card">
     <div style="font-size:12px;color:var(--muted);margin-bottom:.75rem;line-height:1.5">Track headaches so you can spot patterns — barometric drops, high pollen, and high-histamine foods often stack to trigger them.</div>
     <div style="margin-bottom:.75rem">
+      <div style="font-size:12px;font-weight:500;color:var(--ink);margin-bottom:.5rem">Where do you feel it?</div>
+      <div class="tap-grid" id="headache-location"></div>
+    </div>
+    <div style="margin-bottom:.75rem">
+      <div style="font-size:12px;font-weight:500;color:var(--ink);margin-bottom:.5rem">What does it feel like?</div>
+      <div class="tap-grid" id="headache-type"></div>
+    </div>
+    <div style="margin-bottom:.75rem">
       <div style="font-size:12px;font-weight:500;color:var(--ink);margin-bottom:.5rem">Headache today?</div>
       <div style="display:flex;gap:8px">
         <button class="big-tap" id="head-none" onclick="setHeadache('none')">✓ None</button>
@@ -1942,6 +1950,36 @@ var overallBurden=localStorage.getItem('burden_'+new Date().toISOString().split(
 var headacheLevel=localStorage.getItem('headache_'+new Date().toISOString().split('T')[0])||null;
 var headacheMedsTapped=lsGet('headacheMeds_'+new Date().toISOString().split('T')[0],{});
 var headacheTriggersTapped=lsGet('headacheTriggers_'+new Date().toISOString().split('T')[0],{});
+var headacheLocationTapped=lsGet('headacheLoc_'+new Date().toISOString().split('T')[0],{});
+var headacheTypeTapped=lsGet('headacheType_'+new Date().toISOString().split('T')[0],{});
+
+var HEADACHE_LOCATIONS=[
+  {id:'forehead',label:'Forehead',icon:'😣'},
+  {id:'temples',label:'Temples',icon:'🤯'},
+  {id:'sinuses',label:'Sinuses / behind eyes',icon:'👁️'},
+  {id:'top_head',label:'Top of head / crown',icon:'⬆️'},
+  {id:'one_side',label:'One side only',icon:'↔️'},
+  {id:'both_sides',label:'Both sides',icon:'⬅️➡️'},
+  {id:'back_head',label:'Back of head',icon:'⬇️'},
+  {id:'neck',label:'Neck / base of skull',icon:'🔙'},
+  {id:'jaw',label:'Jaw / face',icon:'😬'},
+  {id:'whole_head',label:'Whole head',icon:'💆'},
+];
+
+var HEADACHE_TYPES=[
+  {id:'band',label:'Band / pressure wrap around head',icon:'🎗️'},
+  {id:'throbbing',label:'Throbbing / pulsing',icon:'💓'},
+  {id:'stabbing',label:'Stabbing / sharp',icon:'⚡'},
+  {id:'dull_ache',label:'Dull constant ache',icon:'😔'},
+  {id:'pressure',label:'Heavy pressure / weight',icon:'🏋️'},
+  {id:'sinus_pressure',label:'Sinus fullness / congestion',icon:'🤧'},
+  {id:'tight',label:'Tight / squeezing',icon:'🤛'},
+  {id:'behind_eyes',label:'Pain behind eyes',icon:'👀'},
+  {id:'neck_tension',label:'Neck tension radiating up',icon:'↗️'},
+  {id:'nausea',label:'With nausea',icon:'🤢'},
+  {id:'light_sensitive',label:'Light sensitive',icon:'💡'},
+  {id:'sound_sensitive',label:'Sound sensitive',icon:'🔊'},
+];
 
 var HEADACHE_MEDS=[
   {id:'advil',label:'Advil / Ibuprofen',icon:'💊'},
@@ -2066,29 +2104,33 @@ function saveHeadacheTimes(){
 
 function buildHeadacheSection(){
   if(headacheLevel)setHeadache(headacheLevel);
-  // Restore times
   var onset=localStorage.getItem('headache_onset_'+todayKey());
   var resolved=localStorage.getItem('headache_resolved_'+todayKey());
   var onsetEl=document.getElementById('headache-onset');
   var resolvedEl=document.getElementById('headache-resolved');
   if(onsetEl&&onset)onsetEl.value=onset;
   if(resolvedEl&&resolved)resolvedEl.value=resolved;
-  var mc=document.getElementById('headache-meds');if(!mc)return;mc.innerHTML='';
-  HEADACHE_MEDS.forEach(function(m){
-    var btn=document.createElement('button');
-    btn.className='tap-btn'+(headacheMedsTapped[m.id]?' active-sage':'');
-    btn.id='hm-'+m.id;btn.textContent=m.icon+' '+m.label;
-    btn.onclick=function(){headacheMedsTapped[m.id]=!headacheMedsTapped[m.id];lsSet('headacheMeds_'+todayKey(),headacheMedsTapped);if(headacheMedsTapped[m.id])btn.classList.add('active-sage');else btn.classList.remove('active-sage')};
-    mc.appendChild(btn);
-  });
-  var tc=document.getElementById('headache-triggers');if(!tc)return;tc.innerHTML='';
-  HEADACHE_TRIGGERS_LIST.forEach(function(t){
-    var btn=document.createElement('button');
-    btn.className='tap-btn'+(headacheTriggersTapped[t.id]?' active-blush':'');
-    btn.id='ht-'+t.id;btn.textContent=t.icon+' '+t.label;
-    btn.onclick=function(){headacheTriggersTapped[t.id]=!headacheTriggersTapped[t.id];lsSet('headacheTriggers_'+todayKey(),headacheTriggersTapped);if(headacheTriggersTapped[t.id])btn.classList.add('active-blush');else btn.classList.remove('active-blush')};
-    tc.appendChild(btn);
-  });
+
+  function buildTapGroup(containerId,items,stateObj,stateKey,activeClass){
+    var c=document.getElementById(containerId);if(!c)return;c.innerHTML='';
+    items.forEach(function(item){
+      var btn=document.createElement('button');
+      btn.className='tap-btn'+(stateObj[item.id]?' '+activeClass:'');
+      btn.textContent=item.icon+' '+item.label;
+      btn.onclick=function(){
+        stateObj[item.id]=!stateObj[item.id];
+        lsSet(stateKey+todayKey(),stateObj);
+        if(stateObj[item.id])btn.classList.add(activeClass);
+        else btn.classList.remove(activeClass);
+      };
+      c.appendChild(btn);
+    });
+  }
+
+  buildTapGroup('headache-location',HEADACHE_LOCATIONS,headacheLocationTapped,'headacheLoc_','active-blush');
+  buildTapGroup('headache-type',HEADACHE_TYPES,headacheTypeTapped,'headacheType_','active-blush');
+  buildTapGroup('headache-meds',HEADACHE_MEDS,headacheMedsTapped,'headacheMeds_','active-sage');
+  buildTapGroup('headache-triggers',HEADACHE_TRIGGERS_LIST,headacheTriggersTapped,'headacheTriggers_','active-blush');
 }
 
 function setHeadache(level){
