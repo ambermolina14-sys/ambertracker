@@ -162,7 +162,11 @@ textarea{resize:vertical;min-height:70px}
   <h1>Amber's Health <span>Tracker</span></h1>
   <div class="header-sub">
     <span class="header-date" id="hdr-date"></span>
-    <span class="phase-badge" id="hdr-phase"></span>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span id="sync-status" style="font-size:10px;color:var(--sage);opacity:0;transition:opacity .3s"></span>
+      <button onclick="pullSyncFromSheets()" style="font-size:10px;padding:3px 10px;border-radius:10px;border:1px solid var(--border);background:var(--cream-dark);color:var(--muted);cursor:pointer">↻ Sync</button>
+      <span class="phase-badge" id="hdr-phase"></span>
+    </div>
   </div>
 </div>
 
@@ -1250,6 +1254,93 @@ function deleteWin(i){
 }
 
 // ── END DASHBOARD ─────────────────────────────────────────────────
+// ── SYNC ──────────────────────────────────────────────────────────
+var syncTimer=null;
+var lastSyncedState=null;
+
+function buildSyncState(){
+  return {
+    checks:checks,symVals:symVals,energyTimeVals:energyTimeVals,
+    nsState:nsState,stressLevel:stressLevel,vagalDone:vagalDone,
+    pollenTapped:pollenTapped,foodTapped:foodTapped,overallBurden:overallBurden,
+    headacheLevel:headacheLevel,headacheMedsTapped:headacheMedsTapped,
+    headacheTriggersTapped:headacheTriggersTapped,
+    headacheLocationTapped:headacheLocationTapped,headacheTypeTapped:headacheTypeTapped,
+    quercetin:localStorage.getItem('quercetin_'+todayKey())||'false',
+    headacheOnset:localStorage.getItem('headache_onset_'+todayKey())||'',
+    headacheResolved:localStorage.getItem('headache_resolved_'+todayKey())||'',
+    pollenNotes:localStorage.getItem('pollennotes_'+todayKey())||'',
+    stressStressors:document.getElementById('stress-stressors')?document.getElementById('stress-stressors').value:'',
+    stressWins:document.getElementById('stress-wins')?document.getElementById('stress-wins').value:'',
+  };
+}
+
+function applySyncState(state){
+  if(!state)return;
+  if(state.checks){checks=state.checks;lsSet('checks_'+todayKey(),checks)}
+  if(state.symVals){Object.assign(symVals,state.symVals);lsSet('symVals_'+todayKey(),symVals)}
+  if(state.energyTimeVals){Object.assign(energyTimeVals,state.energyTimeVals);lsSet('energyTime_'+todayKey(),energyTimeVals)}
+  if(state.nsState){nsState=state.nsState;localStorage.setItem('nsState_'+todayKey(),nsState)}
+  if(state.stressLevel){stressLevel=state.stressLevel;localStorage.setItem('stressLevel_'+todayKey(),stressLevel)}
+  if(state.vagalDone){vagalDone=state.vagalDone;lsSet('vagalDone_'+todayKey(),vagalDone)}
+  if(state.pollenTapped){Object.assign(pollenTapped,state.pollenTapped);lsSet('pollenTapped_'+todayKey(),pollenTapped)}
+  if(state.foodTapped){Object.assign(foodTapped,state.foodTapped);lsSet('foodTapped_'+todayKey(),foodTapped)}
+  if(state.overallBurden){overallBurden=state.overallBurden;localStorage.setItem('burden_'+todayKey(),overallBurden)}
+  if(state.quercetin)localStorage.setItem('quercetin_'+todayKey(),state.quercetin);
+  if(state.pollenNotes)localStorage.setItem('pollennotes_'+todayKey(),state.pollenNotes);
+  if(state.headacheLevel){headacheLevel=state.headacheLevel;localStorage.setItem('headache_'+todayKey(),headacheLevel)}
+  if(state.headacheMedsTapped){Object.assign(headacheMedsTapped,state.headacheMedsTapped);lsSet('headacheMeds_'+todayKey(),headacheMedsTapped)}
+  if(state.headacheTriggersTapped){Object.assign(headacheTriggersTapped,state.headacheTriggersTapped);lsSet('headacheTriggers_'+todayKey(),headacheTriggersTapped)}
+  if(state.headacheLocationTapped){Object.assign(headacheLocationTapped,state.headacheLocationTapped);lsSet('headacheLoc_'+todayKey(),headacheLocationTapped)}
+  if(state.headacheTypeTapped){Object.assign(headacheTypeTapped,state.headacheTypeTapped);lsSet('headacheType_'+todayKey(),headacheTypeTapped)}
+  if(state.headacheOnset)localStorage.setItem('headache_onset_'+todayKey(),state.headacheOnset);
+  if(state.headacheResolved)localStorage.setItem('headache_resolved_'+todayKey(),state.headacheResolved);
+}
+
+function scheduleSyncSave(){
+  if(syncTimer)clearTimeout(syncTimer);
+  syncTimer=setTimeout(pushSyncToSheets,3000);
+}
+
+async function pushSyncToSheets(){
+  if(!sheetUrl)return;
+  var state=buildSyncState();
+  var stateStr=JSON.stringify(state);
+  if(stateStr===lastSyncedState)return;
+  lastSyncedState=stateStr;
+  try{
+    await fetch(sheetUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'sync',date:todayKey(),state:state})});
+    showSyncStatus('✓ Synced');
+  }catch(e){showSyncStatus('Sync failed')}
+}
+
+async function pullSyncFromSheets(){
+  if(!sheetUrl){showSyncStatus('No Sheets URL — go to Settings');return}
+  showSyncStatus('Syncing...');
+  try{
+    var r=await fetch(sheetUrl+'?action=sync&date='+todayKey());
+    var data=await r.json();
+    if(data.ok&&data.state){
+      applySyncState(data.state);
+      builtTabs={};
+      var activePanel=document.querySelector('.panel.active');
+      var activeId=activePanel?activePanel.id.replace('tab-',''):'protocol';
+      var activeBtn=document.querySelector('.tab-btn.active');
+      activateTab(activeId,activeBtn);
+      showSyncStatus('✓ Loaded from Sheets');
+    }else{showSyncStatus('No data for today yet')}
+  }catch(e){showSyncStatus('Could not reach Sheets')}
+}
+
+function showSyncStatus(msg){
+  var el=document.getElementById('sync-status');
+  if(!el)return;
+  el.textContent=msg;el.style.opacity='1';
+  setTimeout(function(){el.style.opacity='0'},3000);
+}
+
+// ── END SYNC ──────────────────────────────────────────────────────
+
 var NON_NEGOTIABLES=[
   {id:'methyl',label:'Methyl Guard Plus',note:'Most critical supplement'},
   {id:'flowbalance',label:'Flow Balance',note:'Must be uninterrupted — Vitex needs 2-3 months'},
@@ -2736,7 +2827,20 @@ function init(){
   var ps=localStorage.getItem('period_start');if(ps)document.getElementById('period-start-input').value=ps;
   var pinDisplay=document.getElementById('cycle-pin-display');if(pinDisplay){pinDisplay.textContent=getCyclePin()?'PIN set ✓':'No PIN set';pinDisplay.style.color=getCyclePin()?'var(--sage)':'var(--muted)'}
 }
-document.addEventListener('DOMContentLoaded',init);
+document.addEventListener('DOMContentLoaded',function(){
+  init();
+  // After init, patch functions to auto-sync on change
+  var _tc=toggleCheck;toggleCheck=function(id,val){_tc(id,val);scheduleSyncSave()};
+  var _us=updateSlider;updateSlider=function(id,val,inv){_us(id,val,inv);scheduleSyncSave()};
+  var _ue=updateEnergyTime;updateEnergyTime=function(id,val){_ue(id,val);scheduleSyncSave()};
+  var _sn=setNS;setNS=function(id,bg,col){_sn(id,bg,col);scheduleSyncSave()};
+  var _ss=setStress;setStress=function(level){_ss(level);scheduleSyncSave()};
+  var _sh=setHeadache;setHeadache=function(level){_sh(level);scheduleSyncSave()};
+  var _sb=setBurden;setBurden=function(id){_sb(id);scheduleSyncSave()};
+  var _tv=toggleVagal;toggleVagal=function(id){_tv(id);scheduleSyncSave()};
+  // Auto-pull sync on load if connected
+  if(sheetUrl){setTimeout(pullSyncFromSheets,1500)}
+});
 </script>
 </body>
 </html>
