@@ -2840,9 +2840,19 @@ function importTodayState(e){
 }
 
 function exportData(){
-  var data={checks:checks,flowLog:flowLog,meals:meals,notes:notes,exLog:exLog,baroLog:baroLog,sheetUrl:sheetUrl,period_start:localStorage.getItem('period_start')};
-  var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='amber_health_backup_'+todayKey()+'.json';a.click();
+  // Export everything in localStorage — captures all headache logs, baro history, daily symptom data
+  var fullData={};
+  for(var i=0;i<localStorage.length;i++){
+    var key=localStorage.key(i);
+    fullData[key]=localStorage.getItem(key);
+  }
+  fullData['_exportedAt']=new Date().toISOString();
+  fullData['_exportVersion']='2';
+  var blob=new Blob([JSON.stringify(fullData,null,2)],{type:'application/json'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='amber_full_backup_'+todayKey()+'.json';
+  a.click();
 }
 function importData(e){
   var file=e.target.files[0];if(!file)return;
@@ -2850,16 +2860,37 @@ function importData(e){
   reader.onload=function(ev){
     try{
       var d=JSON.parse(ev.target.result);
-      if(d.checks){checks=d.checks;lsSet('checks',checks)}
-      if(d.flowLog){flowLog=d.flowLog;lsSet('flow_log',flowLog)}
-      if(d.meals){meals=d.meals;lsSet('meals',meals)}
-      if(d.notes){notes=d.notes;lsSet('notes',notes)}
-      if(d.exLog){exLog=d.exLog;lsSet('ex_log',exLog)}
-      if(d.sheetUrl){sheetUrl=d.sheetUrl;localStorage.setItem('sheet_url',sheetUrl)}
-      if(d.period_start){localStorage.setItem('period_start',d.period_start);PERIOD_START=new Date(d.period_start+'T00:00:00')}
-      alert('Data imported!');init();
+      if(d._exportVersion==='2'){
+        // Full localStorage restore
+        Object.keys(d).forEach(function(key){
+          if(!key.startsWith('_'))localStorage.setItem(key,d[key]);
+        });
+      } else {
+        // Legacy format
+        if(d.checks)lsSet('checks',d.checks);
+        if(d.flowLog)lsSet('flow_log',d.flowLog);
+        if(d.meals)lsSet('meals',d.meals);
+        if(d.notes)lsSet('notes',d.notes);
+        if(d.exLog)lsSet('ex_log',d.exLog);
+        if(d.sheetUrl){sheetUrl=d.sheetUrl;localStorage.setItem('sheet_url',sheetUrl)}
+        if(d.period_start){localStorage.setItem('period_start',d.period_start);PERIOD_START=new Date(d.period_start+'T00:00:00')}
+      }
+      // Reload all in-memory state
+      checks=lsGet('checks_'+todayKey(),{});
+      flowLog=lsGet('flow_log',{});
+      meals=JSON.parse(localStorage.getItem('meals')||'[]');
+      notes=JSON.parse(localStorage.getItem('notes')||'{}');
+      exLog=JSON.parse(localStorage.getItem('ex_log')||'[]');
+      baroHistory=JSON.parse(localStorage.getItem('baro_history')||'[]');
+      sheetUrl=localStorage.getItem('sheet_url')||'';
+      if(localStorage.getItem('period_start'))PERIOD_START=new Date(localStorage.getItem('period_start')+'T00:00:00');
+      builtTabs={};
+      alert('✓ Full backup imported — all your data including headache logs and symptom history is now here.');
+      init();
     }catch(err){alert('Import failed: '+err.message)}
-  };reader.readAsText(file);
+  };
+  reader.readAsText(file);
+  e.target.value='';
 }
 
 // ── INIT ──────────────────────────────────────────────────────────
