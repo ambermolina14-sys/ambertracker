@@ -165,6 +165,9 @@ textarea{resize:vertical;min-height:70px}
     <div style="display:flex;align-items:center;gap:8px">
       <span id="sync-status" style="font-size:10px;color:var(--sage);opacity:0;transition:opacity .3s"></span>
       <button onclick="pullSyncFromSheets()" style="font-size:10px;padding:3px 10px;border-radius:10px;border:1px solid var(--border);background:var(--cream-dark);color:var(--muted);cursor:pointer">↻ Sync</button>
+      <button onclick="exportTodayState()" style="font-size:10px;padding:3px 10px;border-radius:10px;border:1px solid var(--sage-mid);background:var(--sage-light);color:var(--sage-dark);cursor:pointer" title="Export today's data to share with another device">📤 Export today</button>
+      <input type="file" id="import-today-file" accept=".json" style="display:none" onchange="importTodayState(event)">
+      <button onclick="document.getElementById('import-today-file').click()" style="font-size:10px;padding:3px 10px;border-radius:10px;border:1px solid var(--blush-mid);background:var(--blush-light);color:var(--blush-dark);cursor:pointer" title="Import today's data from another device">📥 Import today</button>
       <span class="phase-badge" id="hdr-phase"></span>
     </div>
   </div>
@@ -2799,6 +2802,43 @@ function savePeriodStart(){
   PERIOD_START=new Date(val+'T00:00:00');localStorage.setItem('period_start',val);
   initHeader();alert('Period start updated!');
 }
+function exportTodayState(){
+  var state=buildSyncState();
+  state._date=todayKey();
+  state._exported=new Date().toLocaleTimeString();
+  var blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='amber_today_'+todayKey()+'.json';
+  a.click();
+  showSyncStatus('✓ Today exported — open on other device and tap Import today');
+}
+
+function importTodayState(e){
+  var file=e.target.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      var state=JSON.parse(ev.target.result);
+      if(state._date&&state._date!==todayKey()){
+        if(!confirm('This file is from '+state._date+' — today is '+todayKey()+'. Import anyway?'))return;
+      }
+      applySyncState(state);
+      // Rebuild all tabs with new data
+      builtTabs={};
+      var activePanel=document.querySelector('.panel.active');
+      var activeId=activePanel?activePanel.id.replace('tab-',''):'protocol';
+      var activeBtn=document.querySelector('.tab-btn.active');
+      activateTab(activeId,activeBtn);
+      showSyncStatus('✓ Today\'s data imported successfully');
+    }catch(err){
+      showSyncStatus('Import failed — invalid file');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+
 function exportData(){
   var data={checks:checks,flowLog:flowLog,meals:meals,notes:notes,exLog:exLog,baroLog:baroLog,sheetUrl:sheetUrl,period_start:localStorage.getItem('period_start')};
   var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
