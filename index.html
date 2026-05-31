@@ -164,7 +164,6 @@ textarea{resize:vertical;min-height:70px}
     <span class="header-date" id="hdr-date"></span>
     <div style="display:flex;align-items:center;gap:8px">
       <span id="sync-status" style="font-size:10px;color:var(--sage);opacity:0;transition:opacity .3s"></span>
-      <button onclick="pullSyncFromSheets()" style="font-size:10px;padding:3px 10px;border-radius:10px;border:1px solid var(--border);background:var(--cream-dark);color:var(--muted);cursor:pointer">↻ Sync</button>
       <button onclick="exportTodayState()" style="font-size:10px;padding:3px 10px;border-radius:10px;border:1px solid var(--sage-mid);background:var(--sage-light);color:var(--sage-dark);cursor:pointer" title="Export today's data to share with another device">📤 Export today</button>
       <input type="file" id="import-today-file" accept=".json" style="display:none" onchange="importTodayState(event)">
       <button onclick="document.getElementById('import-today-file').click()" style="font-size:10px;padding:3px 10px;border-radius:10px;border:1px solid var(--blush-mid);background:var(--blush-light);color:var(--blush-dark);cursor:pointer" title="Import today's data from another device">📥 Import today</button>
