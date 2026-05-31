@@ -1393,12 +1393,32 @@ function buildStreaks(){
 }
 
 // ── TEST REMINDERS ────────────────────────────────────────────────
-var UPCOMING_TESTS=[
-  {name:'Vitamin D 25-OH',date:'2026-06-01',location:'Everlywell — at-home kit',prep:'URGENT — 3 genetic variants impairing conversion, transport, and receptor response. Almost certainly deficient.',urgent:true},
-  {name:'Choose Health Metabolic 7-in-1',date:'2026-05-28',location:'Results received May 28, 2026',prep:'Complete. See Lab Results tab for full breakdown.',urgent:false,waiting:false,done:true},
-  {name:'Ferritin recheck',date:'2026-06-15',location:'Quest Diagnostics, 11911 N Meridian St, Carmel',prep:'Morning, no fasting required. Target result: 35-50 ng/mL (was 18 in March).',urgent:false},
-  {name:'Ulta Lab Tests bundle',date:'2026-12-31',location:'Quest Diagnostics, 11911 N Meridian St, Carmel',prep:'Fasting required. Before 10am. Order: Free Testosterone, Homocysteine, Reverse T3. Add Serum Progesterone on Day 21 only.',urgent:false,waiting:true},
+// Tests stored in localStorage so they can be updated in-app
+var DEFAULT_TESTS=[
+  {id:'vitd',name:'Vitamin D 25-OH',date:'2026-06-01',location:'Everlywell — at-home kit',prep:'3 genetic variants impairing conversion, transport, and receptor response.',urgent:true,status:'shipped'},
+  {id:'choosehealth',name:'Choose Health Metabolic 7-in-1',date:'2026-05-28',location:'Results received May 28, 2026',prep:'Complete. See Lab Results tab for full breakdown.',urgent:false,status:'done'},
+  {id:'ferritin',name:'Ferritin recheck',date:'2026-06-15',location:'Quest Diagnostics, 11911 N Meridian St, Carmel',prep:'Morning, no fasting required. Target: 35-50 ng/mL (was 18 in March).',urgent:false,status:'scheduled'},
+  {id:'homocysteine',name:'Homocysteine',date:'2026-06-15',location:'Mail-in kit — shipped',prep:'Confirms methylation working. Methyl Guard Plus is targeting this.',urgent:false,status:'shipped'},
+  {id:'ulta',name:'Ulta Lab Tests bundle',date:'2026-12-31',location:'Quest Diagnostics, 11911 N Meridian St, Carmel',prep:'Fasting required. Before 10am. Free Testosterone, Reverse T3, Serum Progesterone Day 21.',urgent:false,status:'tbd'},
 ];
+
+var STATUS_OPTIONS=['ordered','shipped','awaiting','done','scheduled','tbd'];
+var STATUS_LABELS={ordered:'Ordered',shipped:'📦 Shipped',awaiting:'Awaiting results',done:'✓ Results in',scheduled:'Scheduled',tbd:'Date TBD'};
+var STATUS_COLORS={ordered:{col:'var(--col-warn)',bg:'var(--col-warn-bg)'},shipped:{col:'var(--col-pending)',bg:'var(--col-pending-bg)'},awaiting:{col:'var(--col-pending)',bg:'var(--col-pending-bg)'},done:{col:'var(--col-ok)',bg:'var(--col-ok-bg)'},scheduled:{col:'var(--sage)',bg:'var(--sage-light)'},tbd:{col:'var(--muted)',bg:'var(--cream-dark)'}};
+
+function getTests(){
+  var saved=lsGet('upcoming_tests',null);
+  if(!saved)return DEFAULT_TESTS;
+  // Merge saved statuses into defaults (keeps prep/location up to date)
+  return DEFAULT_TESTS.map(function(t){
+    var s=saved.find(function(x){return x.id===t.id});
+    return s?Object.assign({},t,{status:s.status,date:s.date,notes:s.notes||''}):t;
+  });
+}
+
+function saveTests(tests){
+  lsSet('upcoming_tests',tests.map(function(t){return{id:t.id,status:t.status,date:t.date,notes:t.notes||''}}));
+}
 
 function daysUntil(dateStr){
   var target=new Date(dateStr+'T00:00:00');
@@ -1408,21 +1428,41 @@ function daysUntil(dateStr){
 function buildTestReminders(){
   var el=document.getElementById('test-reminders');
   if(!el)return;
-  var sorted=UPCOMING_TESTS.slice().sort(function(a,b){return daysUntil(a.date)-daysUntil(b.date)});
+  var tests=getTests();
+  var sorted=tests.filter(function(t){return t.status!=='done';}).slice().sort(function(a,b){
+    var order={done:99,tbd:98};
+    var ao=order[a.status]||daysUntil(a.date);
+    var bo=order[b.status]||daysUntil(b.date);
+    return ao-bo;
+  });
   el.innerHTML=sorted.map(function(t){
-    var days=daysUntil(t.date);
-    var daysLabel=t.done?'✓ Results in':t.waiting?'Awaiting results':days<0?'Overdue by '+Math.abs(days)+'d':days===0?'Today!':days===1?'Tomorrow':'In '+days+' days';
-    var urgCol=t.done?'var(--col-ok)':t.waiting?'var(--col-pending)':t.urgent||days<=0?'var(--col-high)':days<=7?'var(--col-warn)':'var(--sage)';
-    var urgBg=t.done?'var(--col-ok-bg)':t.waiting?'var(--col-pending-bg)':t.urgent||days<=0?'var(--col-high-bg)':days<=7?'var(--col-warn-bg)':'var(--col-ok-bg)';
+    var sc=STATUS_COLORS[t.status]||STATUS_COLORS.tbd;
+    var label=STATUS_LABELS[t.status]||t.status;
+    if(t.status==='scheduled'||t.status==='ordered'){
+      var days=daysUntil(t.date);
+      if(days>=0)label+=' — '+(days===0?'Today!':days===1?'Tomorrow':'in '+days+'d');
+    }
     return'<div style="padding:10px 0;border-bottom:1px solid var(--cream-dark)">'
       +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:5px">'
-      +'<div style="font-size:13px;font-weight:500;color:var(--ink)">'+t.name+(t.urgent?' <span style="font-size:10px;background:var(--col-high-bg);color:var(--col-high);padding:1px 7px;border-radius:8px;font-weight:600;margin-left:4px">URGENT</span>':'')+'</div>'
-      +'<span style="font-size:11px;font-weight:600;color:'+urgCol+';background:'+urgBg+';padding:3px 9px;border-radius:10px;flex-shrink:0;white-space:nowrap">'+daysLabel+'</span>'
+      +'<div style="font-size:13px;font-weight:500;color:var(--ink)">'+t.name+(t.urgent?'<span style="font-size:10px;background:var(--col-high-bg);color:var(--col-high);padding:1px 7px;border-radius:8px;font-weight:600;margin-left:6px">URGENT</span>':'')+'</div>'
+      +'<span style="font-size:11px;font-weight:600;color:'+sc.col+';background:'+sc.bg+';padding:3px 9px;border-radius:10px;flex-shrink:0;white-space:nowrap">'+label+'</span>'
       +'</div>'
       +'<div style="font-size:11px;color:var(--muted);margin-bottom:3px">📍 '+t.location+'</div>'
-      +'<div style="font-size:11px;color:var(--ink-mid);line-height:1.5">'+t.prep+'</div>'
+      +'<div style="font-size:11px;color:var(--ink-mid);line-height:1.5;margin-bottom:6px">'+t.prep+'</div>'
+      +(t.notes?'<div style="font-size:11px;color:var(--blush);font-style:italic;margin-bottom:6px">'+t.notes+'</div>':'')
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap">'
+      +STATUS_OPTIONS.map(function(s){
+        return'<button onclick="updateTestStatus(\''+t.id+'\',\''+s+'\')" style="font-size:10px;padding:2px 9px;border-radius:8px;cursor:pointer;border:1px solid '+(t.status===s?'var(--sage)':'var(--border)')+';background:'+(t.status===s?'var(--sage-light)':'var(--surface)')+';color:'+(t.status===s?'var(--sage-dark)':'var(--muted)')+'">'+STATUS_LABELS[s]+'</button>';
+      }).join('')
+      +'</div>'
       +'</div>';
   }).join('');
+}
+
+function updateTestStatus(id,status){
+  var tests=getTests();
+  var t=tests.find(function(x){return x.id===id});
+  if(t){t.status=status;saveTests(tests);buildTestReminders();}
 }
 
 // ── SMART CLAUDE BUTTONS ──────────────────────────────────────────
