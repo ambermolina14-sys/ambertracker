@@ -494,6 +494,7 @@ textarea{resize:vertical;min-height:70px}
   <div class="section-title">Other confirmed</div>
   <div class="card">
     <div class="info-row"><div><div style="font-size:13px">Ferritin (March 2026)</div><div style="font-size:11px;color:var(--muted)">Optimal: 70–100 ng/mL</div></div><span class="badge badge-low">18 ng/mL</span></div>
+    <div class="info-row"><div><div style="font-size:13px">Homocysteine (May 31, 2026)</div><div style="font-size:11px;color:var(--muted)">Ref: 5.00–15.00 µmol/L — methylation working</div></div><span class="badge badge-normal">6.63 µmol/L</span></div>
   </div>
   <div class="section-title">Pending</div>
   <div class="card" id="pending-results"></div>
@@ -567,8 +568,8 @@ textarea{resize:vertical;min-height:70px}
 </div><!-- end .app -->
 <script>
 // ── CORE ──────────────────────────────────────────────────────────
-var PERIOD_START = new Date(localStorage.getItem('period_start') || '2026-05-15');
-var CYCLE_LEN = 27;
+var PERIOD_START = new Date(localStorage.getItem('period_start') || '2026-05-18');
+var CYCLE_LEN = 26;
 var TODAY = new Date(); TODAY.setHours(0,0,0,0);
 var sheetUrl = localStorage.getItem('sheet_url') || '';
 var baroLog = JSON.parse(localStorage.getItem('baro_log')||'[]');
@@ -1403,7 +1404,7 @@ var DEFAULT_TESTS=[
   {id:'vitd',name:'Vitamin D 25-OH',date:'2026-06-01',location:'Everlywell — at-home kit',prep:'3 genetic variants impairing conversion, transport, and receptor response.',urgent:true,status:'shipped'},
   {id:'choosehealth',name:'Choose Health Metabolic 7-in-1',date:'2026-05-28',location:'Results received May 28, 2026',prep:'Complete. See Lab Results tab for full breakdown.',urgent:false,status:'done'},
   {id:'ferritin',name:'Ferritin recheck',date:'2026-06-15',location:'Quest Diagnostics, 11911 N Meridian St, Carmel',prep:'Morning, no fasting required. Target: 35-50 ng/mL (was 18 in March).',urgent:false,status:'scheduled'},
-  {id:'homocysteine',name:'Homocysteine',date:'2026-06-15',location:'Mail-in kit — shipped',prep:'Confirms methylation working. Methyl Guard Plus is targeting this.',urgent:false,status:'shipped'},
+  {id:'homocysteine',name:'Homocysteine',date:'2026-05-31',location:'US Specialty Labs — results received',prep:'Result: 6.63 µmol/L (optimal, range 5–15). Confirms methylation working — Methyl Guard Plus doing its job.',urgent:false,status:'done'},
   {id:'ulta',name:'Ulta Lab Tests bundle',date:'2026-12-31',location:'Quest Diagnostics, 11911 N Meridian St, Carmel',prep:'Fasting required. Before 10am. Free Testosterone, Reverse T3, Serum Progesterone Day 21.',urgent:false,status:'tbd'},
 ];
 
@@ -1777,7 +1778,7 @@ var cycleSymTapped={};
 
 // ── HISTORICAL CYCLE DATA ─────────────────────────────────────────
 var CYCLE_HISTORY=[
-  {start:'2026-05-15',length:null,notes:'Current. Extended flow, slower onset. Post-stress recalibration.'},
+  {start:'2026-05-18',length:null,notes:'Current. Extended flow, slower onset. Post-stress recalibration.'},
   {start:'2026-04-22',length:26,notes:''},
   {start:'2026-03-27',length:26,notes:''},
   {start:'2026-03-01',length:26,notes:''},
@@ -1824,6 +1825,24 @@ var CYCLE_HISTORY=[
   {start:'2022-07-22',length:28,notes:''},
   {start:'2022-06-25',length:27,notes:''},
 ];
+
+// Derive the current cycle start from the most recent logged period start.
+// Uses whichever is more recent: the logged history or a manually-saved start,
+// so the cycle day stays accurate from the data without manual upkeep.
+(function reconcileCurrentCycleStart(){
+  try{
+    var histStart=(CYCLE_HISTORY&&CYCLE_HISTORY.length)?CYCLE_HISTORY[0].start:null;
+    var lsStart=localStorage.getItem('period_start');
+    var chosen=histStart;
+    if(lsStart&&histStart){
+      chosen=(new Date(lsStart+'T00:00:00')>new Date(histStart+'T00:00:00'))?lsStart:histStart;
+    } else if(lsStart){chosen=lsStart;}
+    if(chosen){
+      PERIOD_START=new Date(chosen+'T00:00:00');
+      localStorage.setItem('period_start',chosen);
+    }
+  }catch(e){}
+})();
 
 function buildCycleInsights(){
   buildCycleHistory();
@@ -2804,7 +2823,6 @@ var PENDING=[
   {name:'Vitamin D (25-OH)',val:'URGENT',ref:'Everlywell ordered'},
   {name:'Serum Progesterone Day 21',val:'Next test Day 21',ref:'Blood confirmation'},
   {name:'Free Testosterone',val:'Pending',ref:'SHBG variant'},
-  {name:'Homocysteine',val:'Pending',ref:'Confirms methylation working'},
   {name:'Reverse T3',val:'Pending',ref:'Pairs with Free T3'},
 ];
 
