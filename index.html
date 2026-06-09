@@ -242,6 +242,11 @@ textarea{resize:vertical;min-height:70px}
       </div>
     </div>
   </div>
+  <div class="card" id="cycle-day-card" style="margin-bottom:.75rem;text-align:center">
+    <div style="font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.25rem">Today you're on</div>
+    <div id="cycle-day-big" style="font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:300;line-height:1.1">Day —</div>
+    <div id="cycle-day-phase" style="font-size:12px;font-weight:500;margin-top:4px"></div>
+  </div>
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
       <button onclick="prevMonth()" class="btn-outline" style="padding:4px 12px">‹</button>
@@ -2177,8 +2182,23 @@ function initPeriodDisplay(){
   if(el)el.textContent=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
 }
 
+function updateCycleDayCard(){
+  var card=document.getElementById('cycle-day-card');
+  if(!card)return;
+  var day=getCycleDay(TODAY);
+  var phase=getPhase(TODAY);
+  var cols={menstrual:'#c2185b',follicular:'#2e7d32',ovulation:'#1565c0',luteal:'#e65100'};
+  var bgs={menstrual:'#fce4ec',follicular:'#e8f5e9',ovulation:'#e3f2fd',luteal:'#fff3e0'};
+  card.style.background=bgs[phase];
+  var bigEl=document.getElementById('cycle-day-big');
+  var phaseEl=document.getElementById('cycle-day-phase');
+  if(bigEl){bigEl.textContent='Day '+day;bigEl.style.color=cols[phase];}
+  if(phaseEl){phaseEl.textContent=PHASE_LABELS[phase]+' phase';phaseEl.style.color=cols[phase];}
+}
+
 function buildCalendar(){
   initPeriodDisplay();
+  updateCycleDayCard();
   buildCycleTapSections();
   buildCycleInsights();
   document.getElementById('cal-month-label').textContent=MONTHS[calViewMonth.getMonth()]+' '+calViewMonth.getFullYear();
