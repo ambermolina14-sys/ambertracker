@@ -671,6 +671,7 @@ function activateTab(id,btn){
   }
   // Always refresh live tabs
   if(id==='today'){buildToday();}
+  if(id==='insights'){buildInsights();}
   if(id==='baro'||id==='environment'){fetchBaro();}
 }
 
@@ -854,7 +855,7 @@ function buildInsights(){
     var phase=getPhase(d);
     var cycDay=getCycleDay(d);
     var chk=lsGet('checks_'+key,{});
-    var allSupps=Object.values(SUPPLEMENTS).flat();
+    var allSupps=(typeof SUPPLEMENTS!=='undefined')?Object.values(SUPPLEMENTS).flat():[];
     var protoPct=allSupps.length?Math.round(allSupps.filter(function(s){return chk[s.id]}).length/allSupps.length*100):null;
     var dayReadings=baroHistory.filter(function(e){var ds=d.getTime();return e.ts>=ds&&e.ts<ds+864e5});
     var hadBaroDrop=dayReadings.some(function(e){return e.dir==='dropping-fast'||e.dir==='dropping'});
