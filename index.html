@@ -893,8 +893,20 @@ function buildInsights(){
   var overallTrend=(oldAvg&&newAvg)?Math.round((newAvg-oldAvg)*10)/10:null;
 
   // Protocol compliance vs wellbeing
-  var highProto=days.filter(function(d){return d.protoPct>=80&&d.wellbeing!==null});
-  var lowProto=days.filter(function(d){return d.protoPct!==null&&d.protoPct<50&&d.wellbeing!==null});
+  // For each day with wellbeing logged, find protocol % for that same day OR adjacent day
+  var highProto=[]; var lowProto=[];
+  days.filter(function(d){return d.wellbeing!==null;}).forEach(function(d){
+    var pct=d.protoPct;
+    // also check stored checks for this date directly
+    if(pct===null){
+      var ck=lsGet('checks_'+d.key,{});
+      var allS=(typeof SUPPLEMENTS!=='undefined')?Object.values(SUPPLEMENTS).flat():[];
+      if(allS.length&&Object.keys(ck).length>0)pct=Math.round(allS.filter(function(s){return ck[s.id]}).length/allS.length*100);
+    }
+    if(pct===null)return;
+    if(pct>=80)highProto.push(d);
+    else if(pct<50)lowProto.push(d);
+  });
   var highProtoAvg=calcAvg(highProto.map(function(d){return d.wellbeing}));
   var lowProtoAvg=calcAvg(lowProto.map(function(d){return d.wellbeing}));
 
@@ -958,19 +970,28 @@ function buildInsights(){
   // Overview
   html+='<div class="section-title">Overview — '+loggedDays+' days logged</div>';
   html+='<div class="card" style="margin-bottom:.75rem">';
-  html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;margin-bottom:.75rem">';
-  html+='<div><div style="font-family:Cormorant Garamond,serif;font-size:26px;font-weight:500;color:var(--ink)">'+(weekAvg||'&#x2014;')+'</div><div style="font-size:10px;color:var(--muted);margin-top:2px">This week avg</div>'+(weekTrend!==null?'<div style="font-size:11px;font-weight:600;color:'+(weekTrend>=0?'#4a6b50':'#c4788a')+'">'+(weekTrend>0?'+':'')+weekTrend+' vs last wk</div>':'')+'</div>';
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center">';
+  html+='<div><div style="font-family:Cormorant Garamond,serif;font-size:26px;font-weight:500;color:var(--ink)">'+(weekAvg||'—')+'</div><div style="font-size:10px;color:var(--muted);margin-top:2px">This week avg</div>'+(weekTrend!==null?'<div style="font-size:11px;font-weight:600;color:'+(weekTrend>=0?'#4a6b50':'#c4788a')+'">'+(weekTrend>0?'+':'')+weekTrend+' vs last wk</div>':'')+'</div>';
   html+='<div><div style="font-family:Cormorant Garamond,serif;font-size:26px;font-weight:500;color:'+(weekHeadaches>=3?'var(--blush)':'var(--ink)')+'">'+weekHeadaches+'</div><div style="font-size:10px;color:var(--muted);margin-top:2px">Headaches this week</div></div>';
   html+='<div><div style="font-family:Cormorant Garamond,serif;font-size:26px;font-weight:500;color:var(--ink)">'+loggedDays+'</div><div style="font-size:10px;color:var(--muted);margin-top:2px">Days logged</div></div>';
-  html+='</div>';
-  if(overallTrend!==null){
+  html+='</div></div>';
+
+  // Are you improving — own section
+  html+='<div class="section-title">Are you improving?</div>';
+  if(overallTrend!==null&&oldAvg&&newAvg){
     var improving=overallTrend>0.3;var declining=overallTrend<-0.3;
     var tCol=improving?'#4a6b50':declining?'#c4788a':'#b8763a';
     var tBg=improving?'#eef4ef':declining?'#fdf0f3':'#faf4e8';
-    var tMsg=improving?'&#x2191; Trending up +'+overallTrend+' pts since you started. The protocol is working.':declining?'&#x2193; Wellbeing has dipped '+overallTrend+' pts. Worth checking what changed.':'&#x2192; Holding steady ('+overallTrend+' pts change). Foundation is stable.';
-    html+='<div style="background:'+tBg+';border-radius:var(--radius);padding:.6rem .9rem;font-size:12px;color:'+tCol+';line-height:1.5">'+tMsg+'</div>';
+    html+='<div class="card" style="margin-bottom:.75rem;border-left:3px solid '+tCol+'">';
+    html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:.75rem;text-align:center">';
+    html+='<div><div style="font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">When you started</div><div style="font-family:Cormorant Garamond,serif;font-size:32px;font-weight:300;color:var(--muted)">'+oldAvg+'</div><div style="font-size:10px;color:var(--muted)">avg wellbeing</div></div>';
+    html+='<div><div style="font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Right now</div><div style="font-family:Cormorant Garamond,serif;font-size:32px;font-weight:300;color:'+tCol+'">'+newAvg+'</div><div style="font-size:10px;color:var(--muted)">avg wellbeing</div></div>';
+    html+='</div>';
+    html+='<div style="background:'+tBg+';border-radius:var(--radius);padding:.6rem .9rem;font-size:13px;font-weight:500;color:'+tCol+'">'+(improving?'↑ Up '+overallTrend+' points since you started. The protocol is working.':declining?'↓ Down '+Math.abs(overallTrend)+' points. Worth checking what changed.':'→ Holding steady. '+Math.abs(overallTrend)+' point change overall.')+'</div>';
+    html+='</div>';
+  } else {
+    html+='<div class="card" style="margin-bottom:.75rem"><div style="font-size:12px;color:var(--muted);line-height:1.6">Need at least 2 weeks of logged symptom data to compare. Keep going &#x2014; it\'s building.</div></div>';
   }
-  html+='</div>';
 
   // Protocol vs wellbeing
   if(highProtoAvg!==null&&lowProtoAvg!==null&&highProto.length>=3&&lowProto.length>=2){
