@@ -490,6 +490,7 @@ textarea{resize:vertical;min-height:70px}
   <div class="card">
     <div class="info-row"><div><div style="font-size:13px">Ferritin (March 2026)</div><div style="font-size:11px;color:var(--muted)">Optimal: 70–100 ng/mL</div></div><span class="badge badge-low">18 ng/mL</span></div>
     <div class="info-row"><div><div style="font-size:13px">Homocysteine (May 31, 2026)</div><div style="font-size:11px;color:var(--muted)">Ref: 5.00–15.00 µmol/L — methylation working</div></div><span class="badge badge-normal">6.63 µmol/L</span></div>
+    <div class="info-row"><div><div style="font-size:13px">Vitamin D, 25-OH (May 31, 2026)</div><div style="font-size:11px;color:var(--muted)">Ref: 32–100 ng/mL — Everlywell, in range</div></div><span class="badge badge-normal">36.9 ng/mL</span></div>
   </div>
   <div class="section-title">Pending</div>
   <div class="card" id="pending-results"></div>
@@ -1087,12 +1088,12 @@ var GOALS = [
     id:'vitd',
     label:'Vitamin D',
     icon:'☀️',
-    why:'Three genetic variants impairing conversion (CYP2R1), transport (GC), and receptor response (VDR). Almost certainly deficient.',
-    start:null, target:60, current:null, unit:' ng/mL',
-    test:'Everlywell ordered — URGENT',
-    status:'untested',
+    why:'Three genetic variants impairing conversion (CYP2R1), transport (GC), and receptor response (VDR). Now tested and in range.',
+    start:36.9, target:60, current:36.9, unit:' ng/mL',
+    test:'Everlywell — 36.9 ng/mL (May 31, 2026), in range',
+    status:'in-progress',
     color:'var(--gold)',
-    note:'Currently on 1000 IU D3 — likely insufficient. May need 4000-5000 IU once tested.'
+    note:'Tested 36.9 ng/mL (normal 32–100) despite the genetic variants. On 1000 IU D3 — may increase toward the 60 optimal target with Dr. Abraham.'
   },
   {
     id:'estradiol',
@@ -1469,7 +1470,7 @@ function buildStreaks(){
 // ── TEST REMINDERS ────────────────────────────────────────────────
 // Tests stored in localStorage so they can be updated in-app
 var DEFAULT_TESTS=[
-  {id:'vitd',name:'Vitamin D 25-OH',date:'2026-06-01',location:'Everlywell — at-home kit',prep:'3 genetic variants impairing conversion, transport, and receptor response.',urgent:true,status:'shipped'},
+  {id:'vitd',name:'Vitamin D 25-OH',date:'2026-05-31',location:'Everlywell — results received',prep:'Result: 36.9 ng/mL (normal, range 32–100). In range despite the 3 genetic variants. Target 60 — may increase D3 with Dr. Abraham.',urgent:false,status:'done'},
   {id:'choosehealth',name:'Choose Health Metabolic 7-in-1',date:'2026-05-28',location:'Results received May 28, 2026',prep:'Complete. See Lab Results tab for full breakdown.',urgent:false,status:'done'},
   {id:'ferritin',name:'Ferritin recheck',date:'2026-06-15',location:'Quest Diagnostics, 11911 N Meridian St, Carmel',prep:'Morning, no fasting required. Target: 35-50 ng/mL (was 18 in March).',urgent:false,status:'scheduled'},
   {id:'homocysteine',name:'Homocysteine',date:'2026-05-31',location:'US Specialty Labs — results received',prep:'Result: 6.63 µmol/L (optimal, range 5–15). Confirms methylation working — Methyl Guard Plus doing its job.',urgent:false,status:'done'},
@@ -2888,7 +2889,6 @@ var CHOOSE_HEALTH=[
 
 var PENDING=[
   {name:'Ferritin recheck',val:'Due mid-June',ref:'Quest, 11911 N Meridian St'},
-  {name:'Vitamin D (25-OH)',val:'URGENT',ref:'Everlywell ordered'},
   {name:'Serum Progesterone Day 21',val:'Next test Day 21',ref:'Blood confirmation'},
   {name:'Free Testosterone',val:'Pending',ref:'SHBG variant'},
   {name:'Reverse T3',val:'Pending',ref:'Pairs with Free T3'},
