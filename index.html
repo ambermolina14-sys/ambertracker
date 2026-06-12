@@ -893,22 +893,15 @@ function buildInsights(){
   var overallTrend=(oldAvg&&newAvg)?Math.round((newAvg-oldAvg)*10)/10:null;
 
   // Protocol compliance vs wellbeing
-  // For each day with wellbeing logged, find protocol % for that same day OR adjacent day
-  var highProto=[]; var lowProto=[];
-  days.filter(function(d){return d.wellbeing!==null;}).forEach(function(d){
-    var pct=d.protoPct;
-    // also check stored checks for this date directly
-    if(pct===null){
-      var ck=lsGet('checks_'+d.key,{});
-      var allS=(typeof SUPPLEMENTS!=='undefined')?Object.values(SUPPLEMENTS).flat():[];
-      if(allS.length&&Object.keys(ck).length>0)pct=Math.round(allS.filter(function(s){return ck[s.id]}).length/allS.length*100);
-    }
-    if(pct===null)return;
-    if(pct>=80)highProto.push(d);
-    else if(pct<50)lowProto.push(d);
-  });
+  // Split days by YOUR average compliance, not arbitrary thresholds
+  var protoDays=days.filter(function(d){return d.wellbeing!==null&&d.protoPct!==null});
+  var avgCompliance=protoDays.length?protoDays.reduce(function(a,b){return a+b.protoPct},0)/protoDays.length:null;
+  var highProto=avgCompliance!==null?protoDays.filter(function(d){return d.protoPct>avgCompliance}):[];
+  var lowProto=avgCompliance!==null?protoDays.filter(function(d){return d.protoPct<=avgCompliance}):[];
   var highProtoAvg=calcAvg(highProto.map(function(d){return d.wellbeing}));
   var lowProtoAvg=calcAvg(lowProto.map(function(d){return d.wellbeing}));
+  var highProtoComplianceAvg=highProto.length?Math.round(highProto.reduce(function(a,b){return a+b.protoPct},0)/highProto.length):null;
+  var lowProtoComplianceAvg=lowProto.length?Math.round(lowProto.reduce(function(a,b){return a+b.protoPct},0)/lowProto.length):null;
 
   // Sleep -> next day
   var sleepPairs=[];
@@ -994,16 +987,19 @@ function buildInsights(){
   }
 
   // Protocol vs wellbeing
-  if(highProtoAvg!==null&&lowProtoAvg!==null&&highProto.length>=3&&lowProto.length>=2){
+  if(highProtoAvg!==null&&lowProtoAvg!==null&&highProto.length>=2&&lowProto.length>=2){
     var diff=Math.round((highProtoAvg-lowProtoAvg)*10)/10;
     html+='<div class="section-title">Does your protocol make a difference?</div>';
     html+='<div class="card" style="margin-bottom:.75rem;border-left:3px solid '+(diff>=1?'var(--sage)':'var(--gold)')+'">';
     html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:.6rem">';
-    html+='<div style="text-align:center"><div style="font-family:Cormorant Garamond,serif;font-size:26px;font-weight:500;color:#4a6b50">'+highProtoAvg+'</div><div style="font-size:11px;color:var(--muted)">Wellbeing on 80%+ days</div><div style="font-size:10px;color:var(--muted)">('+highProto.length+' days)</div></div>';
-    html+='<div style="text-align:center"><div style="font-family:Cormorant Garamond,serif;font-size:26px;font-weight:500;color:#c4788a">'+lowProtoAvg+'</div><div style="font-size:11px;color:var(--muted)">Wellbeing on &lt;50% days</div><div style="font-size:10px;color:var(--muted)">('+lowProto.length+' days)</div></div>';
+    html+='<div style="text-align:center"><div style="font-family:Cormorant Garamond,serif;font-size:26px;font-weight:500;color:#4a6b50">'+highProtoAvg+'</div><div style="font-size:11px;color:var(--muted)">Wellbeing on higher-compliance days</div><div style="font-size:10px;color:var(--muted)">(~'+highProtoComplianceAvg+'% done, '+highProto.length+' days)</div></div>';
+    html+='<div style="text-align:center"><div style="font-family:Cormorant Garamond,serif;font-size:26px;font-weight:500;color:#c4788a">'+lowProtoAvg+'</div><div style="font-size:11px;color:var(--muted)">Wellbeing on lower-compliance days</div><div style="font-size:10px;color:var(--muted)">(~'+lowProtoComplianceAvg+'% done, '+lowProto.length+' days)</div></div>';
     html+='</div>';
-    html+='<div style="font-size:12px;color:var(--ink-mid);line-height:1.6">'+(diff>=1?'<strong style="color:#4a6b50">Clear signal &#x2014; you feel '+diff+' pts better on high-compliance days.</strong>':diff>=0.5?'Moderate signal &#x2014; '+diff+' pt difference on high vs low protocol days.':'Small difference so far ('+diff+' pts). May need more data.')+'</div>';
+    html+='<div style="font-size:12px;color:var(--ink-mid);line-height:1.6">'+(diff>=1?'<strong style="color:#4a6b50">Clear signal &#x2014; you feel '+diff+' pts better on your more consistent days.</strong>':diff>=0.5?'Moderate signal &#x2014; '+diff+' pt better on more consistent days.':diff<=-0.5?'Interesting &#x2014; wellbeing is actually '+Math.abs(diff)+' pts lower on high-compliance days. Possibly you push protocol harder on bad days.':'Small difference so far ('+diff+' pts).')+'</div>';
     html+='</div>';
+  } else if(protoDays.length>0){
+    html+='<div class="section-title">Does your protocol make a difference?</div>';
+    html+='<div class="card" style="margin-bottom:.75rem"><div style="font-size:12px;color:var(--muted);line-height:1.6">'+protoDays.length+' days have both protocol and symptoms logged. Keep checking off your protocol on days you log symptoms and this comparison will appear.</div></div>';
   }
 
   // Sleep -> next day
