@@ -1427,6 +1427,100 @@ function buildInsights(){
     html+='</div>';
   }
 
+  // ── HIDDEN PATTERNS (cross-tab, time-shifted — things no single tab shows) ──
+  (function(){
+    var chron=days.slice().sort(function(a,b){return a.d-b.d});
+    var byKey={};chron.forEach(function(d){byKey[d.key]=d;});
+    function dayBefore(d,n){var x=new Date(d.d);x.setDate(x.getDate()-n);return byKey[x.toISOString().split('T')[0]]||null;}
+    var wbAll=chron.filter(function(d){return d.wellbeing!==null});
+    if(wbAll.length<12){
+      html+='<div class="section-title">Hidden patterns</div><div class="card" style="margin-bottom:.75rem"><div style="font-size:12px;color:var(--muted);line-height:1.6">Once you\'ve logged ~2+ weeks consistently, this will hunt for time-delayed and exception patterns \u2014 things like \u201cstress on Monday \u2192 headache Wednesday\u201d that no single tab can show. Keep logging.</div></div>';
+      return;
+    }
+    var findings=[];
+    function conf(n){return n>=12?{lbl:'fairly solid',col:'#4a6b50'}:n>=7?{lbl:'tentative',col:'#b8763a'}:{lbl:'early hint \u2014 needs more data',col:'#9a8fb0'};}
+    function mean(a){return a.length?a.reduce(function(x,y){return x+y},0)/a.length:null;}
+
+    // ---- LAG EFFECTS: does X on a prior day predict today? ----
+    // poor sleep N days ago -> today's wellbeing
+    [1,2,3].forEach(function(lag){
+      var paired=wbAll.filter(function(d){var p=dayBefore(d,lag);return p&&p.sleep!==null;});
+      if(paired.length>=7){
+        var afterPoor=paired.filter(function(d){return parseInt(dayBefore(d,lag).sleep)<=4}).map(function(d){return d.wellbeing});
+        var afterGood=paired.filter(function(d){return parseInt(dayBefore(d,lag).sleep)>=7}).map(function(d){return d.wellbeing});
+        if(afterPoor.length>=2&&afterGood.length>=2){
+          var gap=mean(afterGood)-mean(afterPoor);
+          if(gap>=1)findings.push({s:gap,n:paired.length,icon:'\u23F1\uFE0F',txt:'<strong>Poor sleep catches up with you '+(lag===1?'the next day':lag+' days later')+'.</strong> Your wellbeing runs ~'+Math.round(gap*10)/10+' pts lower '+lag+' day'+(lag>1?'s':'')+' after a bad night \u2014 the hit is '+(lag>1?'delayed, not immediate':'next-day')+', which is why it\'s easy to miss.'});
+        }
+      }
+    });
+    // high stress N days ago -> headache today
+    [1,2,3].forEach(function(lag){
+      var paired=chron.filter(function(d){var p=dayBefore(d,lag);return p&&p.stress&&d.headache!==undefined;});
+      if(paired.length>=8){
+        var afterHiStress=paired.filter(function(d){return dayBefore(d,lag).stress==='high';});
+        var afterLoStress=paired.filter(function(d){return dayBefore(d,lag).stress==='low';});
+        if(afterHiStress.length>=3&&afterLoStress.length>=3){
+          var hPct=afterHiStress.filter(function(d){return d.headache&&d.headache!=='none'}).length/afterHiStress.length;
+          var lPct=afterLoStress.filter(function(d){return d.headache&&d.headache!=='none'}).length/afterLoStress.length;
+          if(hPct-lPct>=0.3)findings.push({s:(hPct-lPct)*3,n:paired.length,icon:'\uD83D\uDD2E',txt:'<strong>Stress today may show up as a headache '+lag+' day'+(lag>1?'s':'')+' later.</strong> '+Math.round(hPct*100)+'% of days following high stress brought a headache, vs '+Math.round(lPct*100)+'% after calm days. A delayed reaction you\'d never catch day-to-day.'});
+        }
+      }
+    });
+
+    // ---- LEADING INDICATORS: what shows up BEFORE a bad day? ----
+    var badDays=wbAll.filter(function(d){return d.wellbeing<=4;});
+    var goodDays=wbAll.filter(function(d){return d.wellbeing>=6;});
+    if(badDays.length>=4){
+      // NS wired the day before a crash?
+      var beforeBad=badDays.map(function(d){return dayBefore(d,1);}).filter(Boolean);
+      var beforeGood=goodDays.map(function(d){return dayBefore(d,1);}).filter(Boolean);
+      if(beforeBad.length>=3&&beforeGood.length>=3){
+        var wiredBeforeBad=beforeBad.filter(function(d){return d.ns==='wired'}).length/beforeBad.length;
+        var wiredBeforeGood=beforeGood.filter(function(d){return d.ns==='wired'}).length/beforeGood.length;
+        if(wiredBeforeBad-wiredBeforeGood>=0.3)findings.push({s:(wiredBeforeBad-wiredBeforeGood)*3,n:beforeBad.length+beforeGood.length,icon:'\uD83D\uDEA8',txt:'<strong>Early-warning signal:</strong> a <strong>wired nervous system today</strong> often comes the day before a low day. When you notice wired, that\'s your cue to protect tomorrow \u2014 rest, sauna, guard your sleep.'});
+      }
+      // poor sleep the night before a crash
+      var sleepBeforeBad=beforeBad.filter(function(d){return d.sleep!==null}).map(function(d){return parseInt(d.sleep);});
+      var sleepBeforeGood=beforeGood.filter(function(d){return d.sleep!==null}).map(function(d){return parseInt(d.sleep);});
+      if(sleepBeforeBad.length>=3&&sleepBeforeGood.length>=3){
+        var sg=mean(sleepBeforeGood)-mean(sleepBeforeBad);
+        if(sg>=1.5)findings.push({s:sg/1.5,n:sleepBeforeBad.length+sleepBeforeGood.length,icon:'\uD83D\uDEA8',txt:'<strong>Your low days are often set up the night before</strong> \u2014 sleep before a bad day averages '+Math.round(mean(sleepBeforeBad)*10)/10+'/10 vs '+Math.round(mean(sleepBeforeGood)*10)/10+' before good days. Tonight\'s sleep is tomorrow\'s mood.'});
+      }
+    }
+
+    // ---- PATTERN BREAKERS: days that violate your own rules ----
+    // best day in your WORST phase, or worst day in your BEST phase
+    var phaseAvg={};['menstrual','follicular','ovulation','luteal'].forEach(function(p){var v=wbAll.filter(function(d){return d.phase===p}).map(function(d){return d.wellbeing});if(v.length>=2)phaseAvg[p]=mean(v);});
+    var phaseKeys=Object.keys(phaseAvg);
+    if(phaseKeys.length>=2){
+      var worstPhase=phaseKeys.reduce(function(a,b){return phaseAvg[a]<phaseAvg[b]?a:b;});
+      // a notably GOOD day in your worst phase
+      var goodInWorst=wbAll.filter(function(d){return d.phase===worstPhase&&d.wellbeing>=(phaseAvg[worstPhase]+2);}).sort(function(a,b){return b.wellbeing-a.wellbeing})[0];
+      if(goodInWorst){
+        var dn=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][goodInWorst.d.getDay()];
+        var why=[];
+        if(goodInWorst.stress==='low')why.push('low stress');
+        if(goodInWorst.sleep!==null&&parseInt(goodInWorst.sleep)>=7)why.push('good sleep');
+        if(goodInWorst.ns==='regulated'||goodInWorst.ns==='calm'||goodInWorst.ns==='rest')why.push('calm nervous system');
+        if(goodInWorst.protoPct!==null&&goodInWorst.protoPct>=80)why.push('protocol on point');
+        findings.push({s:2,n:wbAll.filter(function(d){return d.phase===worstPhase}).length,icon:'\u2728',txt:'<strong>You broke your own pattern:</strong> '+dn+' you felt good ('+goodInWorst.wellbeing+'/10) during your '+worstPhase+' phase \u2014 usually your rougher window. What was different: <strong>'+(why.length?why.join(', '):'worth looking back at that day')+'</strong>. That\'s your recipe for surviving the hard phase.'});
+      }
+    }
+
+    if(!findings.length){
+      html+='<div class="section-title">Hidden patterns</div><div class="card" style="margin-bottom:.75rem"><div style="font-size:12px;color:var(--muted);line-height:1.6">No strong time-delayed or exception patterns have surfaced yet \u2014 which is itself useful: your bad days aren\'t being clearly set up by sleep, stress lag, or NS state in the data so far. Keep logging and this will sharpen.</div></div>';
+      return;
+    }
+    findings.sort(function(a,b){return b.s-a.s;});
+    html+='<div class="section-title">Hidden patterns</div>';
+    html+='<div style="font-size:11px;color:var(--muted);line-height:1.5;margin:-.3rem .2rem .6rem">Cross-referenced across days \u2014 things no single tab can show. Each tagged with how much data backs it.</div>';
+    findings.slice(0,4).forEach(function(f){
+      var c=conf(f.n);
+      html+='<div class="card" style="margin-bottom:.6rem;border-left:3px solid #9a8fb0;background:linear-gradient(135deg,#faf7f2,#f3eef7)"><div style="display:flex;gap:10px;align-items:flex-start"><div style="font-size:18px;flex-shrink:0">'+f.icon+'</div><div style="flex:1"><div style="font-size:12.5px;color:var(--ink-mid);line-height:1.6;margin-bottom:.4rem">'+f.txt+'</div><div style="font-size:9.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:'+c.col+'">'+c.lbl+' \u00b7 '+f.n+' days</div></div></div></div>';
+    });
+  })();
+
   el.innerHTML=html;
 }
 
