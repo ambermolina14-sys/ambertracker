@@ -1007,6 +1007,120 @@ function buildInsights(){
     }
   })();
 
+  // ── YOUR RECOVERY ARCS (holistic: layers stacking today + slow movers vs daily noise) ──
+  (function(){
+    var arcs=getArcs();
+    var wbDays=days.filter(function(d){return d.wellbeing!==null});
+
+    // ---- HALF 1: what's stacking on you today ----
+    // Build weighted layers: long arcs (slow floor) + today factors + cycle
+    var tKey=todayKey();
+    var tStress=localStorage.getItem('stressLevel_'+tKey);
+    var tNs=localStorage.getItem('nsState_'+tKey);
+    var tSym=lsGet('symVals_'+tKey,null);
+    var tSleep=tSym&&tSym['sleep_quality']!==undefined?parseInt(tSym['sleep_quality']):null;
+    var tPhase=getPhase(TODAY),tCD=getCycleDay(TODAY);
+    var layers=[];
+    // long-arc floor: any lab arc not yet at target = ongoing drag/support
+    if(arcs.ferritin&&arcs.ferritin.current<(arcs.ferritin.target||70))layers.push({w:2.5,band:'long',txt:'<strong>Iron still rebuilding</strong> (ferritin '+arcs.ferritin.current+', target '+(arcs.ferritin.target||70)+') \u2014 a baseline drag on energy until it climbs'});
+    if(arcs.dheas&&arcs.dheas.dir==='up')layers.push({w:2,band:'long',txt:'<strong>Adrenals still recovering</strong> \u2014 your stress reserve is low, so demands hit harder'});
+    if(arcs.estradiol&&arcs.estradiol.current>(arcs.estradiol.target||150))layers.push({w:1,band:'long',txt:'Estrogen still clearing (feeds histamine + symptoms)'});
+    // today factors
+    if(tStress==='high')layers.push({w:3,band:'today',txt:'<strong>Work/life stress is high today</strong> \u2014 likely today\'s single biggest hit'});
+    else if(tStress==='moderate')layers.push({w:1.5,band:'today',txt:'Stress is moderate today'});
+    if(tNs==='wired')layers.push({w:2,band:'today',txt:'Nervous system wired \u2014 burning energy'});
+    if(tSleep!==null&&tSleep<=4)layers.push({w:2,band:'today',txt:'<strong>Slept poorly</strong> ('+tSleep+'/10) \u2014 drags the whole day'});
+    // cycle (one layer)
+    if(tPhase==='luteal')layers.push({w:1.5,band:'cycle',txt:'Luteal phase (day '+tCD+') \u2014 amplifies everything above'});
+    else if(tPhase==='menstrual')layers.push({w:1,band:'cycle',txt:'Menstruating (day '+tCD+') \u2014 lower energy is expected'});
+    else layers.push({w:0.3,band:'cycle',txt:'Cycle is in a steadier phase ('+tPhase+') \u2014 NOT the main driver today'});
+
+    if(layers.length){
+      layers.sort(function(a,b){return b.w-a.w});
+      var bandLabel={long:'ongoing recovery',today:'today',cycle:'cycle'};
+      var bandCol={long:'#9a8fb0',today:'#c4788a',cycle:'#d4b87a'};
+      html+='<div class="section-title">What\'s stacking on you today</div>';
+      html+='<div class="card" style="margin-bottom:.75rem">';
+      html+='<div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:.7rem">You\'re never just <em>one</em> thing. Here\'s everything pressing on you right now, biggest first \u2014 your slow recoveries underneath, today\'s spikes on top, and your cycle as one layer.</div>';
+      layers.slice(0,5).forEach(function(L){
+        html+='<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:.5rem"><div style="font-size:8px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:'+bandCol[L.band]+';background:'+bandCol[L.band]+'22;padding:2px 6px;border-radius:4px;flex-shrink:0;margin-top:1px;min-width:54px;text-align:center">'+bandLabel[L.band]+'</div><div style="font-size:12px;color:var(--ink-mid);line-height:1.45">'+L.txt+'</div></div>';
+      });
+      var topLayer=layers[0];
+      html+='<div style="background:var(--cream-dark);border-radius:var(--radius);padding:.55rem .85rem;font-size:11.5px;color:var(--ink-mid);line-height:1.5;margin-top:.4rem">The through-line: '+(topLayer.band==='today'?'today is mostly <strong>'+(tStress==='high'?'stress':'a daily spike')+'</strong> landing on top of recoveries that are still in progress. The bad feeling is real \u2014 and it\'s layered, not one cause.':topLayer.band==='long'?'your <strong>slow recoveries</strong> are doing most of this \u2014 they take months, and you\'re mid-way. Patience is the medicine, not a new supplement.':'even your cycle layer is mild today \u2014 look to stress, sleep, and your recoveries.')+'</div>';
+      html+='</div>';
+    }
+
+    // ---- HALF 2: slow movers vs daily noise ----
+    // Baseline = smoothed wellbeing over weeks; today's deviation = noise
+    if(wbDays.length>=10){
+      var sorted=wbDays.slice().sort(function(a,b){return a.d-b.d});
+      function windowAvg(arr){return arr.length?Math.round(arr.reduce(function(s,d){return s+d.wellbeing},0)/arr.length*10)/10:null;}
+      var recent14=sorted.filter(function(d){return(TODAY-d.d)/864e5<14});
+      var prior14=sorted.filter(function(d){return(TODAY-d.d)/864e5>=14&&(TODAY-d.d)/864e5<28});
+      var baseNow=windowAvg(recent14),basePrev=windowAvg(prior14);
+      var todayWB=(function(){var t=wbDays.filter(function(d){return d.key===tKey});return t.length?t[0].wellbeing:null;})();
+
+      html+='<div class="section-title">Slow movers vs today\'s noise</div>';
+      html+='<div class="card" style="margin-bottom:.75rem">';
+      // baseline trajectory
+      if(baseNow!==null&&basePrev!==null){
+        var drift=Math.round((baseNow-basePrev)*10)/10;
+        var dirTxt=drift>=0.3?'<strong style="color:#4a6b50">slowly rising</strong>':drift<=-0.3?'<strong style="color:#c4788a">drifting down</strong>':'<strong>holding steady</strong>';
+        html+='<div style="font-size:12.5px;color:var(--ink-mid);line-height:1.6;margin-bottom:.6rem">Your <strong>baseline</strong> (2-week average, ignoring daily ups and downs) is '+dirTxt+' \u2014 now '+baseNow+', was '+basePrev+' a couple weeks back. '+(drift>=0.3?'That\'s your recoveries working underneath the noise.':drift<=-0.3?'Worth noting \u2014 if stress is the driver, that\'s the lever.':'')+'</div>';
+      } else {
+        html+='<div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:.6rem">Keep logging \u2014 in a couple weeks this will show whether your baseline is rising under the daily noise.</div>';
+      }
+      // today vs baseline
+      if(todayWB!==null&&baseNow!==null){
+        var dev=Math.round((todayWB-baseNow)*10)/10;
+        if(dev<=-1)html+='<div style="background:var(--cream-dark);border-radius:var(--radius);padding:.6rem .9rem;font-size:12px;color:var(--ink-mid);line-height:1.55">Today ('+todayWB+') is <strong>below your baseline</strong> ('+baseNow+'). This is a <strong>bad day, not lost progress</strong> \u2014 something spiked today, but the floor underneath is '+(basePrev!==null&&baseNow>basePrev?'still climbing':'holding')+'. Don\'t read one rough day as failure.</div>';
+        else if(dev>=1)html+='<div style="background:#eef4ef;border-radius:var(--radius);padding:.6rem .9rem;font-size:12px;color:#3a6b4a;line-height:1.55">Today ('+todayWB+') is <strong>above your baseline</strong> \u2014 a genuinely good day. Notice what\'s different.</div>';
+        else html+='<div style="font-size:11.5px;color:var(--muted);line-height:1.5">Today is right around your baseline of '+baseNow+'.</div>';
+      }
+      html+='</div>';
+    }
+
+    // ---- the arcs themselves (compact status list) ----
+    var labArcs=Object.keys(arcs).filter(function(k){return arcs[k].kind==='lab'});
+    if(labArcs.length){
+      html+='<div class="section-title">Your recovery arcs</div>';
+      html+='<div class="card" style="margin-bottom:.75rem"><div style="font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:.7rem">The long games running in the background. Update these as you retest (Settings).</div>';
+      labArcs.forEach(function(k){
+        var a=arcs[k];
+        var pct=null;
+        if(a.target!==null&&a.start!==a.target){pct=Math.round((a.current-a.start)/(a.target-a.start)*100);pct=Math.max(0,Math.min(100,pct));}
+        var arrow=a.dir==='up'?'\u2191':'\u2193';
+        var onTrack=(a.dir==='up'&&a.current>a.start)||(a.dir==='down'&&a.current<a.start);
+        var col=onTrack?'#4a6b50':'#b8763a';
+        html+='<div style="margin-bottom:.7rem">';
+        html+='<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="font-weight:600;color:var(--ink)">'+a.label+'</span><span style="color:'+col+';font-weight:600">'+a.current+(a.unit?' '+a.unit:'')+' '+arrow+(a.target!==null?' \u2192 '+a.target:'')+'</span></div>';
+        if(pct!==null)html+='<div style="height:6px;background:var(--cream-dark);border-radius:3px;overflow:hidden;margin-bottom:2px"><div style="height:100%;width:'+pct+'%;background:'+col+';border-radius:3px"></div></div>';
+        html+='<div style="font-size:10px;color:var(--muted);line-height:1.4">'+a.note+(a.retest?' \u00b7 retest '+a.retest:'')+'</div>';
+        html+='</div>';
+      });
+      // feel-based arcs measured from data
+      Object.keys(arcs).filter(function(k){return arcs[k].kind==='feel'}).forEach(function(k){
+        var a=arcs[k];
+        var since=new Date(a.since+'T00:00:00');
+        var before=wbDays.filter(function(d){return d.d<since&&d.sym&&d.sym[a.symField]!==undefined});
+        var after=wbDays.filter(function(d){return d.d>=since&&d.sym&&d.sym[a.symField]!==undefined});
+        function sa(arr){return arr.length?Math.round(arr.reduce(function(s,d){return s+d.sym[a.symField]},0)/arr.length*10)/10:null;}
+        var b=sa(before),af=sa(after);
+        html+='<div style="margin-bottom:.7rem;padding-top:.5rem;border-top:1px solid var(--cream-dark)">';
+        html+='<div style="font-size:12px;font-weight:600;color:var(--ink);margin-bottom:2px">'+a.label+'</div>';
+        if(b!==null&&af!==null){
+          var moved=Math.round((af-b)*10)/10;
+          var better=(a.dir==='down'&&af<b)||(a.dir==='up'&&af>b);
+          html+='<div style="font-size:11px;color:'+(better?'#4a6b50':'var(--muted)')+';line-height:1.4">Your tracked '+a.symField+' since starting: '+b+' \u2192 '+af+' '+(better?'\u2713 moving the right way':'(not much change yet)')+'</div>';
+        } else {
+          html+='<div style="font-size:11px;color:var(--muted);line-height:1.4">'+a.note+'</div>';
+        }
+        html+='</div>';
+      });
+      html+='</div>';
+    }
+  })();
+
   // ── THIS WEEK, IN PLAIN WORDS (narrative summary) ──
   (function(){
     var tw=days.filter(function(d){return(TODAY-d.d)/864e5<7});
@@ -1919,6 +2033,20 @@ async function saveProtocol(){
 }
 
 // ── SYMPTOMS ──────────────────────────────────────────────────────
+// ── RECOVERY ARCS (long-term trajectories — labs + feel-based) ──
+// Seeded from known values; editable + updated as retests happen (stored in localStorage).
+var DEFAULT_ARCS={
+  ferritin:{label:'Iron (ferritin)',unit:'ng/mL',start:18,startDate:'2026-04-01',current:18,currentDate:'2026-05-24',target:70,dir:'up',retest:'2026-06-30',kind:'lab',note:'Likely a big driver of fatigue until it climbs.'},
+  dheas:{label:'Adrenals (DHEA-S)',unit:'',start:1.1,startDate:'2026-04-01',current:1.1,currentDate:'2026-05-24',target:null,dir:'up',retest:'2026-07-01',kind:'lab',note:'Depleted from ~8 months of stress; 3\u20136 month recovery.'},
+  estradiol:{label:'Estrogen (estradiol)',unit:'pg/mL',start:263,startDate:'2026-05-01',current:263,currentDate:'2026-05-24',target:150,dir:'down',retest:'2026-07-01',kind:'lab',note:'DIM + vitex working to bring it down over months.'},
+  vitd:{label:'Vitamin D',unit:'ng/mL',start:36.9,startDate:'2026-05-01',current:36.9,currentDate:'2026-05-24',target:60,dir:'up',retest:null,kind:'lab',note:'Slowly building toward the higher end.'},
+  hscrp:{label:'Inflammation (hsCRP)',unit:'mg/L',start:1.20,startDate:'2026-02-01',current:0.7,currentDate:'2026-05-24',target:0.5,dir:'down',retest:null,kind:'lab',note:'Already trending down \u2014 good direction.'},
+  gut:{label:'Gut / histamine',unit:'',kind:'feel',symField:'bloating',dir:'down',since:'2026-06-19',note:'Probiotic + fiber; watch bloating trend.'},
+  burnout:{label:'Burnout / nervous system',unit:'',kind:'feel',symField:'energy',dir:'up',since:'2026-04-15',note:'No lab for this \u2014 your own logged energy & NS state is the measure.'}
+};
+function getArcs(){var saved=lsGet('recovery_arcs',null);return saved||DEFAULT_ARCS;}
+function saveArcs(a){localStorage.setItem('recovery_arcs',JSON.stringify(a));}
+
 var GENERAL_SYMS=[
   {id:'energy',label:'Energy level',low:'Exhausted',high:'Full energy',def:5},
   {id:'fatigue',label:'Fatigue',low:'No fatigue',high:'Severe fatigue',inv:true,def:3},
