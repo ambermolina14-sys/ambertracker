@@ -866,8 +866,7 @@ function buildInsights(){
       var sc=sym?GENERAL_SYMS.map(function(s){return s.inv?10-(sym[s.id]||s.def):sym[s.id]||s.def}):null;
       var wellbeing=sc?Math.round(sc.reduce(function(a,b){return a+b},0)/sc.length*10)/10:null;
       var sleep=sym?(sym['sleep_quality']!==undefined?sym['sleep_quality']:null):null;
-      days.push({key:key,d:d,sym:sym,wellbeing:wellbeing,sleep:sleep,ns:ns,stress:stress,headache:headache,phase:phase,cycDay:cycDay,protoPct:protoPct,hadBaroDrop:hadBaroDrop});
-    }
+      days.push({key:key,d:d,sym:sym,wellbeing:wellbeing,sleep:sleep,ns:ns,stress:stress,headache:headache,phase:phase,cycDay:cycDay,protoPct:protoPct,hadBaroDrop:hadBaroDrop});    }
   }
 
   var loggedDays=days.length;
@@ -963,6 +962,195 @@ function buildInsights(){
   // ── BUILD HTML ──
   var html='';
 
+  // ── WHY AM I FEELING THIS WAY TODAY? (whole-picture synthesis) ──
+  // Pulls today's actual logged data and weighs ALL factors, not just cycle.
+  (function(){
+    var tKey=todayKey();
+    var tSym=lsGet('symVals_'+tKey,null);
+    var tNs=localStorage.getItem('nsState_'+tKey);
+    var tStress=localStorage.getItem('stressLevel_'+tKey);
+    var tHeadache=localStorage.getItem('headache_'+tKey);
+    var tSleepRaw=tSym?(tSym['sleep_quality']!==undefined?tSym['sleep_quality']:null):null;
+    var tPhase=getPhase(TODAY);
+    var tCycDay=getCycleDay(TODAY);
+    var tWB=null;
+    if(tSym){var sc=GENERAL_SYMS.map(function(s){return s.inv?10-(tSym[s.id]||s.def):tSym[s.id]||s.def});tWB=Math.round(sc.reduce(function(a,b){return a+b},0)/sc.length*10)/10;}
+
+    // Build a weighted list of factors that could explain how you feel — biggest drivers first.
+    var factors=[];
+    if(tStress==='high')factors.push({w:3,txt:'Your <strong>work/life stress is high</strong> today. This is often the single biggest driver of feeling terrible \u2014 it can override everything else, including a \u201cgood\u201d cycle phase.',col:'#c4788a'});
+    else if(tStress==='moderate')factors.push({w:1.5,txt:'Your stress is <strong>moderate</strong> today \u2014 a real factor even if the rest looks fine.',col:'#b8763a'});
+    if(tNs==='wired')factors.push({w:2.5,txt:'Your nervous system is <strong>wired</strong> \u2014 running on stress chemistry, which drains energy and worsens mood no matter the time of month.',col:'#c4788a'});
+    if(tNs==='frozen'||tNs==='shutdown')factors.push({w:2.5,txt:'Your nervous system is in <strong>shutdown/freeze</strong> \u2014 a depletion state. This is your body asking for genuine rest, not more output.',col:'#c4788a'});
+    if(tSleepRaw!==null&&parseInt(tSleepRaw)<=4)factors.push({w:2,txt:'You slept <strong>poorly</strong> (rated '+tSleepRaw+'/10). Poor sleep alone can flatten mood, focus, and energy the whole next day.',col:'#b8763a'});
+    if(tHeadache&&tHeadache!=='none')factors.push({w:1.5,txt:'You have a <strong>headache/pressure</strong> today, which colors everything else.',col:'#b8763a'});
+    // Cycle is included — but framed as ONE factor, not the explanation
+    if(tPhase==='luteal')factors.push({w:1.5,txt:'You\'re in your <strong>luteal phase</strong> (day '+tCycDay+'), when hormones can amplify stress sensitivity and symptoms.',col:'#d4a04a'});
+    else if(tPhase==='menstrual')factors.push({w:1,txt:'You\'re <strong>menstruating</strong> (day '+tCycDay+') \u2014 low energy here is normal and expected.',col:'#d4a04a'});
+    else factors.push({w:0.3,txt:'Cycle-wise you\'re in your <strong>'+tPhase+' phase</strong> (day '+tCycDay+') \u2014 usually a steadier window. So if you feel bad now, the cause is likely <strong>something other than your cycle</strong> (look above at stress and sleep).',col:'#9ab89a'});
+
+    factors.sort(function(a,b){return b.w-a.w});
+
+    html+='<div class="section-title">Why am I feeling this way today?</div>';
+    if(!tSym&&!tNs&&!tStress){
+      html+='<div class="card" style="margin-bottom:.75rem"><div style="font-size:12px;color:var(--muted);line-height:1.6">Log today\'s symptoms, stress, and nervous-system state and this will explain what\'s most likely driving how you feel \u2014 weighing <strong>everything</strong> together, not just your cycle.</div></div>';
+    } else {
+      var leadCol=factors[0]?factors[0].col:'var(--muted)';
+      html+='<div class="card" style="margin-bottom:.75rem;border-left:3px solid '+leadCol+'">';
+      if(tWB!==null)html+='<div style="font-size:12px;color:var(--muted);margin-bottom:.5rem">Today\'s wellbeing: <strong style="color:var(--ink);font-size:14px">'+tWB+'/10</strong></div>';
+      html+='<div style="font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.04em;margin-bottom:.5rem">MOST LIKELY DRIVERS, BIGGEST FIRST:</div>';
+      factors.slice(0,4).forEach(function(f){
+        html+='<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:.5rem"><div style="width:6px;height:6px;border-radius:50%;background:'+f.col+';margin-top:6px;flex-shrink:0"></div><div style="font-size:12.5px;color:var(--ink-mid);line-height:1.5">'+f.txt+'</div></div>';
+      });
+      html+='<div style="background:var(--cream-dark);border-radius:var(--radius);padding:.55rem .8rem;font-size:11.5px;color:var(--muted);line-height:1.5;margin-top:.5rem">Your cycle is just <strong>one</strong> input here. Stress, sleep, and your nervous system often matter more \u2014 especially right now, when work is the real load.</div>';
+      html+='</div>';
+    }
+  })();
+
+  // ── THIS WEEK, IN PLAIN WORDS (narrative summary) ──
+  (function(){
+    var tw=days.filter(function(d){return(TODAY-d.d)/864e5<7});
+    if(tw.length<2)return;
+    var wbVals=tw.filter(function(d){return d.wellbeing!==null}).map(function(d){return d.wellbeing});
+    if(!wbVals.length)return;
+    var twAvg=Math.round(wbVals.reduce(function(a,b){return a+b},0)/wbVals.length*10)/10;
+    var parts=[];
+    // trend vs last week
+    if(weekTrend!==null&&Math.abs(weekTrend)>=0.3){
+      parts.push(weekTrend>0?'You\'ve felt <strong>better than last week</strong> (up '+weekTrend+' pts).':'You\'ve felt <strong>rougher than last week</strong> (down '+Math.abs(weekTrend)+' pts).');
+    } else {
+      parts.push('Your week has been <strong>about the same</strong> as last week.');
+    }
+    // dominant driver this week
+    var hiStressN=tw.filter(function(d){return d.stress==='high'}).length;
+    var poorSleepN=tw.filter(function(d){return d.sleep!==null&&parseInt(d.sleep)<=4}).length;
+    var headacheN=tw.filter(function(d){return d.headache&&d.headache!=='none'}).length;
+    var wiredN=tw.filter(function(d){return d.ns==='wired'}).length;
+    if(hiStressN>=3)parts.push('<strong>Stress</strong> has been the big theme \u2014 high on '+hiStressN+' of the last 7 days.');
+    else if(poorSleepN>=2)parts.push('<strong>Sleep</strong> slipped \u2014 '+poorSleepN+' poor nights this week.');
+    if(wiredN>=3&&hiStressN<3)parts.push('Your nervous system has been <strong>wired</strong> a lot ('+wiredN+' days).');
+    if(headacheN>=2)parts.push('You had '+headacheN+' headache days.');
+    // a win, if logged
+    var bestDay=tw.filter(function(d){return d.wellbeing!==null}).sort(function(a,b){return b.wellbeing-a.wellbeing})[0];
+    if(bestDay&&bestDay.wellbeing>=6){
+      var bd=bestDay.d;var dn=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][bd.getDay()];
+      parts.push('Your best day was <strong>'+dn+'</strong> ('+bestDay.wellbeing+'/10)'+(bestDay.stress==='low'?' \u2014 a low-stress day.':bestDay.sleep!==null&&parseInt(bestDay.sleep)>=7?' \u2014 after good sleep.':'.'));
+    }
+    html+='<div class="section-title">This week, in plain words</div>';
+    html+='<div class="card" style="margin-bottom:.75rem;border-left:3px solid var(--sage)">';
+    html+='<div style="font-size:13px;color:var(--ink-mid);line-height:1.7">'+parts.join(' ')+'</div>';
+    html+='</div>';
+  })();
+
+  // ── HEADS UP (actionable nudges from recent streaks) ──
+  (function(){
+    var nudges=[];
+    // last 3 days
+    var recent=days.filter(function(d){return(TODAY-d.d)/864e5<3}).sort(function(a,b){return b.d-a.d});
+    var last3sleep=recent.filter(function(d){return d.sleep!==null}).slice(0,3);
+    var poorRun=last3sleep.length>=2&&last3sleep.every(function(d){return parseInt(d.sleep)<=5});
+    if(poorRun)nudges.push({icon:'\uD83D\uDD19',txt:'You\'ve had <strong>'+last3sleep.length+' nights of poor sleep</strong> in a row. For you, that often precedes a low-mood or headache day \u2014 protect tonight\'s sleep if you can.',col:'#89b4d4'});
+    // stress streak
+    var last3stress=recent.filter(function(d){return d.stress}).slice(0,3);
+    var stressRun=last3stress.length>=2&&last3stress.every(function(d){return d.stress==='high'});
+    if(stressRun)nudges.push({icon:'\u26A1',txt:'<strong>'+last3stress.length+' high-stress days running.</strong> Your DHEAS is already low \u2014 this is exactly when your tank gets drawn down. A real break matters more than any supplement right now.',col:'#c4788a'});
+    // wired streak
+    var wiredRun=recent.filter(function(d){return d.ns==='wired'}).length>=2;
+    if(wiredRun&&!stressRun)nudges.push({icon:'\uD83C\uDF00',txt:'Your nervous system has been <strong>wired several days running.</strong> Lean on the things that downshift you \u2014 your sauna, PharmaGABA, a walk.',col:'#b8763a'});
+    // headache cluster
+    var recentHeadaches=days.filter(function(d){return(TODAY-d.d)/864e5<5&&d.headache&&d.headache!=='none'}).length;
+    if(recentHeadaches>=3)nudges.push({icon:'\uD83C\uDF27\uFE0F',txt:'<strong>'+recentHeadaches+' headaches in the last 5 days.</strong> Check your barometric pressure and hydration, and watch high-histamine foods.',col:'#c4788a'});
+    if(!nudges.length)return;
+    html+='<div class="section-title">Heads up</div>';
+    nudges.forEach(function(n){
+      html+='<div class="card" style="margin-bottom:.6rem;border-left:3px solid '+n.col+'"><div style="display:flex;gap:10px;align-items:flex-start"><div style="font-size:18px;flex-shrink:0">'+n.icon+'</div><div style="font-size:12.5px;color:var(--ink-mid);line-height:1.55">'+n.txt+'</div></div></div>';
+    });
+  })();
+
+  // ── LOOKING AHEAD (forward-looking forecast) ──
+  (function(){
+    var notes=[];
+    // upcoming cycle window — find days until next luteal/menstrual
+    var todayPhase=getPhase(TODAY);var todayCD=getCycleDay(TODAY);
+    // does this person feel worse in luteal? check phaseWB
+    var lutealAvg=phaseWB.luteal&&phaseWB.luteal.length>=2?calcAvg(phaseWB.luteal):null;
+    var otherAvg=calcAvg([].concat(phaseWB.follicular||[],phaseWB.menstrual||[]));
+    var lutealRough=lutealAvg!==null&&otherAvg!==null&&(otherAvg-lutealAvg)>=1;
+    if((todayPhase==='follicular'||todayPhase==='ovulation')&&lutealRough){
+      var daysToLuteal=Math.max(0,15-todayCD);
+      if(daysToLuteal<=7)notes.push({icon:'\uD83C\uDF19',txt:'Your <strong>luteal phase starts in about '+daysToLuteal+' day'+(daysToLuteal===1?'':'s')+'</strong> \u2014 historically your rougher window (you run ~'+Math.round((otherAvg-lutealAvg)*10)/10+' pts lower). Front-load demanding things this week while you feel steadier, and plan lighter for then.',col:'#d4a04a'});
+    }
+    // weekend vs weekday isn't tracked reliably; skip
+    // recent improving/declining trajectory as a gentle forecast
+    if(typeof overallTrend==='number'){
+      if(overallTrend<=-0.5)notes.push({icon:'\uD83D\uDCC9',txt:'Your wellbeing has been <strong>trending down</strong> over the last few weeks. If work stress is the driver (it usually is for you), that\'s the lever \u2014 not another supplement.',col:'#c4788a'});
+      else if(overallTrend>=0.5)notes.push({icon:'\uD83D\uDCC8',txt:'You\'re on an <strong>upward trend</strong> \u2014 whatever you\'ve been doing lately is working. Keep it steady.',col:'#4a6b50'});
+    }
+    if(!notes.length)return;
+    html+='<div class="section-title">Looking ahead</div>';
+    notes.forEach(function(n){
+      html+='<div class="card" style="margin-bottom:.6rem;border-left:3px solid '+n.col+'"><div style="display:flex;gap:10px;align-items:flex-start"><div style="font-size:18px;flex-shrink:0">'+n.icon+'</div><div style="font-size:12.5px;color:var(--ink-mid);line-height:1.55">'+n.txt+'</div></div></div>';
+    });
+  })();
+
+  // ── CONNECTIONS YOU WOULDN'T EXPECT (only surfaces genuinely strong, non-obvious links) ──
+  (function(){
+    var wbDays=days.filter(function(d){return d.wellbeing!==null});
+    if(wbDays.length<10)return; // need real data before claiming surprises
+    function av(a){return a.length?a.reduce(function(x,d){return x+d.wellbeing},0)/a.length:null;}
+    function avgSym(a,field){var v=a.filter(function(d){return d.sym&&d.sym[field]!==undefined}).map(function(d){return d.sym[field]});return v.length?v.reduce(function(x,y){return x+y},0)/v.length:null;}
+    var candidates=[];
+
+    // 1) Does protocol consistency soften the LUTEAL dip? (protocol x cycle interaction)
+    var luteal=wbDays.filter(function(d){return d.phase==='luteal'&&d.protoPct!==null});
+    if(luteal.length>=5){
+      var lutHi=luteal.filter(function(d){return d.protoPct>=70});
+      var lutLo=luteal.filter(function(d){return d.protoPct<70});
+      if(lutHi.length>=2&&lutLo.length>=2){
+        var g=av(lutHi)-av(lutLo);
+        if(g>=1.2)candidates.push({strength:g,icon:'\uD83D\uDD17',txt:'On your <strong>luteal days</strong>, staying consistent with your protocol seems to soften the dip \u2014 you run about '+Math.round(g*10)/10+' pts better on the luteal days you stay on top of it. Your protocol may matter <em>most</em> exactly when you feel worst.'});
+      }
+    }
+
+    // 2) Does good sleep blunt the effect of high stress? (sleep x stress interaction)
+    var hiStress=wbDays.filter(function(d){return d.stress==='high'&&d.sleep!==null});
+    if(hiStress.length>=5){
+      var hsGoodSleep=hiStress.filter(function(d){return parseInt(d.sleep)>=7});
+      var hsPoorSleep=hiStress.filter(function(d){return parseInt(d.sleep)<=5});
+      if(hsGoodSleep.length>=2&&hsPoorSleep.length>=2){
+        var g2=av(hsGoodSleep)-av(hsPoorSleep);
+        if(g2>=1.2)candidates.push({strength:g2,icon:'\uD83D\uDEE1\uFE0F',txt:'<strong>Sleep is your buffer against stress.</strong> On high-stress days, you hold up about '+Math.round(g2*10)/10+' pts better when you\'ve slept well. You can\'t always lower the stress \u2014 but protecting sleep visibly protects you from it.'});
+      }
+    }
+
+    // 3) Does morning sunlight track with better mood? (env x mood)
+    var sunDays=wbDays.filter(function(d){var c=lsGet('checks_'+d.key,{});return c&&c.sunlight;});
+    var noSunDays=wbDays.filter(function(d){var c=lsGet('checks_'+d.key,{});return c&&!c.sunlight;});
+    if(sunDays.length>=4&&noSunDays.length>=4){
+      var g3=av(sunDays)-av(noSunDays);
+      if(g3>=1)candidates.push({strength:g3,icon:'\u2600\uFE0F',txt:'<strong>Morning sunlight shows up in your numbers.</strong> Days you logged it, your wellbeing ran about '+Math.round(g3*10)/10+' pts higher. Small habit, real signal \u2014 and it fits your serotonin/vitamin-D picture.'});
+    }
+
+    // 4) Does anxiety run higher on poor-sleep days specifically? (sleep x anxiety symptom)
+    var slpDays=wbDays.filter(function(d){return d.sleep!==null&&d.sym&&d.sym.anxiety!==undefined;});
+    if(slpDays.length>=6){
+      var good=slpDays.filter(function(d){return parseInt(d.sleep)>=7});
+      var poor=slpDays.filter(function(d){return parseInt(d.sleep)<=4});
+      if(good.length>=2&&poor.length>=2){
+        var ag=avgSym(poor,'anxiety')-avgSym(good,'anxiety');
+        if(ag>=2)candidates.push({strength:ag/2,icon:'\uD83D\uDCA4',txt:'<strong>Your anxiety is partly a sleep story.</strong> On poor-sleep days your anxiety runs noticeably higher than on well-rested ones. The wired feeling may be less "just me" and more "I didn\'t sleep."'});
+      }
+    }
+
+    if(!candidates.length)return;
+    candidates.sort(function(a,b){return b.strength-a.strength});
+    var show=candidates.slice(0,2); // at most 2, only the strongest
+    html+='<div class="section-title">Connections you wouldn\'t expect</div>';
+    show.forEach(function(c){
+      html+='<div class="card" style="margin-bottom:.6rem;border-left:3px solid #9a8fb0;background:linear-gradient(135deg,#faf7f2,#f3eef7)"><div style="display:flex;gap:10px;align-items:flex-start"><div style="font-size:18px;flex-shrink:0">'+c.icon+'</div><div style="font-size:12.5px;color:var(--ink-mid);line-height:1.6">'+c.txt+'</div></div></div>';
+    });
+  })();
+
   // Overview
   html+='<div class="section-title">Overview — '+loggedDays+' days logged</div>';
   html+='<div class="card" style="margin-bottom:.75rem">';
@@ -1018,6 +1206,62 @@ function buildInsights(){
     html+='<div style="font-size:12px;color:var(--ink-mid);line-height:1.6">'+mDiff+' pt mood difference the day after good vs poor sleep.'+(fDiff&&fDiff>=1?' Brain fog also '+fDiff+' pts better after good sleep.':'')+(mDiff>=1.5?' <strong style="color:var(--blush)">Sleep is your most impactful lever.</strong>':' Sleep quality correlates with next-day mood.')+'</div>';
     html+='</div>';
   }
+
+  // ── WHAT MOVES YOUR WELLBEING MOST (ranks ALL factors, not just cycle) ──
+  (function(){
+    var wbDays=days.filter(function(d){return d.wellbeing!==null});
+    if(wbDays.length<6)return;
+    function avgOf(arr){return arr.length?arr.reduce(function(a,b){return a+b.wellbeing},0)/arr.length:null;}
+    var drivers=[];
+    var lowS=wbDays.filter(function(d){return d.stress==='low'});
+    var hiS=wbDays.filter(function(d){return d.stress==='high'});
+    if(lowS.length>=2&&hiS.length>=2)drivers.push({name:'Low vs high stress',good:'low stress',gap:Math.round((avgOf(lowS)-avgOf(hiS))*10)/10,nGood:lowS.length,nBad:hiS.length,kind:'stress'});
+    var gS=wbDays.filter(function(d){return d.sleep!==null&&parseInt(d.sleep)>=7});
+    var pS=wbDays.filter(function(d){return d.sleep!==null&&parseInt(d.sleep)<=4});
+    if(gS.length>=2&&pS.length>=2)drivers.push({name:'Good vs poor sleep',good:'good sleep',gap:Math.round((avgOf(gS)-avgOf(pS))*10)/10,nGood:gS.length,nBad:pS.length,kind:'sleep'});
+    var calmN=wbDays.filter(function(d){return d.ns==='regulated'||d.ns==='calm'||d.ns==='rest'});
+    var wiredN=wbDays.filter(function(d){return d.ns==='wired'||d.ns==='frozen'||d.ns==='shutdown'});
+    if(calmN.length>=2&&wiredN.length>=2)drivers.push({name:'Calm vs dysregulated nervous system',good:'calm NS',gap:Math.round((avgOf(calmN)-avgOf(wiredN))*10)/10,nGood:calmN.length,nBad:wiredN.length,kind:'ns'});
+    if(avgCompliance!==null&&highProto.length>=2&&lowProto.length>=2)drivers.push({name:'Higher vs lower protocol',good:'staying consistent',gap:Math.round((calcAvg(highProto.map(function(d){return d.wellbeing}))-calcAvg(lowProto.map(function(d){return d.wellbeing})))*10)/10,nGood:highProto.length,nBad:lowProto.length,kind:'protocol'});
+    var phaseAvgList=Object.keys(phaseWB).map(function(p){return{p:p,a:calcAvg(phaseWB[p]),n:phaseWB[p].length};}).filter(function(x){return x.n>=2&&x.a!==null});
+    if(phaseAvgList.length>=2){phaseAvgList.sort(function(a,b){return b.a-a.a});drivers.push({name:'Best vs worst cycle phase',good:phaseNames2[phaseAvgList[0].p]+' phase',gap:Math.round((phaseAvgList[0].a-phaseAvgList[phaseAvgList.length-1].a)*10)/10,nGood:phaseAvgList[0].n,nBad:phaseAvgList[phaseAvgList.length-1].n,kind:'cycle'});}
+    if(drivers.length<2)return;
+    drivers.sort(function(a,b){return Math.abs(b.gap)-Math.abs(a.gap)});
+    var maxGap=Math.abs(drivers[0].gap)||1;
+    var kindCol={stress:'#c4788a',sleep:'#89b4d4',ns:'#b8763a',protocol:'var(--sage)',cycle:'#d4b87a'};
+    html+='<div class="section-title">What actually moves your wellbeing</div>';
+    html+='<div class="card" style="margin-bottom:.75rem">';
+    html+='<div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:.75rem">Ranked by how many points each shifts your wellbeing \u2014 your <strong>biggest levers first</strong>. Your cycle is in here too, competing with everything else.</div>';
+    drivers.forEach(function(dr){
+      var w=Math.round(Math.abs(dr.gap)/maxGap*100);
+      var col=kindCol[dr.kind]||'var(--muted)';
+      html+='<div style="margin-bottom:.7rem"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="font-weight:500;color:var(--ink)">'+dr.name+'</span><span style="font-weight:700;color:'+col+'">'+(dr.gap>0?'+':'')+dr.gap+' pts</span></div><div style="height:8px;background:var(--cream-dark);border-radius:4px;overflow:hidden"><div style="height:100%;width:'+w+'%;background:'+col+';border-radius:4px;opacity:.85"></div></div><div style="font-size:10px;color:var(--muted);margin-top:2px">better on '+dr.good+' days ('+dr.nGood+' vs '+dr.nBad+' days)</div></div>';
+    });
+    var top=drivers[0];
+    var cycleRank=-1;
+    for(var ci=0;ci<drivers.length;ci++){if(drivers[ci].kind==='cycle'){cycleRank=ci;break;}}
+    html+='<div style="background:var(--cream-dark);border-radius:var(--radius);padding:.6rem .9rem;font-size:12px;color:var(--ink-mid);line-height:1.5;margin-top:.25rem"><strong>Your #1 lever is '+top.name.toLowerCase()+'</strong>'+(top.kind!=='cycle'?' \u2014 a bigger swing than your cycle'+(cycleRank>=0?' (which ranks #'+(cycleRank+1)+')':'')+'. Focus your energy here.':'.')+'</div>';
+    html+='</div>';
+  })();
+
+  // ── WHAT STRESS IS COSTING YOU (direct, cycle-independent) ──
+  (function(){
+    var wbDays=days.filter(function(d){return d.wellbeing!==null&&d.stress});
+    var hi=wbDays.filter(function(d){return d.stress==='high'});
+    var lo=wbDays.filter(function(d){return d.stress==='low'});
+    if(hi.length<3||lo.length<2)return;
+    function av(a){return Math.round(a.reduce(function(x,d){return x+d.wellbeing},0)/a.length*10)/10;}
+    var hiAvg=av(hi),loAvg=av(lo),gap=Math.round((loAvg-hiAvg)*10)/10;
+    var hiHeadache=calcPct(hi.filter(function(d){return d.headache&&d.headache!=='none'}).length,hi.length);
+    html+='<div class="section-title">What stress is costing you</div>';
+    html+='<div class="card" style="margin-bottom:.75rem;border-left:3px solid #c4788a">';
+    html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:.6rem;text-align:center">';
+    html+='<div><div style="font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">High-stress days</div><div style="font-family:Cormorant Garamond,serif;font-size:32px;font-weight:300;color:#c4788a">'+hiAvg+'</div><div style="font-size:10px;color:var(--muted)">avg wellbeing ('+hi.length+' days)</div></div>';
+    html+='<div><div style="font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Low-stress days</div><div style="font-family:Cormorant Garamond,serif;font-size:32px;font-weight:300;color:#4a6b50">'+loAvg+'</div><div style="font-size:10px;color:var(--muted)">avg wellbeing ('+lo.length+' days)</div></div>';
+    html+='</div>';
+    html+='<div style="font-size:12px;color:var(--ink-mid);line-height:1.6">'+(gap>=1?'<strong style="color:#c4788a">Stress drops your wellbeing '+gap+' points</strong> \u2014 this is real and independent of your cycle. ':'Stress shifts your wellbeing '+gap+' pts. ')+(hiHeadache>=40?'And '+hiHeadache+'% of your high-stress days came with a headache.':'')+'</div>';
+    html+='</div>';
+  })();
 
   // Wellbeing by phase
   if(Object.values(phaseWB).some(function(v){return v.length>0})){
